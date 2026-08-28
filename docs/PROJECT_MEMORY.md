@@ -7,6 +7,7 @@
 ## 1. Product identity
 
 - Working repository name: `variant-inference-app`; the public product name is not decided.
+- Public naming requirement confirmed on August 28, 2026: the eventual open-source product must have a distinctive, ownable, non-generic name. Descriptive placeholders such as `variant-inference-app`, `CHL Resolve`, and generic `Evidence Studio`-style names are not acceptable as the public identity. GitHub remote creation is paused until a deliberate naming round and conflict scan produce a user-approved name.
 - Owner identity: **Computational Health Lab**.
 - Intended direction: a standalone, desktop-oriented application that may later be open sourced.
 - TEKNOFEST is the first demanding deployment context, not the permanent product boundary. The product should remain useful for later compatible research CSVs, especially when they contain richer inspectable features or metadata.
@@ -102,7 +103,7 @@ This hypothesis is not fully accepted until the remaining grilling questions are
 - Which visualizations materially aid verification and which should be omitted.
 - Run Archive retention, secure deletion, and Source Snapshot encryption requirements.
 - Offline-only versus optional hosted deployment.
-- Production vector assets and usage rules for the approved Resolved Layers identity; the public application name remains undecided.
+- Production vector assets and usage rules for the approved Resolved Layers identity; the public application name remains undecided and must be distinctive enough for a future public open-source release.
 - Accessibility target and supported languages.
 - License for application source code.
 - Whether organizer agreements permit publishing trained weights, feature schema, categorical mappings, or example data.
