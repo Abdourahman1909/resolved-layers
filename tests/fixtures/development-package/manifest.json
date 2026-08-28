@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "package_id": "chl.synthetic.source-review",
+  "display_name": "Synthetic Source Review package",
+  "version": "0.test",
+  "development_only": true,
+  "artifacts": [
+    {
+      "path": "synthetic-model.bin",
+      "sha256": "a7623c785a2da78108bcc9ad91ddd1d2802113523e96fec9a39ca00ea8c389e8"
+    }
+  ],
+  "inference_contract": {
+    "contract_id": "chl.synthetic.source-review.contract",
+    "version": "0.test",
+    "features": [
+      {
+        "name": "Feature_A",
+        "presence": "required",
+        "kind": "numeric"
+      },
+      {
+        "name": "Feature_B",
+        "presence": "required",
+        "kind": "numeric"
+      },
+      {
+        "name": "Category",
+        "presence": "required",
+        "kind": "categorical",
+        "allowed_categories": ["A", "B", "C", "Unknown"],
+        "unknown_category": "Unknown"
+      },
+      {
+        "name": "Panel",
+        "presence": "omissible",
+        "kind": "categorical",
+        "missing_representation": "Unknown",
+        "allowed_categories": ["Panel-A", "Panel-B", "Panel-C", "Unknown"],
+        "unknown_category": "Unknown"
+      }
+    ],
+    "ensemble_weights": {
+      "catboost": 0.5007,
+      "lightgbm": 0.4993
+    },
+    "release_threshold": 0.61,
+    "row_filtering": "none"
+  }
+}

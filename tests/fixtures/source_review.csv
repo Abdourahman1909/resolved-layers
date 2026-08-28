@@ -1,0 +1,11 @@
+Record_ID,Feature_A,Feature_B,Category,Panel,Research_Note
+SYN-0001,0.842,1.230,A,Panel-A,synthetic alpha
+SYN-0002,1.105,0.980,B,Panel-B,synthetic beta
+SYN-0003,0.532,1.450,A,Panel-A,synthetic gamma
+SYN-0004,0.623,1.110,C,Panel-C,synthetic delta
+SYN-0005,0.913,,A,Panel-A,synthetic epsilon
+SYN-0006,1.254,0.770,B,Panel-B,synthetic zeta
+SYN-0007,0.411,1.670,C,Panel-C,synthetic eta
+SYN-0008,,1.200,A,Panel-A,synthetic theta
+SYN-0009,0.643,0.890,B,Panel-B,synthetic iota
+SYN-0010,1.021,1.300,C,Panel-C,synthetic kappa
