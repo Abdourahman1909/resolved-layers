@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "chl-variant-inference"
+name = "chl-resolved-layers"
 version = "0.1.0"
-description = "Computational Health Lab's evidence-first desktop variant inference application"
+description = "Resolved Layers, Computational Health Lab's evidence-first desktop inference product"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -19,6 +19,7 @@ dev = [
 ]
 
 [project.scripts]
+resolved-layers = "variant_inference.main:main"
 variant-inference = "variant_inference.main:main"
 
 [tool.setuptools]
@@ -34,4 +35,3 @@ variant_inference = ["qml/*.qml"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
-

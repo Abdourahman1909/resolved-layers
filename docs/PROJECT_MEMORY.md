@@ -1,4 +1,4 @@
-# Project Memory — Variant Inference App
+# Project Memory — Resolved Layers
 
 > Durable context for future sessions working in this repository.
 > Last consolidated: 2026-08-28.
@@ -6,9 +6,9 @@
 
 ## 1. Product identity
 
-- Working repository name: `variant-inference-app`; the public product name is not decided.
-- Public naming requirement confirmed on August 28, 2026: the eventual open-source product must have a distinctive, ownable, non-generic name. Descriptive placeholders such as `variant-inference-app`, `CHL Resolve`, and generic `Evidence Studio`-style names are not acceptable as the public identity. GitHub remote creation is paused until a deliberate naming round and conflict scan produce a user-approved name.
-- Accepted naming direction: pursue a coined, futuristic, product-like single-word name with a defensible scientific idea behind it. It must remain pronounceable, memorable, broad enough for future Computational Health Lab models, compatible with the Resolved Layers identity, and free of clinical overclaiming. Avoid both literal category labels and meaningless startup-style syllable combinations.
+- Final public product name: **Resolved Layers**. The user explicitly locked it on August 28, 2026 after rejecting generic repository/product names. It carries forward the already-approved Resolved Layers identity concept while Computational Health Lab remains the creator and owner brand.
+- Public repository slug: `resolved-layers`; intended private GitHub destination: `Abdourahman1909/resolved-layers`, with later public release possible only after licensing and artifact-publication checks.
+- `Variant Inference` remains the functional Product Descriptor for the current missense-variant workflow, not the product name.
 - Owner identity: **Computational Health Lab**.
 - Intended direction: a standalone, desktop-oriented application that may later be open sourced.
 - TEKNOFEST is the first demanding deployment context, not the permanent product boundary. The product should remain useful for later compatible research CSVs, especially when they contain richer inspectable features or metadata.
@@ -52,7 +52,7 @@
 - Accepted desktop architecture, conditional on visual quality: PySide6 with a custom QML/Qt Quick presentation layer and a direct Python inference core. Package with `pyside6-deploy`/Nuitka after target-OS validation. The app must not ship with generic/default Qt styling. Qt/module licensing remains a release gate, and GPL-only optional modules such as Qt Graphs are excluded until the public license is deliberately chosen.
 - Accepted first-release build matrix: produce and test native Linux and Windows packages. macOS is deferred unless a concrete Computational Health Lab need emerges.
 - Confirmed brand starting state: **Computational Health Lab** is the established organization/laboratory name, but there is currently no logo, symbol, official palette, or typography system.
-- Accepted brand architecture: Computational Health Lab is the creator, owner, and primary Laboratory Identity. Build a reusable symbol, complete wordmark, and adaptable lockups for future lab work. `Variant Inference` is a provisional functional Product Descriptor, not a separate commercial brand; reconsider a distinct product name only after the working application demonstrates a need. Avoid cliché DNA, cross, heartbeat, and AI-brain marks.
+- Accepted brand architecture: Computational Health Lab is the creator, owner, and primary Laboratory Identity. **Resolved Layers** is the distinct product name, and `Variant Inference` is its current functional descriptor. Avoid cliché DNA, cross, heartbeat, and AI-brain marks.
 - Confirmed identity scope: the laboratory will join other competitions and undertake projects beyond missense-variant prediction. The Laboratory Identity must therefore remain a broad computational-health umbrella and must not encode this model or competition as the lab's permanent subject.
 - Accepted Laboratory Thesis: **“Computational Health Lab turns complex health data into transparent, testable computational evidence.”** Future identity work should express complexity becoming clarity, traceability, and scientific rigor without relying on literal disease, DNA, or algorithm imagery.
 - Accepted naming system: public wordmark and attribution use **Computational Health Lab** without hyphens. `CHL` is a secondary compact monogram only. Preserve `Computational-Health-Lab` solely where an official competition system requires the registered team name.
@@ -104,7 +104,7 @@ This hypothesis is not fully accepted until the remaining grilling questions are
 - Which visualizations materially aid verification and which should be omitted.
 - Run Archive retention, secure deletion, and Source Snapshot encryption requirements.
 - Offline-only versus optional hosted deployment.
-- Production vector assets and usage rules for the approved Resolved Layers identity; the public application name remains undecided and must be distinctive enough for a future public open-source release.
+- Production vector assets and usage rules for the approved Resolved Layers identity and product lockup.
 - Accessibility target and supported languages.
 - License for application source code.
 - Whether organizer agreements permit publishing trained weights, feature schema, categorical mappings, or example data.
@@ -132,7 +132,7 @@ The first slice deliberately stops before prediction. The enabled action records
 
 An independent manager acceptance review on August 28, 2026 reran all 11 tests, the offscreen QML smoke check, and Python compilation successfully and visually inspected the 1536×980 Source Review render. The milestone has no blocking acceptance issue. Production vectorization and tighter wrapping of long evidence values in the narrow pane remain non-blocking polish work.
 
-The independent repository now has a clean `main` baseline with three logical commits rather than one bulk snapshot: product memory and visual direction; Source Review domain/evidence adapters; and the PySide6 desktop shell. Temporary design-tool process logs, virtual environments, generated caches, real model artifacts, and organizer data are excluded. The committed state was revalidated with all 11 tests and the offscreen smoke check. A private GitHub remote is planned, but creation is pending explicit confirmation that the authenticated `Abdourahman1909` account is the intended destination.
+The independent repository has a clean, incremental `main` history rather than one bulk snapshot. Temporary design-tool process logs, virtual environments, generated caches, real model artifacts, and organizer data are excluded. The committed state was revalidated with all 11 tests and the offscreen smoke check. The user explicitly authorized creation of the private `Abdourahman1909/resolved-layers` GitHub repository.
 
 The first post-prediction Results workspace comp at `.impeccable/mocks/app/results-workspace-v1.png` is a superseded exploration rather than an approval candidate. Its useful semantics were carried forward, but its dominant table used the wrong hierarchy for 4,570 variants.
 

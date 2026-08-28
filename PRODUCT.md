@@ -40,11 +40,11 @@ The product treats source evidence, preprocessing visibility, model identity, an
 - Label-dependent metrics require explicit Ground-Truth Authorization.
 - AI and internet integration is deferred; the future assistant remains read-only.
 - Linux and Windows are the first-release operating-system targets; macOS is deferred.
-- The public license, product name, accessibility target, and localization scope remain open.
+- The public license, accessibility target, and localization scope remain open.
 
 ## Brand Commitments
 
-The product is created by and belongs to Computational Health Lab. The Laboratory Identity is the primary umbrella brand and must remain broad enough for future competitions, models, applications, reports, and research beyond missense-variant prediction. It must include a compact symbol, the complete laboratory wordmark, and adaptable lockups. `Variant Inference` is the provisional functional Product Descriptor, not a separate commercial brand. A distinct product name may be considered later only if the working product justifies one.
+The product is named **Resolved Layers** and is created by Computational Health Lab. The Laboratory Identity remains the primary creator/owner identity across future competitions, models, applications, reports, and research. `Variant Inference` is the functional Product Descriptor for the current workflow, not the public product name.
 
 The Laboratory Identity must not encode missense-variant prediction as the laboratory's permanent scope or rely on predictable DNA helices, medical crosses, heartbeat traces, or generic AI-brain imagery.
 

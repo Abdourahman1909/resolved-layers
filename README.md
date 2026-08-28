@@ -1,6 +1,6 @@
-# Variant Inference
+# Resolved Layers
 
-Computational Health Lab's evidence-first desktop foundation for traceable missense-variant inference. The current vertical slice implements the approved Source Review workflow in PySide6 and Qt Quick; deterministic Production Model execution is deliberately the next integration milestone.
+**Resolved Layers** is Computational Health Lab's evidence-first desktop product for traceable model inference. Its current `Variant Inference` workflow focuses on missense-variant prediction. The present vertical slice implements the approved Source Review workflow in PySide6 and Qt Quick; deterministic Production Model execution is deliberately the next integration milestone.
 
 ## What works now
 
@@ -20,7 +20,7 @@ The run button records the completed Source Review gate but does not execute mod
 Python 3.10 or newer is required.
 
 ```bash
-cd variant-inference-app
+cd resolved-layers
 python -m venv .venv
 .venv/bin/python -m pip install --upgrade pip
 .venv/bin/python -m pip install -e '.[dev]'

@@ -1,4 +1,4 @@
-# Variant Inference
+# Resolved Layers
 
 This context defines the language used by Computational Health Lab's standalone missense-variant inference product.
 
@@ -20,9 +20,13 @@ _Avoid_: Primary wordmark, product name, unexplained acronym
 Computational Health Lab turns complex health data into transparent, testable computational evidence.
 _Avoid_: Slogan, marketing promise, variant-prediction mission
 
+**Product Name**:
+`Resolved Layers`, the distinctive public name of this application and repository. It is presented as a product created by Computational Health Lab and can encompass future validated Computational Health Lab Model Packages beyond the initial competition model.
+_Avoid_: Variant Inference App, CHL Resolve, generic evidence dashboard
+
 **Product Descriptor**:
-The functional title `Variant Inference` used to identify this application beneath the Laboratory Identity until a separate product name is justified.
-_Avoid_: Final product brand, laboratory name, commercial codename
+The functional title `Variant Inference` used beneath `Resolved Layers` to describe the current missense-variant workflow without limiting the future product name.
+_Avoid_: Product name, laboratory name, commercial codename
 
 **Production Model**:
 The approved model represented by the Model Package selected and fixed for a Prediction Run. The initial TEKNOFEST release uses the current CatBoost and LightGBM ensemble.

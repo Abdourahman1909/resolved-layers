@@ -12,7 +12,7 @@ ApplicationWindow {
     minimumHeight: 720
     visible: true
     color: "#FFFFFF"
-    title: "Variant Inference — Computational Health Lab"
+    title: "Resolved Layers · Variant Inference — Computational Health Lab"
 
     readonly property color ink: "#101522"
     readonly property color secondary: "#566176"
@@ -85,7 +85,7 @@ ApplicationWindow {
             anchors.left: parent.left
             anchors.leftMargin: 242
             anchors.verticalCenter: parent.verticalCenter
-            text: "Variant Inference"
+            text: "Resolved Layers"
             color: root.ink
             font.family: "Arial"
             font.pixelSize: 20

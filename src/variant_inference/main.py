@@ -18,7 +18,7 @@ from variant_inference.qt.table_model import CsvTableModel
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Computational Health Lab Variant Inference")
+    parser = argparse.ArgumentParser(description="Resolved Layers by Computational Health Lab")
     parser.add_argument("--open", dest="source_path", type=Path, help="Open a CSV on startup")
     parser.add_argument(
         "--model-package",
@@ -34,7 +34,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     application = QGuiApplication(sys.argv[:1])
-    application.setApplicationName("Variant Inference")
+    application.setApplicationName("Resolved Layers")
     application.setOrganizationName("Computational Health Lab")
 
     package_path = args.model_package

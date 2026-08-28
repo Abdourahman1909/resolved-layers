@@ -1,4 +1,4 @@
-# Variant Inference App — Product Requirements
+# Resolved Layers — Product Requirements
 
 **Status:** Draft — active product grilling
 
