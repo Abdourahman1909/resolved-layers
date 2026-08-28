@@ -18,6 +18,7 @@ def test_profile_controller_filters_shared_table_without_rewriting_source_row(fi
         controller.openSource(str(fixture_dir / "dataset_profile.csv"))
         assert controller.groupColumn == "_panel"
         assert not controller.labelsAuthorized
+        controller.setActiveSurface("profile")
 
         controller.selectLabelColumn("Reference_Label")
         controller.authorizeLabels("case", "control")
@@ -29,5 +30,10 @@ def test_profile_controller_filters_shared_table_without_rewriting_source_row(fi
         assert table.data(table.index(0, 0), Qt.DisplayRole) == 1
         assert table.data(table.index(1, 0), Qt.DisplayRole) == 5
         assert table.data(table.index(2, 0), Qt.DisplayRole) == 11
+
+        controller.setActiveSurface("review")
+        assert table.rowCount() == 12
+        controller.setActiveSurface("profile")
+        assert table.rowCount() == 3
     finally:
         controller.close()

@@ -356,6 +356,9 @@ class SourceReviewController(QObject):
         if surface == "profile" and not self.hasSource:
             return
         self._active_surface = surface
+        self._table_model.set_row_filter(
+            self._profile.filtered_source_rows if surface == "profile" else None
+        )
         self._emit()
 
     @Slot(str)
@@ -457,7 +460,9 @@ class SourceReviewController(QObject):
 
     def _refresh_profile(self) -> None:
         self._group_model.set_groups(self._profile.groups, self._profile.authorization is not None)
-        self._table_model.set_row_filter(self._profile.filtered_source_rows)
+        self._table_model.set_row_filter(
+            self._profile.filtered_source_rows if self._active_surface == "profile" else None
+        )
 
     def _identity(self, name: str) -> str:
         source = self._session.source
