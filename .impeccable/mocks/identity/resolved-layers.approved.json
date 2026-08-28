@@ -1,0 +1,19 @@
+{
+  "approved": true,
+  "approved_on": "2026-08-27",
+  "approved_reference": "resolved-layers.png",
+  "laboratory_name": "Computational Health Lab",
+  "direction": "Resolved Layers",
+  "scope": [
+    "symbol shape",
+    "blue, black, and gray color treatment",
+    "complete wordmark relationship",
+    "overall identity character"
+  ],
+  "production_note": "Create precise SVG, monochrome, reversed, compact-icon, and wordmark lockups by faithfully reconstructing this reference. Do not reinterpret the concept without explicit user direction.",
+  "unselected_refinements": [
+    "resolved-layers-a-close.png",
+    "resolved-layers-b-simplified.png",
+    "resolved-layers-c-negative-space.png"
+  ]
+}

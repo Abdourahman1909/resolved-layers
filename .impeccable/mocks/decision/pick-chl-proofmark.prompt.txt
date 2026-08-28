@@ -1,0 +1,12 @@
+Use case: ui-mockup and logo-brand
+Asset type: high-fidelity visual-direction comp for a Linux/Windows scientific desktop application, landscape 16:10
+Primary request: Design the first operational Source Review viewport for "Variant Inference" by "Computational Health Lab" in the CHL Proofmark visual world. Create a sophisticated geometric CHL monogram drawn from calibrated axes, registration marks, and precise letter construction, paired with the exact full wordmark "Computational Health Lab". The monogram must remain legible as CHL without becoming a generic consultancy logo. This is a real desktop workspace after a CSV has been selected, not a landing page.
+Scene/backdrop: full application window on optical-white research-paper ground, no device mockup and no surrounding room
+Subject: publication-like Source Review; compact Open CSV command; "final_variants.csv" identity; checksum and dimensions; dominant raw-data table with Variant_ID, AL_1, CAT_2, EK_7, AA_1; captioned evidence blocks; narrow marginal audit notes for validation mappings, missing values, and transformations; one precise "Confirm source" action; quiet model identity "CHL Ensemble 1.0"
+Style/medium: premium academic research instrument, peer-reviewed figure plate meets modern custom desktop software; light-first, editorially rigorous but operational; micro-rules, registration marks, annotation ink
+Composition/framing: landscape desktop viewport, controlled top wordmark, narrow navigation column, large table as central figure plate, right annotation margin; compact information density with clear reading order
+Color palette: optical white #FBFCFA, carbon #20242A, deep mulberry #6F385A, restrained citron #D7E85A
+Materials/textures: coated figure paper, registration ink, precise hairline rules; no nostalgic paper grain and no skeuomorphic notebook
+Text (verbatim where visible): "Computational Health Lab", "CHL", "Variant Inference", "Source Review", "final_variants.csv", "1,248 rows · 354 columns", "Confirm source", "Raw data", "Validation notes", "CHL Ensemble 1.0"
+Constraints: professional, calm, beautiful, immediately understandable; show the serious CHL letter-built challenger and a complete wordmark; no chart, no KPI cards, no upload theater; no dark mode; no gradients; no generic dashboard grid
+Avoid: DNA helix, medical cross, heartbeat, brain icon, robot, AI sparkles, generic medical blue, warm-cream literary aesthetic, newspaper nostalgia, oversized rounded cards, decorative charts, fake clinical claims, watermark

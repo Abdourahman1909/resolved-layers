@@ -1,0 +1,10 @@
+Use case: logo-brand
+Asset type: Computational Health Lab logo refinement proof sheet
+Input images: Image 1 is the selected Resolved Layers concept and must remain the recognizable source geometry.
+Primary request: Create Refinement A, “Calibrated Original.” Preserve the three offset open-frame symbol and its overall silhouette very closely, but redraw it with exact vector-like construction, uniform optical stroke weight, cleaner junctions, consistent corner radii or sharp corners, and balanced negative space. Remove the slightly improvised appearance without changing why the shape was selected.
+Scene/backdrop: warm-white identity proof sheet only, no application interface.
+Style/medium: flat monochrome vector-style identity drawing, serious computational research laboratory.
+Composition/framing: large symbol, horizontal lockup with the exact words “Computational Health Lab”, pure-black mark, reversed white-on-black mark, and 16/32/64-pixel scale tests.
+Color palette: pure black, white, and neutral warm paper only; no blue or other accent colors.
+Constraints: compare geometry only; preserve the original three-layer topology; exact readable brand name; strong at 16 pixels; no gradients, shadows, texture, 3D, UI screens, devices, or decorative art.
+Avoid: DNA, medical cross, heartbeat, brain, molecule, shield, flower, camera aperture, clothing monogram, chain-link symbol, generic corporate knot, watermark.

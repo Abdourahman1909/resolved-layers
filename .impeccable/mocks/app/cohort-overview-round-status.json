@@ -1,0 +1,11 @@
+{
+  "surface": "post-prediction-cohort-overview",
+  "status": "revision-required",
+  "current_comp": "cohort-overview-v1.png",
+  "prompt": "cohort-overview-v1.prompt.txt",
+  "inherits_from": "source-review-split-hybrid-v2.png",
+  "supersedes": "results-workspace-v1.png",
+  "approved": false,
+  "implementation_started": false,
+  "review_focus": "Preserve the approved cohort-first composition while integrating separate Evaluation and Competition Submission workspaces into a clean navigation architecture."
+}

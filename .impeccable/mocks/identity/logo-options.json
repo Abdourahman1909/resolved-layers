@@ -1,0 +1,44 @@
+{
+  "title": "Choose the Computational Health Lab logo direction",
+  "question": "Which identity idea should we refine as the laboratory logo? This round decides only the mark and wordmark, not the application interface.",
+  "options": [
+    {
+      "id": "evidence-gate",
+      "label": "Evidence Gate",
+      "kicker": "RECOMMENDED START",
+      "lineage": "evidence paths resolving into one verified point",
+      "thesis": "Different computational signals converge into one result that remains open to inspection.",
+      "palette": ["#F8F7F2", "#1A1A1A", "#6F8F78", "#B7B2A8"],
+      "materials": ["precise open geometry", "matte research paper", "calibration-line discipline"],
+      "viewport": "A compact open gate receives several paths and holds one verified point.",
+      "risk": "The incoming paths must be simplified further so the smallest icon does not feel busy.",
+      "comp": ".impeccable/mocks/identity/evidence-gate.png"
+    },
+    {
+      "id": "resolved-layers",
+      "label": "Resolved Layers",
+      "lineage": "transparent analytical planes and traceable overlays",
+      "thesis": "Independent layers overlap to reveal a shared evidence cell.",
+      "palette": ["#F8F7F2", "#171A1B", "#1249A0", "#7B858A"],
+      "materials": ["open frames", "negative-space cell", "technical overlay"],
+      "viewport": "Three partial frames interlock around a central unresolved space.",
+      "risk": "Interlocking frames are familiar in technology branding and may not be distinctive enough.",
+      "comp": ".impeccable/mocks/identity/resolved-layers.png"
+    },
+    {
+      "id": "chl-structure",
+      "label": "CHL Structure",
+      "lineage": "a custom structural monogram built from the laboratory initials",
+      "thesis": "The laboratory name becomes the mark, with no separate scientific metaphor to explain.",
+      "palette": ["#F8F7F2", "#202027", "#4B2E4F"],
+      "materials": ["shared letter strokes", "geometric grid", "controlled negative space"],
+      "viewport": "C, H, and L share one compact silhouette beside the full laboratory name.",
+      "risk": "The current construction is too literal and corporate; a chosen version would need custom redrawing.",
+      "comp": ".impeccable/mocks/identity/chl-structure.png"
+    }
+  ],
+  "reroll": {"registers": ["safer", "bolder"]},
+  "buildPath": {"value": "comp", "toggle": false},
+  "canon": false,
+  "steer": true
+}

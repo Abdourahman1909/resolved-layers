@@ -1,0 +1,12 @@
+Use case: ui-mockup and logo-brand
+Asset type: high-fidelity conventional baseline comp for a Linux/Windows scientific desktop application, landscape 16:10
+Primary request: Design a polished but intentionally category-standard medical AI dashboard for "Variant Inference" by "Computational Health Lab". This is the familiar baseline used for honest comparison, not the recommended direction.
+Scene/backdrop: full desktop application window on white, no device mockup
+Subject: generic abstract blue healthcare logo with full wordmark; left sidebar; large drag-and-drop CSV upload card; top row of four KPI cards; blue and green status chips; donut chart and bar chart; results table; common dashboard components and familiar medical analytics layout
+Style/medium: clean competent enterprise SaaS medical dashboard, well executed but conventional
+Composition/framing: landscape desktop viewport with sidebar, top header, KPI row, two-chart grid, table below
+Color palette: white #FFFFFF, dark navy #172033, healthcare blue #2563EB, pale blue gray #E8EEF8, generic success green
+Materials/textures: clean flat cards, soft shadows, rounded rectangles
+Text (verbatim where visible): "Computational Health Lab", "Variant Inference", "Upload CSV", "Prediction Results", "Total Variants", "Pathogenic", "Benign", "Confidence", "Run prediction"
+Constraints: professional and legible; clearly read as the standard category approach
+Avoid: broken layout, illegible text, dark mode, watermark, fake clinical claims, DNA helix

@@ -1,0 +1,23 @@
+{
+  "status": "approved",
+  "date": "2026-08-27",
+  "seed_key": "fd66593e",
+  "question_key": "d04b2380",
+  "fixed_identity": "Resolved Layers",
+  "surface": "Source Review after a CSV is open",
+  "options": [
+    "split-evidence-desk",
+    "dataset-dossier",
+    "evidence-ledger"
+  ],
+  "selected_structure": "split-evidence-desk",
+  "requested_import": "Dataset Dossier full-color Resolved Layers symbol and Computational Health Lab wordmark treatment",
+  "rejected_elements": [
+    "Runs date shortcuts in the Source Review sidebar",
+    "model compatibility presented as unexplained navigation"
+  ],
+  "hybrid_comp": "source-review-split-hybrid-v2.png",
+  "right_pane_policy": "Retain the full visible Source Identity, Inference Contract Fit, Transformation Audit, and Confirm & Run sections in the default Source Review view.",
+  "approved_comp": "source-review-split-hybrid-v2.png",
+  "implementation_started": false
+}

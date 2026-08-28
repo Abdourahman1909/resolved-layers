@@ -1,0 +1,41 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# JavaScript and desktop builds
+node_modules/
+dist/
+build/
+out/
+src-tauri/target/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Model and data artifacts
+models/*.pkl
+models/*.joblib
+models/*.cbm
+models/*.onnx
+data/
+runs/
+exports/
+*.csv
+!tests/fixtures/*.csv
+
+# Editors and operating systems
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Local design-tool sessions
+.impeccable/questions/

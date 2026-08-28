@@ -1,0 +1,52 @@
+Use case: ui-mockup
+Asset type: high-fidelity desktop application screen concept, 1440×960 landscape
+Primary request: Transform the approved Source Review screen into the first post-prediction Results workspace while preserving its visual language, proportions, brand lockup, typography, fine divider lines, calm white canvas, and professional laboratory character.
+Input images:
+- Image 1 is the approved application layout and visual authority. Preserve its top application bar, full-color Resolved Layers + Computational Health Lab lockup, Variant Inference descriptor, compact Run Archive command, wide working table, and persistent right-side evidence pane.
+- Image 2 is the approved Resolved Layers laboratory identity reference. Keep the logo geometry and blue/black/gray treatment faithful.
+
+Screen state: A verified prediction run has completed for competition_final.csv. This is the immediate Results view before the operator opens any cohort charts.
+
+Top application bar:
+- Keep the approved full-color Computational Health Lab lockup at the far left and “Variant Inference” descriptor after a thin divider.
+- Keep one compact “Run Archive” command near the right.
+- Add one restrained “Export” command or button near Run Archive, not a large call-to-action.
+- Preserve desktop window controls.
+
+Main workspace, left side (dominant, approximately 70% width):
+- Page title: “Prediction Results” with a small green completion indicator and “Verified run”.
+- Calm two-level run summary, not cards: primary line “Run complete · 4,570 variants”; secondary line “Pathogenic 704 · Benign 3,866 · Model disagreements 126 · Warnings 0”. Keep model package and threshold quieter: “CHL Ensemble 2026.1 · Release threshold 0.61”. These are illustrative interface values, not scientific claims.
+- A compact three-tab secondary navigation: “Results” active, “Score distribution”, “Model agreement”. No chart is visible while Results is active.
+- Compact toolbar with search field “Search variants…”, a “Filters” control, and a “Columns” control.
+- Large row-preserving result table fills the workspace. Exact visible column headers: “Source Row”, “Variant_ID”, “Prediction”, “Ensemble Score”, “CatBoost”, “LightGBM”, “Agreement”, “Warnings”.
+- Show about 14 crisp rows with plausible values. Use clear text labels, not colored pills everywhere. Sparse semantic color only: restrained blue selection, green for agreement/clean state, amber only for disagreement or warning.
+- Selected row should be Source Row 142, Variant_ID VAR_000142, Prediction Pathogenic, Ensemble Score 0.842, CatBoost 0.865, LightGBM 0.819, Agreement “Agree”, Warnings “—”.
+- Preserve source order and show a quiet footer such as “4,570 results · Source order preserved”.
+
+Right side: persistent resizable Variant Inspector, organized but not overwhelming:
+- Heading “VARIANT INSPECTOR” and selected identity “VAR_000142” with “Source Row 142”.
+- Compact tabs: “Overview” active, “Source row”, “Model contributions”.
+- Prediction section: “Pathogenic”, Ensemble Score “0.842”, Release Threshold “0.61”. Include a very small horizontal score ruler or understated bar with threshold marker, not a chart.
+- Component evidence section: CatBoost “0.865”, LightGBM “0.819”, status “Models agree”. Keep the two model scores visually separate and easy to compare.
+- Traceability section: Source dataset “competition_final.csv”, Model package “CHL Ensemble 2026.1”, Run status “Verified”.
+- A restrained secondary button “Compute model contributions”.
+- Small caution copy near the contribution action: “Explains model behavior, not biological causation.”
+- Use fine dividers and compact section labels matching the approved Source Review evidence pane.
+
+Composition and hierarchy:
+- The table must remain fully visible when the inspector is open; the split should feel resizable.
+- This must feel like a serious desktop investigation instrument, not a generic analytics dashboard.
+- The initial result screen prioritizes traceable rows and inspection. Charts exist only behind the two secondary tabs.
+- Maintain readable density for a 1440×960 laptop screen and clear alignment.
+
+Avoid:
+- no KPI card grid, dashboard tiles, hero blocks, oversized numbers, or giant status badges
+- no chart on the initial Results view
+- no left date-filter sidebar
+- no duplicate upload panel or drag-and-drop zone
+- no gradients, dark mode, glossy effects, heavy shadows, rounded-card sprawl, glassmorphism, or generic medical teal
+- no DNA helix, heartbeat, cross, brain, shield, or unrelated health iconography
+- no new logo interpretation
+- no claim of accuracy, F1, calibration, or biological causation from this unlabeled run
+- no crowded inspector with all 353 source fields visible at once; source fields belong behind the Source row tab
+- no threshold editing in this Verified Run view

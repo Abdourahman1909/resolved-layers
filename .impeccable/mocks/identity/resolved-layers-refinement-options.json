@@ -1,0 +1,43 @@
+{
+  "title": "Refine the Resolved Layers symbol",
+  "question": "Which geometry should become the basis for the final vector logo? Color and application design remain outside this round.",
+  "options": [
+    {
+      "id": "calibrated-original",
+      "label": "A — Calibrated Original",
+      "kicker": "RECOMMENDED",
+      "lineage": "the selected three-frame construction, optically corrected",
+      "thesis": "Preserve the exact family and asymmetry that made Resolved Layers feel unique.",
+      "palette": ["#FAF9F5", "#111111"],
+      "materials": ["uniform black strokes", "open analytical frames", "balanced negative space"],
+      "viewport": "Three separated frames retain their original offsets with cleaner junctions and spacing.",
+      "risk": "The icon remains slightly intricate at the smallest sizes and needs deterministic vector cleanup.",
+      "comp": ".impeccable/mocks/identity/resolved-layers-a-close.png"
+    },
+    {
+      "id": "essential-layers",
+      "label": "B — Essential Layers",
+      "lineage": "the selected idea reduced to a compact two-level contour",
+      "thesis": "Maximum simplicity makes the symbol easy to reproduce and recognize at small scale.",
+      "palette": ["#FAF9F5", "#111111"],
+      "materials": ["continuous contours", "near-square silhouette", "large central opening"],
+      "viewport": "The layers compress into a simpler nested structure with fewer fragile gaps.",
+      "risk": "It loses much of the three-layer character and starts to resemble a document or copy icon.",
+      "comp": ".impeccable/mocks/identity/resolved-layers-b-simplified.png"
+    },
+    {
+      "id": "evidence-cell",
+      "label": "C — Evidence Cell",
+      "lineage": "the selected frames organized around a deliberate central void",
+      "thesis": "The shared negative-space cell becomes the symbol's signature evidence point.",
+      "palette": ["#FAF9F5", "#111111"],
+      "materials": ["directional openings", "central negative space", "compact silhouette"],
+      "viewport": "Three entries point toward one crisp center while preserving the layered family.",
+      "risk": "The angled front frame can read as a play button, box, or three-dimensional object.",
+      "comp": ".impeccable/mocks/identity/resolved-layers-c-negative-space.png"
+    }
+  ],
+  "buildPath": {"value": "comp", "toggle": false},
+  "canon": false,
+  "steer": true
+}

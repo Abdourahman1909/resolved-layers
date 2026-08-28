@@ -1,0 +1,10 @@
+{
+  "surface": "post-prediction-results-workspace",
+  "status": "revision-required",
+  "current_comp": "results-workspace-v1.png",
+  "prompt": "results-workspace-v1.prompt.txt",
+  "inherits_from": "source-review-split-hybrid-v2.png",
+  "approved": false,
+  "implementation_started": false,
+  "review_focus": "Replace the table-first hierarchy with a calm cohort-first investigation surface; retain the table and Variant Inspector as on-demand record-level tools."
+}

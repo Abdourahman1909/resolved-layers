@@ -1,0 +1,128 @@
+{
+  "title": "Choose the Computational Health Lab visual direction",
+  "question": "Choose the world that should govern both the laboratory identity and the Variant Inference desktop application, or re-roll with a steer.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Lattice Resolve",
+      "kicker": "THE ROLL",
+      "lineage": "optical calibration plates, transparent drafting film, and computational lineage graphs",
+      "thesis": "Many fine evidence paths resolve into one crisp, inspectable structure.",
+      "palette": ["#F5F7F4", "#17221F", "#5B4AE8", "#DCE1DC"],
+      "materials": ["matte ceramic white", "transparent drafting film", "calibrated graphite rules"],
+      "viewport": "A slim laboratory rail frames Source Review: one large raw-data field, a precise validation trace, and a single Confirm Source action.",
+      "risk": "The convergence language becomes decorative if every line does not explain source, transformation, or state.",
+      "raised": [
+        {"from": "challenger-sneaker", "raise": "Run Archive and Model Library entries inherit disciplined end-label indexing."},
+        {"from": "challenger-cassette", "raise": "Confirmed, warning, and active states become tactile and unmistakable without adding dashboard chrome."},
+        {"from": "challenger-cathode", "raise": "The current state remains visually dominant while alternatives stay present but quiet."}
+      ],
+      "comp": ".impeccable/mocks/decision/assigned-lattice-resolve.png"
+    },
+    {
+      "id": "model-pick",
+      "label": "CHL Proofmark",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "peer-reviewed figure plates, laboratory notebooks, and calibration certificates",
+      "thesis": "A rigorously drawn CHL monogram signs every result like a verified research plate.",
+      "palette": ["#FBFCFA", "#20242A", "#6F385A", "#D7E85A"],
+      "materials": ["coated figure paper", "annotation ink", "micro-rules and registration marks"],
+      "viewport": "The wordmark and monogram anchor a publication-like Source Review with a table, captioned evidence blocks, and marginal audit notes.",
+      "risk": "The most academically familiar direction may feel like publication software rather than a distinctive laboratory instrument.",
+      "comp": ".impeccable/mocks/decision/pick-chl-proofmark.png"
+    },
+    {
+      "id": "challenger-oscilloscope",
+      "label": "Evidence Signal Bench",
+      "verdict": "competitive",
+      "lineage": "a CRT oscilloscope on a calibrated signal bench",
+      "thesis": "Predictions are measured signals, stabilized and inspected before interpretation.",
+      "palette": ["#ECEAE2", "#111714", "#53E63A", "#FFB000"],
+      "materials": ["light instrument enamel", "dark anti-reflective glass", "etched graticule"],
+      "viewport": "A light laboratory chassis surrounds one dark score field, with Source Evidence and validation controls arranged like calibrated instrument channels.",
+      "case": "Strong scientific identification and state clarity, but its electronics metaphor narrows the laboratory more than Lattice Resolve.",
+      "risk": "Phosphor and instrument controls can drift toward retro electronics or dark sci-fi styling.",
+      "comp": ".impeccable/mocks/decision/challenger-signal-bench.png",
+      "hero": ".impeccable/reference/oscilloscope-hero.webp",
+      "board": ".impeccable/reference/oscilloscope-board.webp"
+    },
+    {
+      "id": "challenger-sneaker",
+      "label": "Research Archive Stack",
+      "verdict": "declined",
+      "lineage": "labeled archive boxes and indexed specimen storage",
+      "thesis": "Runs and models live as labeled cases that open into complete evidence.",
+      "palette": ["#C65B2A", "#151515", "#F7F2E9", "#8CA7A0"],
+      "materials": ["archive board", "tissue paper", "printed end labels"],
+      "viewport": "A wall of run labels opens into the selected Source Review.",
+      "case": "Useful for archive navigation, but users do not identify the laboratory with product storage.",
+      "kept": "Its indexing discipline now strengthens every archived run and model label.",
+      "risk": "The box metaphor would dominate evidence and make the app feel like a catalog."
+    },
+    {
+      "id": "challenger-cyclorama",
+      "label": "Evidence Horizon",
+      "verdict": "declined",
+      "lineage": "a theatrical cyclorama moving from dark uncertainty into white daylight",
+      "thesis": "Each run moves visibly from unknown source to illuminated evidence.",
+      "palette": ["#F7F8F5", "#151A2B", "#3852A4", "#C9788E"],
+      "materials": ["seamless light field", "soft horizon bands", "named cue states"],
+      "viewport": "Source Review progresses across one horizontal field from unopened data to confirmed evidence.",
+      "case": "Memorable transition language, but weak scientific identification and insufficient density for the operational workspace.",
+      "kept": "State transitions should feel like deliberate changes of illumination, not arbitrary page swaps.",
+      "risk": "Atmosphere could obscure the table and verification work."
+    },
+    {
+      "id": "challenger-pixorama",
+      "label": "Evidence Metropolis",
+      "verdict": "declined",
+      "lineage": "a zoomable isometric pixel city",
+      "thesis": "Every record is a discoverable address inside a computational health system.",
+      "palette": ["#F7F7F4", "#E83F4B", "#20A4B8", "#F1C84B"],
+      "materials": ["hard pixel grid", "isometric blocks", "integer zoom"],
+      "viewport": "A cohort becomes a zoomable evidence city with variant-level discoveries.",
+      "case": "Excellent discoverability but incompatible with the laboratory's professional evidence-first posture.",
+      "kept": "Deep investigation should reward zooming from cohort to one Variant Record without losing orientation.",
+      "risk": "Playfulness would overwhelm trust and data legibility."
+    },
+    {
+      "id": "challenger-cassette",
+      "label": "Inference Deck",
+      "verdict": "declined",
+      "lineage": "a cassette-futurist instrument fascia",
+      "thesis": "Every operation is a labeled physical control with visible running state.",
+      "palette": ["#EEE9DE", "#2B2E2D", "#B66A22", "#C4C7C1"],
+      "materials": ["brushed aluminum", "engraved labels", "amber state lamps"],
+      "viewport": "One desktop fascia holds Source Review, prediction controls, and the active run.",
+      "case": "Clear operation, but the historical hardware metaphor competes with current research evidence.",
+      "kept": "Important state changes gain immediate, tactile feedback.",
+      "risk": "Skeuomorphism could turn professional restraint into novelty."
+    },
+    {
+      "id": "challenger-cathode",
+      "label": "Struck Evidence",
+      "verdict": "declined",
+      "lineage": "cathode numeral stacks behind a fine anode gauze",
+      "thesis": "Every possible state remains visible while the verified one strikes forward.",
+      "palette": ["#F6F4ED", "#15202A", "#D86A22", "#A58D70"],
+      "materials": ["fine bronze gauze", "ghosted numerals", "hard active strike"],
+      "viewport": "Predictions and source states overlap as quiet alternatives with the verified state sharply foregrounded.",
+      "case": "Strong state model, but the visual language is too nocturnal and esoteric for the lab's broad identity.",
+      "kept": "The chosen state stays unmistakable without hiding the alternatives that produced it.",
+      "risk": "Ghost layers would reduce readability in dense tables."
+    }
+  ],
+  "reroll": {"registers": ["safer", "bolder"]},
+  "buildPath": {"value": "comp", "toggle": true},
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "A conventional clean medical-AI dashboard executed with care.",
+    "palette": ["#FFFFFF", "#172033", "#2563EB", "#E8EEF8"],
+    "materials": ["white cards", "blue status chips", "soft gray navigation"],
+    "viewport": "A left sidebar, upload card, KPI row, chart grid, and results table.",
+    "risk": "Easy to understand but indistinguishable from countless healthcare dashboards.",
+    "comp": ".impeccable/mocks/decision/canon-dashboard.png"
+  },
+  "steer": true
+}

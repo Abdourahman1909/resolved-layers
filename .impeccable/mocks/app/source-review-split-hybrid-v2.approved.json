@@ -1,0 +1,17 @@
+{
+  "approved": true,
+  "approved_on": "2026-08-28",
+  "surface": "Source Review after a CSV is open",
+  "approved_comp": "source-review-split-hybrid-v2.png",
+  "identity": "Resolved Layers",
+  "locked_elements": [
+    "wide raw-source table beside a persistent evidence pane",
+    "light application bar with full-color Computational Health Lab identity",
+    "one compact Run Archive command",
+    "no date-filter sidebar",
+    "model compatibility inside Inference Contract Fit",
+    "explicit source-review confirmation checkbox",
+    "full visible Source Identity, Inference Contract Fit, Transformation Audit, and Confirm & Run sections"
+  ],
+  "implementation_note": "Generated text and sample values are illustrative. Production UI must correct any mockup text defects while preserving the approved composition and hierarchy."
+}

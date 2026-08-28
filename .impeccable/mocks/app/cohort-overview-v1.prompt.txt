@@ -1,0 +1,70 @@
+Use case: ui-mockup
+Asset type: high-fidelity desktop application screen concept, 1536×1024 landscape
+Primary request: Create the first post-prediction cohort Investigation Overview for Variant Inference. Preserve the approved Computational Health Lab shell and the calm visual character of the earlier Results exploration, but replace its table-first content with a cohort-first investigation workspace. This is a serious scientific desktop instrument, not a dashboard.
+
+Input images:
+- Image 1 is the approved Source Review shell and spatial authority. Preserve its light application bar, full-color Resolved Layers + Computational Health Lab lockup, Variant Inference descriptor, fine divider lines, white canvas, typography, and restrained professional density.
+- Image 2 is an earlier Results exploration whose clean page rhythm and split-workspace character the user liked. Do not copy its invalid VUS or three-class semantics, large table-first hierarchy, or generic clinical details.
+- Image 3 is the approved identity reference. Reproduce the logo geometry and blue/black/gray relationship faithfully without reinterpretation.
+
+Screen state:
+- Prediction has completed for `competition_final.csv`.
+- Strictly binary model: Pathogenic or Benign only. Never show VUS, Uncertain, Likely Pathogenic, or Likely Benign.
+- Unlabeled prediction run: never claim observed accuracy, F1, calibration, false positives, or false negatives.
+
+Top application bar:
+- Full-color Computational Health Lab lockup at far left, then thin divider and “Variant Inference”.
+- Compact “Run Archive” and restrained “Export” commands near the right.
+- Standard desktop window controls.
+
+Main header and run orientation:
+- Heading “Prediction Results” with small green check and “Verified run”.
+- Calm inline two-level summary, no cards and no oversized numbers:
+  - “Run complete · 4,570 variants”
+  - “Pathogenic 704 · Benign 3,866 · Model disagreements 126 · Warnings 0”
+  - quiet metadata: “competition_final.csv · CHL Ensemble 2026.1 · Release threshold 0.61”
+- Compact workspace tabs: “Overview” active, “Records”, “Model agreement”, “Audit log”.
+
+Main investigation composition below tabs:
+- Use one cohesive split workspace: a wide Ensemble Score Distribution on the left (about 72% width), and a narrow organized Investigation Sets pane on the right (about 28% width). This is not a grid of cards.
+- Left section title “ENSEMBLE SCORE DISTRIBUTION” with helper text “Select a score range to narrow the result set.”
+- Render one refined histogram or density distribution across 0.00–1.00. Visually distinguish Benign side from Pathogenic side with restrained neutral/blue tones, not alarming red/green fill.
+- Mark the Release Threshold with a precise vertical blue line labeled “0.61 Release threshold”.
+- Show a selected translucent range around the threshold, approximately 0.55–0.67, with clear draggable selection handles and a small label “184 variants selected”.
+- Below the chart, show a compact selection bar: `Score 0.55–0.67`, `184 variants`, `Clear selection`, and one prominent but restrained blue action `Inspect 184 records`.
+- The explicit Inspect action is required. Selecting a range must not imply automatic navigation.
+
+Right pane exact content:
+- Section heading “INVESTIGATION SETS” with one sentence: “Focused starting points for this run.”
+- A clean vertical list with fine dividers, small icons or status marks, names, counts, and one-line explanations. Do not use large cards.
+- Items:
+  - “Near release threshold” — “184” — “Scores closest to 0.61” (selected state)
+  - “Model disagreements” — “126” — “CatBoost and LightGBM differ”
+  - “Warnings” — “0” — “No run warnings”
+  - “Predicted Pathogenic” — “704” — “Above release threshold”
+  - “Predicted Benign” — “3,866” — “Below release threshold”
+- The selected Near release threshold item should visibly correspond to the selected chart range.
+- At the bottom of the pane, include a quiet note: “Selections are exploratory views. Verified predictions remain unchanged.”
+
+Interaction meaning visible in the static comp:
+- Selection is reversible and does not navigate by itself.
+- `Inspect 184 records` will open the separate Records tab with visible removable filters.
+- The complete table and Variant Inspector are absent from this Overview; they belong to Records.
+- Component Agreement Plot is absent here; it belongs to the Model agreement tab.
+
+Visual direction:
+- Calm, precise, editorial scientific interface with generous alignment and finely controlled density.
+- Keep the approved light palette, blue accent, black/gray text, thin rules, squared or very subtly softened controls, and sparse semantic green only for Verified run / no warnings.
+- Make the distribution the visual centerpiece without looking decorative.
+- Everything must fit comfortably in a 1536×1024 desktop viewport.
+
+Avoid:
+- no table on Overview
+- no Variant Inspector on Overview
+- no VUS or third class
+- no KPI-card grid, dashboard tiles, oversized numbers, pie charts, gauge charts, or multiple simultaneous charts
+- no editable threshold
+- no automatic navigation from chart selection
+- no medical clichés, DNA, heartbeat, cross, brain, shield, or new logo treatment
+- no gradients, glassmorphism, dark mode, generic medical teal, heavy shadows, excessive rounded containers, or colored-pill overload
+- no performance claims from unlabeled data

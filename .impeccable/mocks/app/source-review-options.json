@@ -1,0 +1,44 @@
+{
+  "title": "Choose the Source Review workspace structure",
+  "question": "Which composition should govern the first real application screen after a CSV is opened? The Resolved Layers identity is fixed in every option.",
+  "options": [
+    {
+      "id": "split-evidence-desk",
+      "label": "Split Evidence Desk",
+      "kicker": "THE ROLL",
+      "lineage": "a wide source table paired with a persistent evidence pane",
+      "thesis": "The exact CSV and the proof that it fits the model remain visible at the same time.",
+      "palette": ["#F8F7F2", "#171A1B", "#1249A0", "#7B858A"],
+      "materials": ["warm data paper", "fine graphite rules", "cobalt evidence states"],
+      "viewport": "Raw rows dominate the left while source identity, contract fit, audit, and confirmation stay fixed on the right.",
+      "risk": "The evidence pane can feel narrow on smaller laptop screens unless it collapses gracefully.",
+      "comp": ".impeccable/mocks/app/source-review-split-desk.png"
+    },
+    {
+      "id": "dataset-dossier",
+      "label": "Dataset Dossier",
+      "lineage": "a research dossier with source, columns, validation, and audit as one document",
+      "thesis": "The selected file reads as a complete evidence object rather than an uploaded attachment.",
+      "palette": ["#F8F7F2", "#171A1B", "#1249A0", "#7B858A"],
+      "materials": ["editorial header", "tabbed evidence sheets", "sticky verification strip"],
+      "viewport": "A narrow project rail frames a strong file header, restrained evidence tabs, and a full source table.",
+      "risk": "Tabs can hide relationships that the split view keeps simultaneously visible.",
+      "comp": ".impeccable/mocks/app/source-review-dossier.png"
+    },
+    {
+      "id": "evidence-ledger",
+      "label": "Evidence Ledger",
+      "lineage": "a full-width scientific data ledger with an attached audit drawer",
+      "thesis": "The uploaded rows remain the visual protagonist and every validation event is recorded beneath them.",
+      "palette": ["#F8F7F2", "#171A1B", "#1249A0", "#7B858A"],
+      "materials": ["dense ruled table", "linear audit log", "quiet frozen columns"],
+      "viewport": "The raw table fills the workspace while an open bottom drawer exposes identity, checks, and confirmation.",
+      "risk": "The bottom drawer can reduce the number of visible rows and feel more technical than approachable.",
+      "comp": ".impeccable/mocks/app/source-review-ledger.png"
+    }
+  ],
+  "reroll": {"registers": ["safer", "bolder"]},
+  "buildPath": {"value": "comp", "toggle": true},
+  "canon": false,
+  "steer": true
+}

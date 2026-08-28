@@ -1,0 +1,24 @@
+{
+  "status": "approved-direction",
+  "date": "2026-08-27",
+  "candidate": "resolved-layers",
+  "final_approval": true,
+  "geometry_approved": true,
+  "palette_approved": true,
+  "approved_reference": "resolved-layers.png",
+  "selection_basis": "The user explicitly locked the original Resolved Layers concept, including its shape, colors, wordmark relationship, and overall appearance.",
+  "rejections": {
+    "chl-structure": "Reads like a clothing-brand logo.",
+    "evidence-gate": "Not preferred against Resolved Layers despite the initial recommendation."
+  },
+  "refinement_round": {
+    "status": "closed-unselected",
+    "options": [
+      "calibrated-original",
+      "essential-layers",
+      "evidence-cell"
+    ],
+    "question_key": "d2599afd"
+  },
+  "note": "The original full-color proof sheet is the approved identity reference. Vector production must reproduce it faithfully; the three refinements remain unselected exploration artifacts."
+}
