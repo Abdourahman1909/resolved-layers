@@ -1,11 +1,15 @@
 # Resolved Layers
 
-**Resolved Layers** is Computational Health Lab's evidence-first desktop product for traceable model inference. Its current `Variant Inference` workflow focuses on missense-variant prediction. The present vertical slice implements the approved Source Review workflow in PySide6 and Qt Quick; deterministic Production Model execution is deliberately the next integration milestone.
+**Resolved Layers** is Computational Health Lab's evidence-first desktop product for traceable model inference. Its current `Variant Inference` workflow focuses on missense-variant prediction. The present vertical slices implement the approved Source Review and pre-prediction Dataset Profile workflows in PySide6 and Qt Quick; deterministic Production Model execution is deliberately the next integration milestone.
 
 ## What works now
 
 - Compact local CSV selection and a faithful, read-only Source Dataset preview.
 - Virtualized QML `TableView` delegates backed by a disk-based row store and bounded 1,024-row Python cache, tested with 10,000 rows.
+- A Dataset Profile available immediately after opening a CSV, with dimensions, source missingness, selectable categorical grouping, and exact raw-record drill-down before prediction.
+- Explicit Ground-Truth Authorization for descriptive class composition: the operator selects a label column and maps distinct source values to Pathogenic and Benign. Missing and unrecognized values remain visible and no label-like column is interpreted automatically.
+- One restrained Pathogenic/Benign composition bar, exact class coverage, compact group counts/percentages, and visible removable class/group filters that preserve immutable Source Row identity.
+- SQLite-backed aggregation and filtering for the Dataset Profile, including a synthetic 10,000-row verification that does not hydrate the bounded row-page cache.
 - Source Identity evidence: filename, dimensions, SHA-256, delimiter, encoding, and last-modified time.
 - Integrity-checked JSON Model Package manifest loading. Loose pickle files are never accepted by the application boundary.
 - Inference Contract Fit with distinct Required, Omissible, and surplus-column policy; blockers and warnings remain separate.
@@ -13,7 +17,7 @@
 - Mandatory explicit operator confirmation. Changing the source resets confirmation; blocking findings keep the run action disabled.
 - The approved Split Evidence Desk hybrid v2 shell and the full-color Resolved Layers identity, currently shown from the approved raster reference without vector reinterpretation.
 
-The run button records the completed Source Review gate but does not execute model inference yet. Run Archive persistence, evaluation, Competition Export Profiles, and read-only AI integration are represented by separate application ports and are not implemented as UI logic.
+The run button records the completed Source Review gate but does not execute model inference yet. Dataset Profile is descriptive and never calculates F1 or other performance metrics. Run Archive persistence, Evaluation, Competition Export Profiles, and read-only AI integration are represented by separate application ports and are not implemented as UI logic.
 
 ## Setup
 
