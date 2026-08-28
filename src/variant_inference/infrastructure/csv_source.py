@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterable
 
-from variant_inference.domain.models import SourceIdentity
+from variant_inference.domain.models import SourceIdentity, SourceValueFilter, SourceValueFilterMode
 
 
 class CsvSourceError(ValueError):
@@ -32,12 +32,16 @@ class CsvSource:
         column_types: tuple[str, ...],
         database_path: Path,
         connection: sqlite3.Connection,
+        missing_cell_count: int,
+        rows_with_missing: int,
     ) -> None:
         self.identity = identity
         self.columns = columns
         self.column_types = column_types
         self._database_path = database_path
         self._connection = connection
+        self.missing_cell_count = missing_cell_count
+        self.rows_with_missing = rows_with_missing
         self._pages: OrderedDict[int, tuple[tuple[str, ...], ...]] = OrderedDict()
         self._closed = False
 
@@ -57,6 +61,77 @@ class CsvSource:
         self._pages[page_number] = page
         return page[source_row_index % self.PAGE_SIZE]
 
+    def value_counts(self, column_index: int) -> tuple[tuple[str, int], ...]:
+        self._validate_column_index(column_index)
+        path = f"$[{column_index}]"
+        expression = (
+            "CASE WHEN TRIM(COALESCE(CAST(json_extract(payload, ?) AS TEXT), '')) = '' "
+            "THEN '' ELSE CAST(json_extract(payload, ?) AS TEXT) END"
+        )
+        records = self._connection.execute(
+            f"SELECT {expression} AS source_value, COUNT(*) "
+            "FROM source_rows GROUP BY source_value "
+            "ORDER BY COUNT(*) DESC, source_value COLLATE NOCASE",
+            (path, path),
+        ).fetchall()
+        return tuple((str(value or ""), int(count)) for value, count in records)
+
+    def paired_value_counts(
+        self, first_column_index: int, second_column_index: int
+    ) -> tuple[tuple[str, str, int], ...]:
+        self._validate_column_index(first_column_index)
+        self._validate_column_index(second_column_index)
+        first_path = f"$[{first_column_index}]"
+        second_path = f"$[{second_column_index}]"
+        expression = (
+            "CASE WHEN TRIM(COALESCE(CAST(json_extract(payload, ?) AS TEXT), '')) = '' "
+            "THEN '' ELSE CAST(json_extract(payload, ?) AS TEXT) END"
+        )
+        records = self._connection.execute(
+            f"SELECT {expression} AS first_value, {expression} AS second_value, COUNT(*) "
+            "FROM source_rows GROUP BY first_value, second_value "
+            "ORDER BY first_value COLLATE NOCASE, second_value COLLATE NOCASE",
+            (first_path, first_path, second_path, second_path),
+        ).fetchall()
+        return tuple(
+            (str(first or ""), str(second or ""), int(count))
+            for first, second, count in records
+        )
+
+    def matching_source_rows(self, filters: Iterable[SourceValueFilter]) -> tuple[int, ...]:
+        clauses: list[str] = []
+        parameters: list[object] = []
+        for item in filters:
+            self._validate_column_index(item.column_index)
+            path = f"$[{item.column_index}]"
+            value_expression = "CAST(json_extract(payload, ?) AS TEXT)"
+            if item.mode is SourceValueFilterMode.EXACT:
+                clauses.append(f"{value_expression} = ?")
+                parameters.extend((path, item.value))
+            elif item.mode is SourceValueFilterMode.MISSING:
+                clauses.append(
+                    "TRIM(COALESCE(CAST(json_extract(payload, ?) AS TEXT), '')) = ''"
+                )
+                parameters.append(path)
+            elif item.mode is SourceValueFilterMode.UNRECOGNIZED:
+                placeholders = ", ".join("?" for _ in item.recognized_values)
+                clause = (
+                    "TRIM(COALESCE(CAST(json_extract(payload, ?) AS TEXT), '')) != ''"
+                )
+                parameters.append(path)
+                if placeholders:
+                    clause += f" AND {value_expression} NOT IN ({placeholders})"
+                    parameters.append(path)
+                    parameters.extend(item.recognized_values)
+                clauses.append(f"({clause})")
+            else:  # pragma: no cover - exhaustive enum guard
+                raise ValueError(f"Unsupported Source Value filter: {item.mode}")
+        query = "SELECT source_row FROM source_rows"
+        if clauses:
+            query += " WHERE " + " AND ".join(f"({clause})" for clause in clauses)
+        query += " ORDER BY source_row"
+        return tuple(int(row[0]) for row in self._connection.execute(query, parameters))
+
     def _load_page(self, page_number: int) -> None:
         first_row = page_number * self.PAGE_SIZE + 1
         last_row = first_row + self.PAGE_SIZE
@@ -68,6 +143,12 @@ class CsvSource:
         self._pages[page_number] = page
         while len(self._pages) > self.MAX_CACHED_PAGES:
             self._pages.popitem(last=False)
+
+    def _validate_column_index(self, column_index: int) -> None:
+        if self._closed:
+            raise RuntimeError("Source Dataset is closed.")
+        if not 0 <= column_index < len(self.columns):
+            raise IndexError(column_index)
 
     def close(self) -> None:
         if self._closed:
@@ -109,7 +190,7 @@ class CsvSourceReader:
             connection.execute(
                 "CREATE TABLE source_rows (source_row INTEGER PRIMARY KEY, payload TEXT NOT NULL)"
             )
-            columns, row_count, samples = self._scan_into_store(
+            columns, row_count, samples, missing_cell_count, rows_with_missing = self._scan_into_store(
                 path, encoding, delimiter, connection
             )
             column_types = self._infer_types(samples, len(columns))
@@ -123,7 +204,15 @@ class CsvSourceReader:
                 encoding=encoding.upper().replace("-SIG", " with BOM"),
                 last_modified=datetime.fromtimestamp(stat.st_mtime).astimezone().isoformat(timespec="seconds"),
             )
-            return CsvSource(identity, columns, column_types, database_path, connection)
+            return CsvSource(
+                identity,
+                columns,
+                column_types,
+                database_path,
+                connection,
+                missing_cell_count,
+                rows_with_missing,
+            )
         except Exception:
             connection.close()
             database_path.unlink(missing_ok=True)
@@ -135,9 +224,11 @@ class CsvSourceReader:
         encoding: str,
         delimiter: str,
         connection: sqlite3.Connection,
-    ) -> tuple[tuple[str, ...], int, list[tuple[str, ...]]]:
+    ) -> tuple[tuple[str, ...], int, list[tuple[str, ...]], int, int]:
         samples: list[tuple[str, ...]] = []
         batch: list[tuple[int, str]] = []
+        missing_cell_count = 0
+        rows_with_missing = 0
         with path.open("r", encoding=encoding, errors="strict", newline="") as handle:
             reader = csv.reader(handle, delimiter=delimiter)
             try:
@@ -157,6 +248,9 @@ class CsvSourceReader:
                         f"Source Row {row_count} contains {len(raw_row)} values for {len(columns)} columns."
                     )
                 row = tuple(raw_row) + ("",) * (len(columns) - len(raw_row))
+                row_missing_count = sum(1 for value in row if not value.strip())
+                missing_cell_count += row_missing_count
+                rows_with_missing += int(row_missing_count > 0)
                 if len(samples) < self.TYPE_SAMPLE_ROWS:
                     samples.append(row)
                 batch.append((row_count, json.dumps(row, ensure_ascii=False, separators=(",", ":"))))
@@ -166,7 +260,7 @@ class CsvSourceReader:
             if batch:
                 connection.executemany("INSERT INTO source_rows VALUES (?, ?)", batch)
             connection.commit()
-        return columns, row_count, samples
+        return columns, row_count, samples, missing_cell_count, rows_with_missing
 
     def _detect_encoding(self, path: Path) -> str:
         with path.open("rb") as handle:
@@ -234,4 +328,3 @@ class CsvSourceReader:
     def _delimiter_label(self, delimiter: str) -> str:
         names = {",": "Comma (,)", ";": "Semicolon (;)", "\t": "Tab", "|": "Pipe (|)"}
         return names.get(delimiter, repr(delimiter))
-
