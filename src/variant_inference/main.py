@@ -14,6 +14,7 @@ from variant_inference.infrastructure.model_package import (
     ModelPackageValidationError,
 )
 from variant_inference.qt.controller import SourceReviewController
+from variant_inference.qt.profile_model import GroupBreakdownModel
 from variant_inference.qt.table_model import CsvTableModel
 
 
@@ -28,6 +29,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--smoke", action="store_true", help="Load the QML shell, then exit")
     parser.add_argument("--screenshot", type=Path, help="Save one startup screenshot, then exit")
+    parser.add_argument(
+        "--surface",
+        choices=("review", "profile"),
+        default="review",
+        help="Initial surface used by automated visual verification",
+    )
     return parser
 
 
@@ -54,8 +61,10 @@ def main(argv: list[str] | None = None) -> int:
         identity_reference = None
 
     table_model = CsvTableModel()
+    group_model = GroupBreakdownModel()
     controller = SourceReviewController(
         table_model,
+        group_model,
         package,
         package_error=package_error,
         identity_reference=identity_reference,
@@ -63,6 +72,7 @@ def main(argv: list[str] | None = None) -> int:
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("sourceController", controller)
     engine.rootContext().setContextProperty("sourceTableModel", table_model)
+    engine.rootContext().setContextProperty("groupBreakdownModel", group_model)
     qml_file = Path(__file__).with_name("qml") / "Main.qml"
     engine.load(QUrl.fromLocalFile(str(qml_file)))
     if not engine.rootObjects():
@@ -77,6 +87,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.source_path:
         QTimer.singleShot(0, lambda: controller.openSource(str(args.source_path.resolve())))
+        if args.surface == "profile":
+            QTimer.singleShot(100, lambda: controller.setActiveSurface("profile"))
     if args.screenshot:
         destination = args.screenshot.resolve()
 

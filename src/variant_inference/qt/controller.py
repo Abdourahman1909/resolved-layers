@@ -4,10 +4,12 @@ from pathlib import Path
 
 from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
 
+from variant_inference.application.dataset_profile import DatasetProfileSession
 from variant_inference.application.source_review import SourceReviewSession
 from variant_inference.domain.models import ModelPackageIdentity
 from variant_inference.infrastructure.csv_source import CsvSourceError, CsvSourceReader
 from variant_inference.qt.table_model import CsvTableModel
+from variant_inference.qt.profile_model import GroupBreakdownModel
 
 
 class SourceReviewController(QObject):
@@ -16,19 +18,24 @@ class SourceReviewController(QObject):
     def __init__(
         self,
         table_model: CsvTableModel,
+        group_model: GroupBreakdownModel,
         package: ModelPackageIdentity | None,
         package_error: str = "",
         identity_reference: Path | None = None,
     ) -> None:
         super().__init__()
         self._table_model = table_model
+        self._group_model = group_model
         self._reader = CsvSourceReader()
         self._session = SourceReviewSession(package=package)
+        self._profile = DatasetProfileSession()
         self._package = package
         self._package_error = package_error
         self._status_message = "Open a Source Dataset to begin review."
         self._status_kind = "neutral"
         self._identity_reference = identity_reference
+        self._active_surface = "review"
+        self._profile_message = "Select a label column and map both classes explicitly."
 
     def _emit(self) -> None:
         self.stateChanged.emit()
@@ -36,6 +43,10 @@ class SourceReviewController(QObject):
     @Property(bool, notify=stateChanged)
     def hasSource(self) -> bool:  # noqa: N802
         return self._session.source is not None
+
+    @Property(str, notify=stateChanged)
+    def activeSurface(self) -> str:  # noqa: N802
+        return self._active_surface
 
     @Property(str, notify=stateChanged)
     def fileName(self) -> str:  # noqa: N802
@@ -55,6 +66,127 @@ class SourceReviewController(QObject):
     def columnCount(self) -> int:  # noqa: N802
         source = self._session.source
         return source.identity.column_count if source else 0
+
+    @Property(int, notify=stateChanged)
+    def missingCellCount(self) -> int:  # noqa: N802
+        source = self._session.source
+        return getattr(source, "missing_cell_count", 0) if source else 0
+
+    @Property(int, notify=stateChanged)
+    def rowsWithMissing(self) -> int:  # noqa: N802
+        source = self._session.source
+        return getattr(source, "rows_with_missing", 0) if source else 0
+
+    @Property("QStringList", notify=stateChanged)
+    def groupColumns(self) -> list[str]:  # noqa: N802
+        return list(self._profile.group_columns)
+
+    @Property(str, notify=stateChanged)
+    def groupColumn(self) -> str:  # noqa: N802
+        return self._profile.group_column
+
+    @Property(int, notify=stateChanged)
+    def groupCount(self) -> int:  # noqa: N802
+        return len(self._profile.groups)
+
+    @Property("QStringList", notify=stateChanged)
+    def labelColumns(self) -> list[str]:  # noqa: N802
+        return list(self._profile.label_columns)
+
+    @Property(str, notify=stateChanged)
+    def selectedLabelColumn(self) -> str:  # noqa: N802
+        return self._profile.label_column
+
+    @Property("QStringList", notify=stateChanged)
+    def labelValues(self) -> list[str]:  # noqa: N802
+        return list(self._profile.label_values)
+
+    @Property(bool, notify=stateChanged)
+    def labelsAuthorized(self) -> bool:  # noqa: N802
+        return self._profile.authorization is not None
+
+    @Property(str, notify=stateChanged)
+    def authorizedLabelColumn(self) -> str:  # noqa: N802
+        authorization = self._profile.authorization
+        return authorization.column_name if authorization else ""
+
+    @Property(str, notify=stateChanged)
+    def pathogenicMapping(self) -> str:  # noqa: N802
+        authorization = self._profile.authorization
+        return authorization.pathogenic_value if authorization else ""
+
+    @Property(str, notify=stateChanged)
+    def benignMapping(self) -> str:  # noqa: N802
+        authorization = self._profile.authorization
+        return authorization.benign_value if authorization else ""
+
+    @Property(int, notify=stateChanged)
+    def pathogenicCount(self) -> int:  # noqa: N802
+        coverage = self._profile.label_coverage
+        return coverage.pathogenic if coverage else 0
+
+    @Property(int, notify=stateChanged)
+    def benignCount(self) -> int:  # noqa: N802
+        coverage = self._profile.label_coverage
+        return coverage.benign if coverage else 0
+
+    @Property(int, notify=stateChanged)
+    def missingLabelCount(self) -> int:  # noqa: N802
+        coverage = self._profile.label_coverage
+        return coverage.missing if coverage else 0
+
+    @Property(int, notify=stateChanged)
+    def unrecognizedLabelCount(self) -> int:  # noqa: N802
+        coverage = self._profile.label_coverage
+        return coverage.unrecognized if coverage else 0
+
+    @Property(int, notify=stateChanged)
+    def recognizedLabelCount(self) -> int:  # noqa: N802
+        coverage = self._profile.label_coverage
+        return coverage.recognized if coverage else 0
+
+    @Property(float, notify=stateChanged)
+    def pathogenicShare(self) -> float:  # noqa: N802
+        coverage = self._profile.label_coverage
+        return (coverage.pathogenic / coverage.recognized) if coverage and coverage.recognized else 0.0
+
+    @Property(str, notify=stateChanged)
+    def labelCoverageText(self) -> str:  # noqa: N802
+        coverage = self._profile.label_coverage
+        if coverage is None:
+            return "Class composition unavailable"
+        return f"{coverage.recognized:,} of {coverage.total:,} labels recognized"
+
+    @Property(str, notify=stateChanged)
+    def profileMessage(self) -> str:  # noqa: N802
+        return self._profile_message
+
+    @Property(str, notify=stateChanged)
+    def classFilter(self) -> str:  # noqa: N802
+        return self._profile.class_filter
+
+    @Property(bool, notify=stateChanged)
+    def hasGroupFilter(self) -> bool:  # noqa: N802
+        return self._profile.group_filter is not None
+
+    @Property(str, notify=stateChanged)
+    def groupFilterValue(self) -> str:  # noqa: N802
+        return self._profile.group_filter or "" if self._profile.group_filter is not None else ""
+
+    @Property(str, notify=stateChanged)
+    def groupFilterDisplay(self) -> str:  # noqa: N802
+        if self._profile.group_filter is None:
+            return ""
+        value = self._profile.group_filter or "Missing"
+        return f"{self._profile.group_column}: {value}"
+
+    @Property(int, notify=stateChanged)
+    def activeFilterCount(self) -> int:  # noqa: N802
+        return len(self._profile.active_filters)
+
+    @Property(int, notify=stateChanged)
+    def filteredRowCount(self) -> int:  # noqa: N802
+        return self._table_model.filtered_row_count
 
     @Property(str, notify=stateChanged)
     def checksum(self) -> str:
@@ -203,11 +335,97 @@ class SourceReviewController(QObject):
             source = self._reader.open(path)
             self._session.load_source(source, self._package)
             self._table_model.set_source(source)
+            context_columns = list(source.columns)
+            if self._session.fit is not None:
+                context_columns = list(self._session.fit.surplus_columns)
+                if "_panel" in source.columns and "_panel" not in context_columns:
+                    context_columns.insert(0, "_panel")
+            self._profile.load_source(source, context_columns)
+            self._refresh_profile()
             self._status_message = "Source ready for review."
             self._status_kind = "success" if self._session.can_confirm else "warning"
         except (CsvSourceError, OSError, ValueError) as error:
             self._status_message = str(error)
             self._status_kind = "error"
+        self._emit()
+
+    @Slot(str)
+    def setActiveSurface(self, surface: str) -> None:  # noqa: N802
+        if surface not in {"review", "profile"}:
+            return
+        if surface == "profile" and not self.hasSource:
+            return
+        self._active_surface = surface
+        self._emit()
+
+    @Slot(str)
+    def selectGroupColumn(self, column_name: str) -> None:  # noqa: N802
+        try:
+            self._profile.select_group_column(column_name)
+            self._refresh_profile()
+        except ValueError as error:
+            self._profile_message = str(error)
+        self._emit()
+
+    @Slot(str)
+    def selectLabelColumn(self, column_name: str) -> None:  # noqa: N802
+        try:
+            self._profile.select_label_column(column_name)
+            self._profile_message = "Map one source value to each class, then authorize the mapping."
+            self._refresh_profile()
+        except ValueError as error:
+            self._profile_message = str(error)
+        self._emit()
+
+    @Slot(str, str)
+    def authorizeLabels(self, pathogenic_value: str, benign_value: str) -> None:  # noqa: N802
+        try:
+            self._profile.authorize_labels(pathogenic_value, benign_value)
+            coverage = self._profile.label_coverage
+            assert coverage is not None
+            self._profile_message = (
+                f"Authorized {coverage.recognized:,} labels; {coverage.missing:,} missing and "
+                f"{coverage.unrecognized:,} unrecognized remain outside the mapping."
+            )
+            self._refresh_profile()
+        except ValueError as error:
+            self._profile_message = str(error)
+        self._emit()
+
+    @Slot()
+    def clearLabelAuthorization(self) -> None:  # noqa: N802
+        self._profile.clear_authorization()
+        self._profile_message = "Label authorization cleared. Class composition is unavailable."
+        self._refresh_profile()
+        self._emit()
+
+    @Slot(str)
+    def setClassFilter(self, class_name: str) -> None:  # noqa: N802
+        try:
+            self._profile.set_class_filter("" if self._profile.class_filter == class_name else class_name)
+            self._refresh_profile()
+        except ValueError as error:
+            self._profile_message = str(error)
+        self._emit()
+
+    @Slot(str)
+    def setGroupFilter(self, value: str) -> None:  # noqa: N802
+        next_value = None if self._profile.group_filter == value else value
+        self._profile.set_group_filter(next_value)
+        self._refresh_profile()
+        self._emit()
+
+    @Slot()
+    def clearGroupFilter(self) -> None:  # noqa: N802
+        self._profile.set_group_filter(None)
+        self._refresh_profile()
+        self._emit()
+
+    @Slot()
+    def clearProfileFilters(self) -> None:  # noqa: N802
+        self._profile.set_class_filter("")
+        self._profile.set_group_filter(None)
+        self._refresh_profile()
         self._emit()
 
     @Slot(bool)
@@ -237,6 +455,10 @@ class SourceReviewController(QObject):
     def close(self) -> None:
         self._session.close()
 
+    def _refresh_profile(self) -> None:
+        self._group_model.set_groups(self._profile.groups, self._profile.authorization is not None)
+        self._table_model.set_row_filter(self._profile.filtered_source_rows)
+
     def _identity(self, name: str) -> str:
         source = self._session.source
         return str(getattr(source.identity, name)) if source else "—"
@@ -244,4 +466,3 @@ class SourceReviewController(QObject):
     def _audit(self, topic: str, default: str) -> str:
         audit = self._session.audit
         return audit.summary_for(topic, default) if audit else default
-
