@@ -21,6 +21,7 @@
 - Competition: TEKNOFEST 2026 AI in Health, University and Above level.
 - Team: Computational-Health-Lab; Team ID 763095; official finalist.
 - Production Model: the current CatBoost and LightGBM ensemble reported for the final competition model.
+- The authoritative local candidate artifacts remain only in the parent training repository at `../models/The Models/Test model/CatBoost+LightGBM/`. The parent's top-level `models/The Models/` bundle contains three boosters and is not the PDR-selected candidate. No real weights or organizer-derived mappings are committed to this app repository.
 - Reported ensemble weights are approximately CatBoost 0.5007 and LightGBM 0.4993.
 - Reported decision threshold is 0.61.
 - Reported genuine held-out F1 is 0.9067 on 736 rows.
@@ -82,7 +83,9 @@
 - Threshold Study is now confirmed to be enabled only when verified ground-truth labels are present. Unlabeled competition runs must use a Release Threshold fixed before the final data arrive.
 - `Release Threshold` does not mean 0.50 or 0.61 specifically. The current 0.61 value remains a provisional candidate because it has more direct evidence for the current saved model than the numerical midpoint 0.50, but the final value must come from stronger validation and may be neither.
 - Replace the loose phrase "Benign-heavy threshold study" with **Target-Prevalence Study**. This uses labeled out-of-fold predictions and reweights/resamples them to the organizer's approximate final class ratio before the final. It cannot discover the true best threshold for hidden-label data and is informative only if class-conditional model behavior transfers.
-- Confirmed strategy, not yet executed: perform the Target-Prevalence Study in the parent training repository before freezing the competition Release Threshold. Use it to confirm or replace provisional 0.61, document assumptions, then bundle the selected value in the Inference Contract.
+- Confirmed strategy: the first parent-repository Target-Prevalence Study has now been executed; repeated grouped-CV sensitivity and a documented Release Threshold decision remain before bundling the selected value in the Inference Contract.
+- Parent-repository Target-Prevalence Study completed on August 29, 2026. It exactly reproduces the PDR candidate pipeline and benchmark, then uses development-only grouped OOF predictions under the stated 720 Pathogenic / 3,850 Benign scenario. The single-run optimum is 0.852 and materially outperforms 0.61 in both development and held-out prevalence simulations, but bootstrap-selected thresholds span approximately 0.848–0.921. No replacement Release Threshold is frozen; the saved candidate still contains provisional 0.61.
+- The app's eventual Inference Contract must reproduce the PDR release's component-specific categorical behavior. CatBoost receives normalized categorical strings, while LightGBM's persisted observed-category mappings leave missing/unseen categorical values as missing. Adding a new `Unknown` LightGBM category would change some probabilities and is a new release decision, not harmless preprocessing.
 - Trust, evidence, and reproducibility take priority over decorative analytics.
 
 ## 4. Current workflow hypothesis
@@ -138,7 +141,7 @@ The first post-prediction Results workspace comp at `.impeccable/mocks/app/resul
 
 The revised cohort-first comp is `.impeccable/mocks/app/cohort-overview-v1.png`. It preserves the approved shell, opens with a compact Verified Run summary, makes the Ensemble Score Distribution the only main visualization, places one compact Investigation Sets list beside it, and uses an explicit `Inspect 184 records` transition into the separate filtered `Records` tab. No table or Variant Inspector appears on Overview. Its overview composition remains the leading reference, but its navigation is now incomplete: the confirmed architecture separates label-dependent Evaluation from unlabeled Competition Submission. The comp is not approved for implementation.
 
-Next practical focus: define the distributable immutable Model Package manifest for the real CatBoost–LightGBM release without committing restricted artifacts, implement the deterministic inference adapter against that validated package, produce ordered results with Source Row identity, and persist the first immutable Verified Run manifest. Before building any post-prediction navigation, resolve and approve the focused navigation that separates Overview, Records, Model agreement, Evaluation, and Competition Submission while keeping `Organizer format pending` until official instructions arrive.
+Next practical focus: complete repeated grouped-CV threshold sensitivity in the parent repository and record the Release Threshold decision. Only then define the distributable immutable Model Package manifest for the exact CatBoost–LightGBM release without committing restricted artifacts, implement the deterministic inference adapter against that validated package, produce ordered results with Source Row identity, and persist the first immutable Verified Run manifest. Before building any post-prediction navigation, resolve and approve the focused navigation that separates Overview, Records, Model agreement, Evaluation, and Competition Submission while keeping `Organizer format pending` until official instructions arrive.
 
 ## 7. Authoritative files
 
