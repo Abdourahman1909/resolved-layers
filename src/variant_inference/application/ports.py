@@ -4,10 +4,13 @@ from pathlib import Path
 from typing import Any, Mapping, Protocol, Sequence
 
 from variant_inference.domain.models import (
+    ArchivedRun,
     ModelPackageIdentity,
     PredictionRecord,
     SourceIdentity,
+    SourceReferenceStatus,
     SourceValueFilter,
+    VerifiedRun,
 )
 
 
@@ -42,7 +45,8 @@ class DeterministicInference(Protocol):
 
 
 class RunArchive(Protocol):
-    def save_manifest(self, run_manifest: Mapping[str, Any]) -> str: ...
+    def save(self, run: VerifiedRun) -> ArchivedRun: ...
+    def source_status(self, run_id: str) -> SourceReferenceStatus: ...
 
 
 class EvaluationService(Protocol):

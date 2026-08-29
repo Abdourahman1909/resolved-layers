@@ -1,6 +1,6 @@
 # Resolved Layers
 
-**Resolved Layers** is Computational Health Lab's evidence-first desktop product for traceable model inference. Its current `Variant Inference` workflow focuses on missense-variant prediction. The present vertical slices implement the approved Source Review and pre-prediction Dataset Profile workflows in PySide6 and Qt Quick. The deterministic CatBoost–LightGBM inference core and its trusted Model Package boundary are implemented; Verified Run orchestration and results persistence are the next integration milestone.
+**Resolved Layers** is Computational Health Lab's evidence-first desktop product for traceable model inference. Its current `Variant Inference` workflow focuses on missense-variant prediction. The present vertical slices implement the approved Source Review and pre-prediction Dataset Profile workflows in PySide6 and Qt Quick, trusted deterministic CatBoost–LightGBM inference, and immutable local Verified Run persistence.
 
 ## What works now
 
@@ -16,9 +16,10 @@
 - Transformation Audit summaries for type handling, missing values, fixed category mappings, column alignment, and row filtering.
 - Mandatory explicit operator confirmation. Changing the source resets confirmation; blocking findings keep the run action disabled.
 - Deterministic, label-excluding CatBoost–LightGBM inference through an explicitly trusted, integrity-checked Model Package. The external restricted PDR package reproduces all 736 saved ensemble and component probabilities after four-decimal rounding and the expected TN 109 / FP 80 / FN 27 / TP 520 confusion matrix at threshold 0.61.
+- An atomic local Run Archive that stores ordered prediction evidence plus package, contract, source, output-checksum, warning, audit, and timing evidence. It records the source path and checksum by default and never copies the Source Dataset without a future explicit opt-in flow.
 - The approved Split Evidence Desk hybrid v2 shell and the full-color Resolved Layers identity, currently shown from the approved raster reference without vector reinterpretation.
 
-The current run button records the completed Source Review gate but does not create or persist a Verified Run yet. Dataset Profile is descriptive and never calculates F1 or other performance metrics. Run Archive persistence, Evaluation, Competition Export Profiles, and read-only AI integration are represented by separate application ports and are not implemented as UI logic.
+With an explicitly trusted manifest checksum configured, the run button now creates and persists a Verified Run after Source Review confirmation. Dataset Profile remains descriptive and never calculates F1 or other performance metrics. Post-prediction results, Evaluation, Competition Export Profiles, and read-only AI integration remain separate later workspaces.
 
 ## Setup
 
@@ -49,7 +50,17 @@ Open a Source Dataset against a validated package manifest:
   --open /absolute/path/to/source.csv
 ```
 
-`CHL_MODEL_PACKAGE_MANIFEST` may provide the manifest path for a local development machine. Keep that path out of committed defaults. The application validates all declared artifact checksums before exposing contract policy.
+Creating a Verified Run additionally requires the expected manifest SHA-256 as an independent trust anchor. The Run Archive defaults to the platform's local application-data directory:
+
+```bash
+.venv/bin/variant-inference \
+  --model-package /absolute/path/to/package/manifest.json \
+  --trusted-manifest-sha256 EXPECTED_SHA256 \
+  --run-archive /absolute/path/to/local/run-archive \
+  --open /absolute/path/to/source.csv
+```
+
+`CHL_MODEL_PACKAGE_MANIFEST`, `CHL_TRUSTED_MODEL_PACKAGE_SHA256`, and `CHL_RUN_ARCHIVE` provide equivalent local configuration. Keep machine-specific paths and restricted package material out of committed defaults. The application validates all declared artifact checksums before exposing contract policy and requires the independent manifest checksum before model deserialization.
 
 A clearly synthetic fixture is included only for exercising Source Review; it contains no organizer rows, mappings, or trained weights:
 

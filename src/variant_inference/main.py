@@ -5,14 +5,17 @@ import os
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QTimer, QUrl
+from PySide6.QtCore import QStandardPaths, QTimer, QUrl
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 
+from variant_inference.application.verified_run import VerifiedRunService
 from variant_inference.infrastructure.model_package import (
     JsonModelPackageRepository,
     ModelPackageValidationError,
 )
+from variant_inference.infrastructure.production_inference import PickleEnsembleInference
+from variant_inference.infrastructure.run_archive import DirectoryRunArchive
 from variant_inference.qt.controller import SourceReviewController
 from variant_inference.qt.profile_model import GroupBreakdownModel
 from variant_inference.qt.table_model import CsvTableModel
@@ -26,6 +29,18 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="Path to a validated Model Package manifest (never a loose pickle)",
+    )
+    parser.add_argument(
+        "--trusted-manifest-sha256",
+        action="append",
+        default=[],
+        help="Trusted Model Package manifest SHA-256; may be supplied more than once",
+    )
+    parser.add_argument(
+        "--run-archive",
+        type=Path,
+        default=None,
+        help="Local directory for immutable Verified Runs",
     )
     parser.add_argument("--smoke", action="store_true", help="Load the QML shell, then exit")
     parser.add_argument("--screenshot", type=Path, help="Save one startup screenshot, then exit")
@@ -55,6 +70,35 @@ def main(argv: list[str] | None = None) -> int:
         except ModelPackageValidationError as error:
             package_error = str(error)
 
+    trusted_checksums = {
+        value.strip().lower()
+        for value in args.trusted_manifest_sha256
+        if value.strip()
+    }
+    trusted_checksums.update(
+        value.strip().lower()
+        for value in os.environ.get("CHL_TRUSTED_MODEL_PACKAGE_SHA256", "").split(",")
+        if value.strip()
+    )
+    run_archive_path = args.run_archive
+    if run_archive_path is None and os.environ.get("CHL_RUN_ARCHIVE"):
+        run_archive_path = Path(os.environ["CHL_RUN_ARCHIVE"])
+    if run_archive_path is None:
+        run_archive_path = Path(
+            QStandardPaths.writableLocation(QStandardPaths.AppLocalDataLocation)
+        ) / "runs"
+
+    verified_runs = None
+    run_unavailable_reason = ""
+    if package is not None:
+        if package.manifest_checksum.lower() not in trusted_checksums:
+            run_unavailable_reason = "Trust this Model Package checksum before prediction"
+        else:
+            verified_runs = VerifiedRunService(
+                PickleEnsembleInference(trusted_checksums),
+                DirectoryRunArchive(run_archive_path),
+            )
+
     project_root = Path(__file__).resolve().parents[2]
     identity_reference = project_root / ".impeccable" / "mocks" / "app" / "source-review-split-hybrid-v2.png"
     if not identity_reference.is_file():
@@ -68,6 +112,8 @@ def main(argv: list[str] | None = None) -> int:
         package,
         package_error=package_error,
         identity_reference=identity_reference,
+        verified_runs=verified_runs,
+        run_unavailable_reason=run_unavailable_reason,
     )
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("sourceController", controller)

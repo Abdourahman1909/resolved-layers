@@ -177,6 +177,61 @@ class PredictionRecord:
 
 
 @dataclass(frozen=True)
+class VerifiedRun:
+    run_id: str
+    created_at: str
+    completed_at: str
+    duration_ms: int
+    source: SourceIdentity
+    model_package_id: str
+    model_package_name: str
+    model_package_version: str
+    model_package_manifest_checksum: str
+    inference_contract_id: str
+    inference_contract_version: str
+    inference_contract_checksum: str
+    release_threshold: float
+    predictions: tuple[PredictionRecord, ...]
+    predictions_sha256: str
+    warnings: tuple["Finding", ...] = ()
+    transformation_audit: "TransformationAudit" = field(
+        default_factory=lambda: TransformationAudit()
+    )
+    source_snapshot_included: bool = False
+
+    def __post_init__(self) -> None:
+        expected_rows = tuple(range(1, self.source.row_count + 1))
+        actual_rows = tuple(record.source_row for record in self.predictions)
+        if actual_rows != expected_rows:
+            raise ValueError(
+                "Verified Run predictions must preserve every Source Row in order."
+            )
+        if not self.predictions_sha256:
+            raise ValueError("Verified Run requires a predictions checksum.")
+
+
+@dataclass(frozen=True)
+class ArchivedRun:
+    run_id: str
+    directory: Path
+    manifest_path: Path
+    predictions_path: Path
+
+
+class SourceReferenceState(str, Enum):
+    AVAILABLE = "available"
+    MISSING = "missing"
+    MODIFIED = "modified"
+
+
+@dataclass(frozen=True)
+class SourceReferenceStatus:
+    state: SourceReferenceState
+    expected_sha256: str
+    current_sha256: str = ""
+
+
+@dataclass(frozen=True)
 class Finding:
     code: str
     message: str
