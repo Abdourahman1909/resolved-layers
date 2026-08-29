@@ -160,7 +160,9 @@ The first immutable Verified Run milestone completed on August 29, 2026 on `code
 
 The milestone passes all 25 tests, Python compilation, and the offscreen QML smoke path. A proportional end-to-end check used the restricted external PDR package and the 736-row held-out source: the persisted run contained all 736 ordered predictions, 600 Pathogenic and 136 Benign, source SHA-256 `8c0cf0c1ddbeaed5ea7dbabc1131a89ae8f40672e982ffcc890107f90527239c`, prediction-evidence SHA-256 `98d9fe476e4252a95404b8bef120644c3b19fe0b9426a3285833d3ebdf374630`, and no Source Snapshot. The temporary verification archive was discarded after inspection; restricted artifacts remain outside the app repository.
 
-Next practical focus: independently accept and publish the `codex/verified-run` branch, then implement the first post-prediction read-only workspace over a completed Verified Run. Begin with the compact Overview/Records transition and Run Archive reopening; keep label-dependent Evaluation and unlabeled Competition Submission separate, and do not reopen optional threshold research as a blocker. Production Identity vectorization, hands-on accessibility, and installer builds remain later bounded work.
+The accepted `codex/verified-run` branch is published as stacked GitHub PR #4 at `https://github.com/Abdourahman1909/resolved-layers/pull/4`, targeting `codex/production-model-package`. Retarget it after PR #3 merges.
+
+Next practical focus: implement the first post-prediction read-only workspace over a completed Verified Run. Begin with the compact Overview/Records transition and Run Archive reopening; keep label-dependent Evaluation and unlabeled Competition Submission separate, and do not reopen optional threshold research as a blocker. Production Identity vectorization, hands-on accessibility, and installer builds remain later bounded work.
 
 ## 7. Authoritative files
 
