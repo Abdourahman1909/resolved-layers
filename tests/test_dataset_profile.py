@@ -82,6 +82,19 @@ def test_sql_profile_queries_keep_missing_and_unrecognized_distinct(fixture_dir)
         source.close()
 
 
+def test_unique_identifier_columns_are_not_offered_as_grouping_fields(fixture_dir):
+    source = CsvSourceReader().open(fixture_dir / "source_review.csv")
+    try:
+        profile = DatasetProfileSession()
+        profile.load_source(source, ("Record_ID", "Panel", "Research_Note"))
+
+        assert "Record_ID" not in profile.group_columns
+        assert "Research_Note" not in profile.group_columns
+        assert profile.group_column == "Panel"
+    finally:
+        source.close()
+
+
 def test_ten_thousand_row_profile_aggregates_and_filters_in_sql(tmp_path):
     path = tmp_path / "ten-thousand-profile.csv"
     rows = ["Record_ID,_panel,Reference_Label,measurement"]

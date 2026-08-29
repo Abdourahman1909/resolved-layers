@@ -225,4 +225,7 @@ class DatasetProfileSession:
         counts = self._value_counts(column_name)
         distinct_non_missing = sum(1 for value, _ in counts if value)
         maximum = min(100, max(12, self.source.identity.row_count // 5))
-        return 1 <= distinct_non_missing <= maximum
+        return (
+            1 <= distinct_non_missing <= maximum
+            and distinct_non_missing < self.source.identity.row_count
+        )
