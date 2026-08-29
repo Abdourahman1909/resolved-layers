@@ -16,7 +16,7 @@ from variant_inference.domain.models import (
     SourceReferenceState,
     TransformationAudit,
 )
-from variant_inference.infrastructure.run_archive import DirectoryRunArchive
+from variant_inference.infrastructure.run_archive import DirectoryRunArchive, RunArchiveError
 
 
 class FixedInference:
@@ -118,6 +118,15 @@ def test_verified_run_is_atomic_traceable_and_does_not_copy_source(
     assert manifest["warnings"][0]["code"] == "missing_omissible"
     assert manifest["transformation_audit"][0]["topic"] == "row_filtering"
 
+    loaded = archive.load("run-fixed")
+    assert loaded.run_id == "run-fixed"
+    assert [record.source_row for record in loaded.predictions] == [1, 2]
+    assert [record.prediction for record in loaded.predictions] == ["Benign", "Pathogenic"]
+    entries = archive.list_entries()
+    assert len(entries) == 1
+    assert entries[0].record_count == 2
+    assert entries[0].pathogenic_count == 1
+
     repeated_times = iter(
         (
             datetime(2026, 8, 29, 12, 1, tzinfo=timezone.utc),
@@ -146,6 +155,10 @@ def test_verified_run_is_atomic_traceable_and_does_not_copy_source(
     assert archive.source_status("run-fixed").state is SourceReferenceState.MODIFIED
     source_path.unlink()
     assert archive.source_status("run-fixed").state is SourceReferenceState.MISSING
+
+    archived.predictions_path.write_bytes(archived.predictions_path.read_bytes() + b"{}\n")
+    with pytest.raises(RunArchiveError, match="checksum mismatch"):
+        archive.load("run-fixed")
 
 
 def test_verified_run_requires_confirmation_and_exact_source_row_order(

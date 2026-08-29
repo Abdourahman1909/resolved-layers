@@ -159,6 +159,35 @@ ApplicationWindow {
                 TapHandler { enabled: parent.enabled; onTapped: sourceController.setActiveSurface("profile") }
                 Keys.onReturnPressed: sourceController.setActiveSurface("profile")
             }
+
+            Item {
+                width: 76
+                height: 46
+                enabled: sourceController.hasResults
+                opacity: enabled ? 1 : 0.48
+                activeFocusOnTab: enabled
+                Accessible.role: Accessible.Button
+                Accessible.name: "Results"
+                Accessible.selected: sourceController.activeSurface === "results"
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "Results"
+                    color: sourceController.activeSurface === "results" ? root.ink : root.secondary
+                    font.family: "Arial"
+                    font.pixelSize: 13
+                    font.weight: sourceController.activeSurface === "results" ? Font.DemiBold : Font.Normal
+                }
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: 2
+                    color: sourceController.activeSurface === "results" ? root.blue : "transparent"
+                }
+                TapHandler { enabled: parent.enabled; onTapped: sourceController.setActiveSurface("results") }
+                Keys.onReturnPressed: sourceController.setActiveSurface("results")
+            }
         }
 
         ActionButton {
@@ -170,7 +199,75 @@ ApplicationWindow {
             height: 38
             quiet: true
             text: "Run Archive"
-            enabled: false
+            enabled: resultsController.archiveCount > 0
+            onClicked: {
+                resultsController.refreshArchive()
+                archivePopup.open()
+            }
+        }
+    }
+
+    Popup {
+        id: archivePopup
+        x: root.width - width - 28
+        y: appBar.height - 5
+        width: Math.min(470, root.width - 56)
+        height: Math.min(520, root.height - appBar.height - 28)
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        padding: 0
+
+        background: Rectangle {
+            color: "#FFFFFF"
+            border.width: 1
+            border.color: root.rule
+            radius: 4
+        }
+
+        contentItem: Column {
+            spacing: 0
+
+            Item {
+                width: parent.width
+                height: 68
+                Text { x: 20; y: 15; text: "Run Archive"; color: root.ink; font.family: "Arial"; font.pixelSize: 18; font.weight: Font.DemiBold }
+                Text { x: 20; y: 40; text: resultsController.archiveCount + " immutable Verified Run" + (resultsController.archiveCount === 1 ? "" : "s"); color: root.secondary; font.family: "Arial"; font.pixelSize: 11 }
+                Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; height: 1; color: root.rule }
+            }
+
+            ListView {
+                width: parent.width
+                height: archivePopup.height - 68
+                clip: true
+                model: runArchiveModel
+                boundsBehavior: Flickable.StopAtBounds
+                delegate: Item {
+                    required property string runId
+                    required property string completedAt
+                    required property string sourceName
+                    required property string packageName
+                    required property string packageVersion
+                    required property int recordCount
+                    required property int pathogenicCount
+                    required property int warningCount
+                    width: ListView.view.width
+                    height: 94
+                    activeFocusOnTab: true
+                    Accessible.role: Accessible.Button
+                    Accessible.name: "Open Verified Run " + runId
+
+                    Rectangle { anchors.fill: parent; color: hover.hovered ? "#F5F7FB" : "transparent" }
+                    Text { x: 20; y: 14; width: parent.width - 40; text: sourceName; elide: Text.ElideMiddle; color: root.ink; font.family: "Arial"; font.pixelSize: 13; font.weight: Font.DemiBold }
+                    Text { x: 20; y: 37; width: parent.width - 40; text: recordCount.toLocaleString() + " records  ·  " + pathogenicCount.toLocaleString() + " Pathogenic  ·  " + warningCount + " warnings"; color: root.secondary; font.family: "Arial"; font.pixelSize: 11 }
+                    Text { x: 20; y: 59; width: parent.width - 40; text: packageName + " " + packageVersion + "  ·  " + completedAt; elide: Text.ElideRight; color: root.secondary; font.family: "Arial"; font.pixelSize: 10 }
+                    Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; height: 1; color: root.softRule }
+                    HoverHandler { id: hover }
+                    TapHandler { onTapped: { if (sourceController.openArchivedRun(runId)) archivePopup.close() } }
+                    Keys.onReturnPressed: { if (sourceController.openArchivedRun(runId)) archivePopup.close() }
+                }
+                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+            }
         }
     }
 
@@ -1002,6 +1099,346 @@ ApplicationWindow {
                 anchors.bottom: parent.bottom
                 height: 31
                 Text { anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; text: "Descriptive profile only · no prediction or performance metric has been calculated"; color: root.secondary; font.family: "Arial"; font.pixelSize: 11 }
+                Text { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: "Source Row identity preserved"; color: root.secondary; font.family: "Arial"; font.pixelSize: 11 }
+            }
+        }
+
+        Item {
+            id: resultsDesk
+            visible: sourceController.activeSurface === "results"
+            anchors.fill: parent
+
+            Text {
+                id: resultsTitle
+                x: 34
+                y: 23
+                text: "Prediction Results"
+                color: root.ink
+                font.family: "Arial"
+                font.pixelSize: 27
+                font.weight: Font.Medium
+            }
+
+            Rectangle {
+                anchors.left: resultsTitle.right
+                anchors.leftMargin: 17
+                anchors.verticalCenter: resultsTitle.verticalCenter
+                width: verifiedText.implicitWidth + 28
+                height: 24
+                color: "#EDF7F2"
+                radius: 12
+                Text { id: verifiedText; anchors.centerIn: parent; text: "VERIFIED RUN"; color: "#147A4A"; font.family: "Arial"; font.pixelSize: 10; font.weight: Font.Bold; font.letterSpacing: 0.5 }
+            }
+
+            Text {
+                anchors.right: parent.right
+                anchors.rightMargin: 34
+                anchors.baseline: resultsTitle.baseline
+                width: Math.min(430, parent.width * 0.35)
+                horizontalAlignment: Text.AlignRight
+                elide: Text.ElideMiddle
+                text: resultsController.runId
+                color: root.secondary
+                font.family: "Arial"
+                font.pixelSize: 11
+            }
+
+            Rectangle {
+                id: resultsSummary
+                anchors.left: parent.left
+                anchors.leftMargin: 34
+                anchors.right: parent.right
+                anchors.rightMargin: 34
+                anchors.top: resultsTitle.bottom
+                anchors.topMargin: 17
+                height: 72
+                color: "#FAFBFD"
+                border.width: 1
+                border.color: root.rule
+                radius: 3
+
+                Row {
+                    anchors.fill: parent
+                    anchors.leftMargin: 18
+                    anchors.rightMargin: 18
+                    Repeater {
+                        model: [
+                            { value: resultsController.sourceName, label: "Source Dataset", share: 0.25 },
+                            { value: resultsController.recordCount.toLocaleString(), label: "Records", share: 0.12 },
+                            { value: resultsController.pathogenicCount.toLocaleString(), label: "Pathogenic", share: 0.12 },
+                            { value: resultsController.benignCount.toLocaleString(), label: "Benign", share: 0.12 },
+                            { value: resultsController.releaseThreshold.toFixed(6), label: "Release threshold", share: 0.15 },
+                            { value: resultsController.packageName + " " + resultsController.packageVersion, label: "Model Package", share: 0.24 }
+                        ]
+                        Item {
+                            required property var modelData
+                            required property int index
+                            width: parent.width * modelData.share
+                            height: parent.height
+                            Text { x: 12; y: 15; width: parent.width - 25; text: modelData.value; elide: Text.ElideMiddle; color: root.ink; font.family: "Arial"; font.pixelSize: 13; font.weight: Font.DemiBold }
+                            Text { x: 12; y: 42; text: modelData.label; color: root.secondary; font.family: "Arial"; font.pixelSize: 10 }
+                            Rectangle { visible: index > 0; anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; width: 1; height: 31; color: root.rule }
+                        }
+                    }
+                }
+            }
+
+            Row {
+                id: resultsTabs
+                x: 34
+                anchors.top: resultsSummary.bottom
+                anchors.topMargin: 16
+                spacing: 22
+                Repeater {
+                    model: [{ key: "overview", label: "Overview" }, { key: "records", label: "Records" }]
+                    Item {
+                        required property var modelData
+                        width: labelText.implicitWidth
+                        height: 34
+                        activeFocusOnTab: true
+                        Accessible.role: Accessible.Button
+                        Accessible.name: modelData.label
+                        Accessible.selected: resultsController.activeTab === modelData.key
+                        Text { id: labelText; anchors.top: parent.top; text: modelData.label; color: resultsController.activeTab === modelData.key ? root.ink : root.secondary; font.family: "Arial"; font.pixelSize: 13; font.weight: resultsController.activeTab === modelData.key ? Font.DemiBold : Font.Normal }
+                        Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; height: 2; color: resultsController.activeTab === modelData.key ? root.blue : "transparent" }
+                        TapHandler { onTapped: modelData.key === "overview" ? resultsController.showOverview() : resultsController.showRecords() }
+                        Keys.onReturnPressed: modelData.key === "overview" ? resultsController.showOverview() : resultsController.showRecords()
+                        Keys.onSpacePressed: modelData.key === "overview" ? resultsController.showOverview() : resultsController.showRecords()
+                    }
+                }
+            }
+
+            Rectangle { anchors.left: parent.left; anchors.leftMargin: 34; anchors.right: parent.right; anchors.rightMargin: 34; anchors.top: resultsTabs.bottom; height: 1; color: root.rule }
+
+            Item {
+                id: overviewPane
+                visible: resultsController.activeTab === "overview"
+                anchors.left: parent.left
+                anchors.leftMargin: 34
+                anchors.right: parent.right
+                anchors.rightMargin: 34
+                anchors.top: resultsTabs.bottom
+                anchors.topMargin: 22
+                anchors.bottom: resultsFooter.top
+                anchors.bottomMargin: 15
+
+                Item {
+                    id: distributionPane
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    width: parent.width * 0.67
+
+                    SectionTitle { id: distributionTitle; text: "Ensemble Score Distribution" }
+                    Text { anchors.left: distributionTitle.right; anchors.leftMargin: 12; anchors.baseline: distributionTitle.baseline; text: "Select a score band to inspect its records"; color: root.secondary; font.family: "Arial"; font.pixelSize: 11 }
+
+                    Item {
+                        id: chart
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: distributionTitle.bottom
+                        anchors.topMargin: 25
+                        height: Math.max(230, parent.height - 145)
+
+                        Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; height: 1; color: root.rule }
+                        Repeater {
+                            model: 5
+                            Rectangle { required property int index; x: 0; y: chart.height * index / 4; width: chart.width; height: 1; color: index === 4 ? root.rule : root.softRule }
+                        }
+                        Row {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            height: parent.height
+                            spacing: 2
+                            Repeater {
+                                model: scoreHistogramModel
+                                Item {
+                                    required property real lower
+                                    required property real upper
+                                    required property int count
+                                    required property real heightRatio
+                                    width: (chart.width - 62) / 32
+                                    height: chart.height
+                                    activeFocusOnTab: count > 0
+                                    Accessible.role: Accessible.Button
+                                    Accessible.name: count + " records with scores from " + lower.toFixed(3) + " to " + upper.toFixed(3)
+                                    Rectangle {
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.bottom: parent.bottom
+                                        height: Math.max(count > 0 ? 3 : 0, (parent.height - 18) * heightRatio)
+                                        color: lower >= resultsController.selectedLower && upper <= resultsController.selectedUpper ? root.blue : "#8EA2C9"
+                                        opacity: hover.hovered ? 1 : 0.88
+                                    }
+                                    HoverHandler { id: hover }
+                                    TapHandler { onTapped: resultsController.selectScoreRange(lower, upper) }
+                                    Keys.onReturnPressed: resultsController.selectScoreRange(lower, upper)
+                                    Keys.onSpacePressed: resultsController.selectScoreRange(lower, upper)
+                                }
+                            }
+                        }
+                        Rectangle { x: chart.width * resultsController.releaseThreshold; y: 0; width: 2; height: chart.height; color: root.amber }
+                        Text { x: Math.min(chart.width - width, chart.width * resultsController.releaseThreshold + 6); y: 4; text: "Threshold " + resultsController.releaseThreshold.toFixed(3); color: root.amber; font.family: "Arial"; font.pixelSize: 10; font.weight: Font.DemiBold }
+                    }
+
+                    Row {
+                        anchors.left: chart.left
+                        anchors.right: chart.right
+                        anchors.top: chart.bottom
+                        anchors.topMargin: 9
+                        Text { text: "0.0"; color: root.secondary; font.family: "Arial"; font.pixelSize: 10 }
+                        Item { width: parent.width - 48; height: 1 }
+                        Text { text: "1.0"; color: root.secondary; font.family: "Arial"; font.pixelSize: 10 }
+                    }
+                }
+
+                Rectangle { anchors.left: distributionPane.right; anchors.leftMargin: 24; anchors.top: parent.top; anchors.bottom: parent.bottom; width: 1; color: root.rule }
+
+                Item {
+                    anchors.left: distributionPane.right
+                    anchors.leftMargin: 49
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+
+                    SectionTitle { id: investigationTitle; text: "Investigation Sets" }
+                    Text { anchors.left: parent.left; anchors.right: parent.right; anchors.top: investigationTitle.bottom; anchors.topMargin: 10; text: "Purposeful groups derived from the immutable prediction records."; color: root.secondary; wrapMode: Text.Wrap; font.family: "Arial"; font.pixelSize: 11 }
+                    ListView {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: investigationTitle.bottom
+                        anchors.topMargin: 42
+                        height: Math.min(contentHeight, 252)
+                        model: investigationSetModel
+                        interactive: false
+                        spacing: 0
+                        delegate: Item {
+                            required property string key
+                            required property string title
+                            required property string detail
+                            required property int count
+                            width: ListView.view.width
+                            height: 60
+                            activeFocusOnTab: true
+                            Accessible.role: Accessible.Button
+                            Accessible.name: title + ", " + count + " records"
+                            Rectangle { anchors.fill: parent; color: resultsController.selectionKey === key ? "#F0F4FF" : "transparent"; border.width: resultsController.selectionKey === key ? 1 : 0; border.color: "#C5D2FA"; radius: 3 }
+                            Text { x: 11; y: 10; width: parent.width - 62; text: title; color: root.ink; font.family: "Arial"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                            Text { x: 11; y: 32; width: parent.width - 62; text: detail; elide: Text.ElideRight; color: root.secondary; font.family: "Arial"; font.pixelSize: 10 }
+                            Text { anchors.right: parent.right; anchors.rightMargin: 12; y: 18; text: count.toLocaleString(); color: resultsController.selectionKey === key ? root.blue : root.ink; font.family: "Arial"; font.pixelSize: 14; font.weight: Font.Bold }
+                            TapHandler { onTapped: resultsController.selectInvestigationSet(key) }
+                            Keys.onReturnPressed: resultsController.selectInvestigationSet(key)
+                            Keys.onSpacePressed: resultsController.selectInvestigationSet(key)
+                        }
+                    }
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: selectionBox.top
+                        anchors.bottomMargin: 10
+                        text: "Run warnings  " + resultsController.warningCount + "  ·  run-level evidence, not a row filter"
+                        color: resultsController.warningCount > 0 ? root.amber : root.secondary
+                        font.family: "Arial"
+                        font.pixelSize: 10
+                        elide: Text.ElideRight
+                    }
+
+                    Rectangle {
+                        id: selectionBox
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: 82
+                        color: "#FAFBFD"
+                        border.width: 1
+                        border.color: root.rule
+                        radius: 3
+                        Text { x: 14; y: 13; width: parent.width - 28; text: resultsController.selectionTitle; elide: Text.ElideRight; color: root.ink; font.family: "Arial"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                        Text { x: 14; y: 36; text: resultsController.selectedCount.toLocaleString() + " records selected"; color: root.secondary; font.family: "Arial"; font.pixelSize: 11 }
+                        ActionButton { anchors.right: parent.right; anchors.rightMargin: 10; anchors.bottom: parent.bottom; anchors.bottomMargin: 9; width: 150; height: 31; primary: true; text: "Inspect " + resultsController.selectedCount.toLocaleString() + " records"; enabled: resultsController.selectedCount > 0; onClicked: resultsController.inspectSelection() }
+                    }
+                }
+            }
+
+            Item {
+                id: recordsPane
+                visible: resultsController.activeTab === "records"
+                anchors.left: parent.left
+                anchors.leftMargin: 34
+                anchors.right: parent.right
+                anchors.rightMargin: 34
+                anchors.top: resultsTabs.bottom
+                anchors.topMargin: 17
+                anchors.bottom: resultsFooter.top
+                anchors.bottomMargin: 12
+
+                ActionButton { id: backOverview; anchors.left: parent.left; anchors.top: parent.top; width: 142; height: 34; quiet: true; text: "Back to Overview"; onClicked: resultsController.showOverview() }
+                Rectangle {
+                    anchors.left: backOverview.right
+                    anchors.leftMargin: 14
+                    anchors.verticalCenter: backOverview.verticalCenter
+                    width: selectionRecordText.implicitWidth + 26
+                    height: 30
+                    color: "#F0F4FF"
+                    border.width: 1
+                    border.color: "#C5D2FA"
+                    radius: 15
+                    Text { id: selectionRecordText; x: 12; anchors.verticalCenter: parent.verticalCenter; text: resultsController.selectionTitle + " · " + resultsController.visibleRecordCount.toLocaleString() + (resultsController.selectionKey === "all" ? "" : "  ×"); color: root.blue; font.family: "Arial"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                    TapHandler { enabled: resultsController.selectionKey !== "all"; onTapped: resultsController.clearSelection() }
+                }
+                TextField {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: backOverview.verticalCenter
+                    width: 238
+                    height: 34
+                    placeholderText: "Search Source Row or class"
+                    selectByMouse: true
+                    font.family: "Arial"
+                    font.pixelSize: 11
+                    onTextChanged: resultsController.searchRecords(text)
+                }
+
+                HorizontalHeaderView {
+                    id: predictionHeader
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: backOverview.bottom
+                    anchors.topMargin: 14
+                    height: 35
+                    syncView: predictionTable
+                    clip: true
+                    delegate: Rectangle { implicitWidth: model.column === 0 ? 120 : 190; implicitHeight: 35; color: "#F3F5F8"; border.width: 1; border.color: root.rule; Text { anchors.fill: parent; anchors.leftMargin: 10; anchors.rightMargin: 10; text: model.display; color: root.secondary; verticalAlignment: Text.AlignVCenter; horizontalAlignment: Text.AlignHCenter; font.family: "Arial"; font.pixelSize: 10; font.weight: Font.DemiBold } }
+                }
+                TableView {
+                    id: predictionTable
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: predictionHeader.bottom
+                    anchors.bottom: parent.bottom
+                    model: predictionTableModel
+                    clip: true
+                    reuseItems: true
+                    columnSpacing: -1
+                    rowSpacing: -1
+                    columnWidthProvider: function(column) { return column === 0 ? 120 : 190 }
+                    rowHeightProvider: function() { return 36 }
+                    delegate: Rectangle { required property int row; required property int column; implicitWidth: column === 0 ? 120 : 190; implicitHeight: 36; color: row % 2 === 0 ? "#FFFFFF" : "#FBFCFE"; border.width: 1; border.color: root.softRule; Text { anchors.fill: parent; anchors.leftMargin: 10; anchors.rightMargin: 10; text: model.display; color: column === 1 && model.display === "Pathogenic" ? root.pathogenic : root.ink; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight; font.family: "Arial"; font.pixelSize: 11; font.weight: column === 1 ? Font.DemiBold : Font.Normal } }
+                    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+                    ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
+                }
+            }
+
+            Item {
+                id: resultsFooter
+                anchors.left: parent.left
+                anchors.leftMargin: 34
+                anchors.right: parent.right
+                anchors.rightMargin: 34
+                anchors.bottom: parent.bottom
+                height: 34
+                Text { anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; text: "Immutable predictions · Source state: " + resultsController.sourceState + " · " + resultsController.warningCount + " warnings"; color: resultsController.sourceState === "unchanged" ? root.secondary : root.amber; font.family: "Arial"; font.pixelSize: 11 }
                 Text { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: "Source Row identity preserved"; color: root.secondary; font.family: "Arial"; font.pixelSize: 11 }
             }
         }

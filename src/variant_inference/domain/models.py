@@ -232,6 +232,67 @@ class SourceReferenceStatus:
 
 
 @dataclass(frozen=True)
+class LoadedVerifiedRun:
+    run_id: str
+    created_at: str
+    completed_at: str
+    duration_ms: int
+    source_path: Path
+    source_file_name: str
+    source_sha256: str
+    source_row_count: int
+    source_column_count: int
+    model_package_name: str
+    model_package_version: str
+    model_package_manifest_checksum: str
+    inference_contract_id: str
+    inference_contract_version: str
+    inference_contract_checksum: str
+    release_threshold: float
+    predictions_sha256: str
+    predictions: tuple[PredictionRecord, ...]
+    warnings: tuple["Finding", ...] = ()
+    transformation_audit: "TransformationAudit" = field(
+        default_factory=lambda: TransformationAudit()
+    )
+
+    def __post_init__(self) -> None:
+        expected_rows = tuple(range(1, self.source_row_count + 1))
+        actual_rows = tuple(record.source_row for record in self.predictions)
+        if actual_rows != expected_rows:
+            raise ValueError(
+                "Archived predictions must preserve every Source Row in order."
+            )
+
+
+@dataclass(frozen=True)
+class RunArchiveEntry:
+    run_id: str
+    completed_at: str
+    source_file_name: str
+    model_package_name: str
+    model_package_version: str
+    record_count: int
+    pathogenic_count: int
+    warning_count: int
+
+
+@dataclass(frozen=True)
+class ScoreBin:
+    lower: float
+    upper: float
+    count: int
+
+
+@dataclass(frozen=True)
+class InvestigationSet:
+    key: str
+    title: str
+    detail: str
+    count: int
+
+
+@dataclass(frozen=True)
 class Finding:
     code: str
     message: str

@@ -18,6 +18,13 @@ from variant_inference.infrastructure.production_inference import PickleEnsemble
 from variant_inference.infrastructure.run_archive import DirectoryRunArchive
 from variant_inference.qt.controller import SourceReviewController
 from variant_inference.qt.profile_model import GroupBreakdownModel
+from variant_inference.qt.results_controller import ResultsController
+from variant_inference.qt.results_models import (
+    InvestigationSetModel,
+    PredictionTableModel,
+    RunArchiveListModel,
+    ScoreHistogramModel,
+)
 from variant_inference.qt.table_model import CsvTableModel
 
 
@@ -42,11 +49,19 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Local directory for immutable Verified Runs",
     )
+    parser.add_argument(
+        "--open-run",
+        help="Open one immutable Verified Run from the configured archive",
+    )
     parser.add_argument("--smoke", action="store_true", help="Load the QML shell, then exit")
     parser.add_argument("--screenshot", type=Path, help="Save one startup screenshot, then exit")
     parser.add_argument(
+        "--window-size",
+        help="Set the verification window size as WIDTHxHEIGHT",
+    )
+    parser.add_argument(
         "--surface",
-        choices=("review", "profile"),
+        choices=("review", "profile", "results"),
         default="review",
         help="Initial surface used by automated visual verification",
     )
@@ -88,6 +103,7 @@ def main(argv: list[str] | None = None) -> int:
             QStandardPaths.writableLocation(QStandardPaths.AppLocalDataLocation)
         ) / "runs"
 
+    archive = DirectoryRunArchive(run_archive_path)
     verified_runs = None
     run_unavailable_reason = ""
     if package is not None:
@@ -96,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             verified_runs = VerifiedRunService(
                 PickleEnsembleInference(trusted_checksums),
-                DirectoryRunArchive(run_archive_path),
+                archive,
             )
 
     project_root = Path(__file__).resolve().parents[2]
@@ -106,6 +122,17 @@ def main(argv: list[str] | None = None) -> int:
 
     table_model = CsvTableModel()
     group_model = GroupBreakdownModel()
+    prediction_model = PredictionTableModel()
+    histogram_model = ScoreHistogramModel()
+    investigation_set_model = InvestigationSetModel()
+    archive_model = RunArchiveListModel()
+    results_controller = ResultsController(
+        archive,
+        prediction_model,
+        histogram_model,
+        investigation_set_model,
+        archive_model,
+    )
     controller = SourceReviewController(
         table_model,
         group_model,
@@ -114,15 +141,31 @@ def main(argv: list[str] | None = None) -> int:
         identity_reference=identity_reference,
         verified_runs=verified_runs,
         run_unavailable_reason=run_unavailable_reason,
+        results_controller=results_controller,
     )
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("sourceController", controller)
     engine.rootContext().setContextProperty("sourceTableModel", table_model)
     engine.rootContext().setContextProperty("groupBreakdownModel", group_model)
+    engine.rootContext().setContextProperty("resultsController", results_controller)
+    engine.rootContext().setContextProperty("predictionTableModel", prediction_model)
+    engine.rootContext().setContextProperty("scoreHistogramModel", histogram_model)
+    engine.rootContext().setContextProperty("investigationSetModel", investigation_set_model)
+    engine.rootContext().setContextProperty("runArchiveModel", archive_model)
     qml_file = Path(__file__).with_name("qml") / "Main.qml"
     engine.load(QUrl.fromLocalFile(str(qml_file)))
     if not engine.rootObjects():
         return 2
+    if args.window_size:
+        try:
+            width, height = (int(value) for value in args.window_size.lower().split("x", 1))
+            if width < 1 or height < 1:
+                raise ValueError
+        except ValueError:
+            return 2
+        window = engine.rootObjects()[0]
+        window.setProperty("width", width)
+        window.setProperty("height", height)
     application.aboutToQuit.connect(controller.close)
 
     def clean_quit() -> None:
@@ -135,6 +178,8 @@ def main(argv: list[str] | None = None) -> int:
         QTimer.singleShot(0, lambda: controller.openSource(str(args.source_path.resolve())))
         if args.surface == "profile":
             QTimer.singleShot(100, lambda: controller.setActiveSurface("profile"))
+    if args.open_run:
+        QTimer.singleShot(0, lambda: controller.openArchivedRun(args.open_run))
     if args.screenshot:
         destination = args.screenshot.resolve()
 

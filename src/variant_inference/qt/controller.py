@@ -11,6 +11,7 @@ from variant_inference.domain.models import ModelPackageIdentity
 from variant_inference.infrastructure.csv_source import CsvSourceError, CsvSourceReader
 from variant_inference.qt.table_model import CsvTableModel
 from variant_inference.qt.profile_model import GroupBreakdownModel
+from variant_inference.qt.results_controller import ResultsController
 
 
 class SourceReviewController(QObject):
@@ -25,6 +26,7 @@ class SourceReviewController(QObject):
         identity_reference: Path | None = None,
         verified_runs: VerifiedRunService | None = None,
         run_unavailable_reason: str = "",
+        results_controller: ResultsController | None = None,
     ) -> None:
         super().__init__()
         self._table_model = table_model
@@ -36,6 +38,7 @@ class SourceReviewController(QObject):
         self._package_error = package_error
         self._verified_runs = verified_runs
         self._run_unavailable_reason = run_unavailable_reason
+        self._results_controller = results_controller
         self._last_run_id = ""
         self._last_run_path = ""
         self._status_message = "Open a Source Dataset to begin review."
@@ -54,6 +57,10 @@ class SourceReviewController(QObject):
     @Property(str, notify=stateChanged)
     def activeSurface(self) -> str:  # noqa: N802
         return self._active_surface
+
+    @Property(bool, notify=stateChanged)
+    def hasResults(self) -> bool:  # noqa: N802
+        return bool(self._results_controller and self._results_controller.hasRun)
 
     @Property(str, notify=stateChanged)
     def fileName(self) -> str:  # noqa: N802
@@ -370,9 +377,11 @@ class SourceReviewController(QObject):
 
     @Slot(str)
     def setActiveSurface(self, surface: str) -> None:  # noqa: N802
-        if surface not in {"review", "profile"}:
+        if surface not in {"review", "profile", "results"}:
             return
         if surface == "profile" and not self.hasSource:
+            return
+        if surface == "results" and not self.hasResults:
             return
         self._active_surface = surface
         self._table_model.set_row_filter(
@@ -481,12 +490,30 @@ class SourceReviewController(QObject):
             )
             self._last_run_id = archived.run_id
             self._last_run_path = str(archived.directory)
+            if self._results_controller is not None:
+                self._results_controller.open_run(archived.run_id)
+                self._active_surface = "results"
             self._status_message = f"Verified Run {archived.run_id} saved to the local Run Archive."
             self._status_kind = "success"
         except (OSError, RuntimeError, ValueError) as error:
             self._status_message = str(error)
             self._status_kind = "error"
         self._emit()
+
+    @Slot(str, result=bool)
+    def openArchivedRun(self, run_id: str) -> bool:  # noqa: N802
+        if self._results_controller is None:
+            return False
+        opened = self._results_controller.open_run(run_id)
+        if opened:
+            self._active_surface = "results"
+            self._status_message = f"Verified Run {run_id} reopened from the local Run Archive."
+            self._status_kind = "success"
+        else:
+            self._status_message = self._results_controller.errorMessage
+            self._status_kind = "error"
+        self._emit()
+        return opened
 
     @Slot()
     def close(self) -> None:
