@@ -74,6 +74,16 @@ The workspace replaces its empty state with Source Evidence and validation findi
 
 Source Review includes a concise Transformation Audit covering feature reordering, categorical mappings, missing values, supplied defaults, and warnings. It does not render a second full-width copy of hundreds of processed columns. When deeper verification is needed, the operator can request Model Input Evidence for a selected row or feature and compare the raw value with the representation supplied separately to CatBoost and LightGBM.
 
+### Dataset Profile
+
+After a CSV is opened, a dedicated Dataset Profile provides descriptive understanding of the Source Dataset without requiring prediction. It is a focused evidence surface rather than a crowded analytics dashboard. Its default composition uses one proportional class bar, one compact group-breakdown table with subtle in-cell proportions, and a filterable source-record table for drilling from a class or group into the exact underlying rows.
+
+The profile reports file dimensions, label coverage, and the number of groups. When Ground-Truth Authorization has established a label column and Pathogenic/Benign value mapping, the class composition reports exact counts and percentages for Pathogenic, Benign, missing, and unrecognized labels. It must never infer or silently map a label-like column. Descriptive class composition does not constitute model evaluation and must not display F1, precision, recall, or other prediction-performance claims.
+
+Grouping defaults to `_panel` when present but remains operator-selectable so future compatible datasets can be explored through another categorical Context Column. Each group row reports total records, Pathogenic and Benign counts and percentages, and missing or invalid label counts. Selecting a class or group applies visible, removable filters to the source-record table while preserving immutable Source Row identity.
+
+For an Unlabeled Prediction Set, Dataset Profile remains available for dimensions, group composition, missingness, and raw-record inspection. The class-composition area explicitly reports that labels are unavailable rather than presenting inferred classes. Dataset Profile remains distinct from the post-prediction Evaluation Workspace: the former describes the uploaded source; the latter evaluates predictions against authorized Ground Truth.
+
 ### Prediction Run
 
 The Production Model operates on a normalized representation derived from the Source Dataset. The source remains unchanged and traceable. A run produced with the approved Inference Contract is stored as an immutable Verified Run.

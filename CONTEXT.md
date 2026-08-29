@@ -84,6 +84,10 @@ _Avoid_: Test set with unknown score, evaluation set
 The operator's explicit confirmation of which Source Dataset column contains reference labels and how its values map to Pathogenic and Benign before Evaluation is enabled.
 _Avoid_: Automatic label detection, inferred labels, label-column guess
 
+**Dataset Profile**:
+The pre-prediction descriptive surface for examining Source Dataset dimensions, class composition, group composition, label coverage, and the exact source records behind a selected class or group. It may describe authorized labels but never claims model performance.
+_Avoid_: Evaluation dashboard, class-performance page, automatic label summary
+
 **Evaluated Cohort**:
 The exact subset of Variant Records with authorized, valid ground-truth labels used to calculate observed performance metrics.
 _Avoid_: Whole dataset, labeled-looking rows, test population
