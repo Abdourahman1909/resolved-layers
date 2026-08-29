@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-29T00:00:00+03:00",
+  "title": "Design System: Resolved Layers",
+  "extensions": {
+    "colorMeta": {
+      "laboratory-blue": { "role": "primary", "displayName": "Laboratory Blue", "canonical": "#0B42E7", "tonalRamp": ["#06144B", "#082272", "#0A319E", "#0B42E7", "#426CF0", "#7E99F6", "#BCC9FB", "#F0F4FF"] },
+      "laboratory-blue-hover": { "role": "primary", "displayName": "Laboratory Blue Hover", "canonical": "#0B35C5", "tonalRamp": ["#06123F", "#081E63", "#0A2A8E", "#0B35C5", "#4263D4", "#7F91E3", "#BCC3F1", "#F0F2FC"] },
+      "ink": { "role": "neutral", "displayName": "Evidence Ink", "canonical": "#101522", "tonalRamp": ["#101522", "#28303F", "#434C5C", "#626B7B", "#858D9B", "#ACB2BC", "#D5D9DF", "#F4F5F7"] },
+      "secondary-text": { "role": "neutral", "displayName": "Secondary Slate", "canonical": "#566176", "tonalRamp": ["#171C25", "#2A3240", "#414B5C", "#566176", "#7A8496", "#A1A8B4", "#CCD0D7", "#F2F3F5"] },
+      "pathogenic": { "role": "secondary", "displayName": "Pathogenic Navy", "canonical": "#263B72", "tonalRamp": ["#111A32", "#1A294F", "#263B72", "#3C5795", "#657BB0", "#92A1C9", "#C6CEE1", "#F1F3F8"] },
+      "benign": { "role": "secondary", "displayName": "Benign Sage", "canonical": "#6D9B91", "tonalRamp": ["#162B27", "#294841", "#42695F", "#6D9B91", "#8DB3AA", "#B1CCC6", "#D8E5E2", "#F3F8F7"] },
+      "threshold-amber": { "role": "tertiary", "displayName": "Threshold Amber", "canonical": "#A86E12", "tonalRamp": ["#321F04", "#543507", "#7A4D0B", "#A86E12", "#C99443", "#DEB875", "#EFDAAD", "#FBF4E7"] },
+      "success": { "role": "tertiary", "displayName": "Verified Green", "canonical": "#14804A", "tonalRamp": ["#062719", "#0A4028", "#0E5D36", "#14804A", "#45A473", "#7DC3A0", "#B9DFCC", "#ECF8F2"] },
+      "error": { "role": "tertiary", "displayName": "Blocking Red", "canonical": "#B52921", "tonalRamp": ["#380B08", "#5B120E", "#841C17", "#B52921", "#D3564F", "#E68B86", "#F3C2BF", "#FCEDEC"] },
+      "rule": { "role": "neutral", "displayName": "Structural Rule", "canonical": "#D8DEE8", "tonalRamp": ["#202631", "#3D4655", "#626C7B", "#8993A1", "#AEB6C2", "#C7CED8", "#D8DEE8", "#F4F6F8"] },
+      "canvas": { "role": "neutral", "displayName": "Evidence Paper", "canonical": "#FFFFFF", "tonalRamp": ["#24272C", "#464A50", "#6B6F75", "#92969B", "#B9BCC0", "#D8DADE", "#ECEDEF", "#FFFFFF"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Workspace Headline", "purpose": "Top-level workspace titles." },
+      "title": { "displayName": "Local Title", "purpose": "Product naming and major local headings." },
+      "body": { "displayName": "Working Text", "purpose": "Controls, navigation, evidence values, and explanatory copy." },
+      "label": { "displayName": "Evidence Label", "purpose": "Section markers, table headers, captions, and compact metadata." }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": [
+      { "name": "desktop-min-width", "value": "1120px" },
+      { "name": "desktop-min-height", "value": "720px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Action Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The compact, singular high-emphasis action used to advance an evidence workflow.",
+      "html": "<button class=\"ds-btn-primary\">Inspect records</button>",
+      "css": ".ds-btn-primary { height: 42px; padding: 0 15px; border: 0; border-radius: 5px; background: #0B42E7; color: #FFFFFF; font: 500 14px Arial, sans-serif; } .ds-btn-primary:hover { background: #0B35C5; } .ds-btn-primary:focus-visible { outline: 2px solid #0B42E7; outline-offset: 2px; } .ds-btn-primary:active { background: #0B35C5; }"
+    },
+    {
+      "name": "Secondary Action Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "A bordered supporting command that remains visually attached to the evidence surface.",
+      "html": "<button class=\"ds-btn-secondary\">All columns</button>",
+      "css": ".ds-btn-secondary { height: 42px; padding: 0 15px; border: 1px solid #CCD3DE; border-radius: 5px; background: #FFFFFF; color: #101522; font: 500 14px Arial, sans-serif; } .ds-btn-secondary:hover { background: #F1F4F8; } .ds-btn-secondary:focus-visible { outline: none; border-color: #0B42E7; } .ds-btn-secondary:active { background: #E9EDF3; }"
+    },
+    {
+      "name": "Select Field",
+      "kind": "input",
+      "refersTo": "select-field",
+      "description": "A compact categorical selector with an explicit blue focus boundary.",
+      "html": "<label class=\"ds-select-label\">Group field<select class=\"ds-select\"><option>_panel</option><option>Study cohort</option></select></label>",
+      "css": ".ds-select-label { display: grid; gap: 6px; color: #566176; font: 600 12px Arial, sans-serif; } .ds-select { width: 190px; height: 38px; padding: 0 34px 0 12px; border: 1px solid #CCD3DE; border-radius: 4px; background: #FFFFFF; color: #101522; font: 400 12px Arial, sans-serif; } .ds-select:hover { background: #FFFFFF; } .ds-select:focus-visible { outline: none; border-color: #0B42E7; } .ds-select:active { border-color: #0B42E7; }"
+    },
+    {
+      "name": "Active Filter Chip",
+      "kind": "chip",
+      "refersTo": "filter-chip",
+      "description": "A removable, text-explicit representation of a currently applied record filter.",
+      "html": "<button class=\"ds-filter-chip\">Class: Pathogenic <span aria-hidden=\"true\">×</span></button>",
+      "css": ".ds-filter-chip { height: 27px; padding: 0 10px 0 11px; border: 1px solid #C5D2FA; border-radius: 999px; background: #EEF3FF; color: #173A9C; font: 400 10px Arial, sans-serif; } .ds-filter-chip:hover { background: #E3EBFF; } .ds-filter-chip:focus-visible { outline: 2px solid #0B42E7; outline-offset: 2px; } .ds-filter-chip:active { background: #D8E3FF; }"
+    },
+    {
+      "name": "Top-Level Navigation Item",
+      "kind": "nav",
+      "description": "A compact application-bar destination with a blue active rule rather than a filled tab.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Workspace\"><button class=\"ds-nav-item ds-nav-item-active\">Source Review</button><button class=\"ds-nav-item\">Dataset Profile</button><button class=\"ds-nav-item\" disabled>Results</button></nav>",
+      "css": ".ds-nav { display: flex; gap: 26px; height: 46px; align-items: stretch; } .ds-nav-item { position: relative; min-width: 104px; border: 0; background: transparent; color: #566176; font: 400 13px Arial, sans-serif; } .ds-nav-item:hover { color: #101522; } .ds-nav-item:focus-visible { outline: 2px solid #0B42E7; outline-offset: -2px; } .ds-nav-item:active, .ds-nav-item-active { color: #101522; font-weight: 600; } .ds-nav-item-active::after { content: ''; position: absolute; right: 0; bottom: 0; left: 0; height: 2px; background: #0B42E7; } .ds-nav-item:disabled { opacity: .48; }"
+    },
+    {
+      "name": "Evidence Row",
+      "kind": "custom",
+      "description": "A compact label/value pair for source identity, contract fit, and transformation evidence.",
+      "html": "<dl class=\"ds-evidence-row\"><dt>SHA-256 checksum</dt><dd>8c0cf0c1…527239c</dd></dl>",
+      "css": ".ds-evidence-row { display: grid; grid-template-columns: 46% 52%; justify-content: space-between; margin: 0; padding: 4px 0; color: #303847; font: 400 13px/1.15 Arial, sans-serif; } .ds-evidence-row dt, .ds-evidence-row dd { margin: 0; } .ds-evidence-row dd { color: #101522; font-weight: 500; text-align: right; overflow-wrap: anywhere; } .ds-evidence-row:hover { background: #FBFCFE; } .ds-evidence-row:focus-within { outline: 1px solid #0B42E7; }"
+    },
+    {
+      "name": "Evidence Table",
+      "kind": "custom",
+      "description": "A fine-ruled, alternating-row table for exact record inspection at compact desktop density.",
+      "html": "<table class=\"ds-table\"><thead><tr><th>Source Row</th><th>Variant_ID</th><th>Prediction</th></tr></thead><tbody><tr><td>1</td><td>VAR-0001</td><td>Pathogenic</td></tr><tr><td>2</td><td>VAR-0002</td><td>Benign</td></tr></tbody></table>",
+      "css": ".ds-table { width: 100%; border-collapse: collapse; border: 1px solid #D8DEE8; border-radius: 3px; overflow: hidden; color: #101522; font: 400 11px Arial, sans-serif; } .ds-table th { height: 47px; padding: 0 10px; border: 1px solid #D8DEE8; background: #F8FAFC; color: #566176; font-size: 10px; font-weight: 600; text-align: center; } .ds-table td { height: 36px; padding: 0 10px; border: 1px solid #E8ECF2; text-align: center; } .ds-table tbody tr:nth-child(even) { background: #FBFCFE; } .ds-table tbody tr:hover { background: #F5F7FB; } .ds-table:focus-visible { outline: 2px solid #0B42E7; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Evidence Desk",
+    "overview": "Resolved Layers is a light-first computational-health desktop workspace. Its visual language resembles an orderly evidence desk: source material, model fit, transformation details, and results remain visible as connected layers separated by fine rules rather than decorative containers. The system is calm, professional, compact, and explicit about state.\n\nThe interface earns trust through alignment, restrained laboratory blue, near-flat tonal surfaces, and evidence-bearing language. It avoids generic dashboard theater: hierarchy comes from type, dividers, and spatial grouping rather than gradients, large metric cards, heavy shadows, or ornamental data graphics. Surface-specific workflows may compose these primitives differently; the design system does not make any single page layout universal.",
+    "keyCharacteristics": [
+      "Light-first white canvas with cool, nearly neutral supporting surfaces.",
+      "Thin rules and tonal shifts organize dense evidence without visual clutter.",
+      "Laboratory blue is reserved for interaction, focus, selection, and section signals.",
+      "Compact Arial/native-sans typography supports scanning at desktop density.",
+      "Small radii soften controls without turning the workspace into a card grid.",
+      "Status and evidence are named directly; color supports meaning but never carries it alone."
+    ],
+    "rules": [
+      { "name": "The One Blue Voice Rule", "body": "Laboratory blue communicates action, focus, selection, or structural emphasis; it is not a decorative fill.", "section": "colors" },
+      { "name": "The Evidence Color Rule", "body": "Pathogenic, Benign, threshold, success, and error colors accompany explicit labels or values and never substitute for them.", "section": "colors" },
+      { "name": "The Working-Type Rule", "body": "Most operational information stays within 10–14px; only page and major local titles rise above that compact evidence scale.", "section": "typography" },
+      { "name": "The Surface Boundary Rule", "body": "Split panes, cohort charts, records tables, and evidence bands are valid compositions for their respective tasks, not mandatory templates for every new surface.", "section": "layout" },
+      { "name": "The Flat Evidence Rule", "body": "Use borders and restrained tonal layering before considering elevation; heavy shadows and glass effects do not belong in this system.", "section": "elevation" },
+      { "name": "The Small-Radius Rule", "body": "Corners support clarity at desktop density; they do not turn every section into a soft standalone card.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do use thin rules, alignment, and subtle tonal surfaces to make relationships inspectable.",
+      "Do preserve compact evidence density with the observed 10–14px working type and small radii.",
+      "Do reserve laboratory blue for interaction, focus, selection, and structural emphasis.",
+      "Do pair every semantic color with explicit status, evidence, or category language.",
+      "Do reuse the same shell, type, color, control, and rule vocabulary across Source Review, Dataset Profile, Overview, Records, and Run Archive."
+    ],
+    "donts": [
+      "Don't introduce gradients, heavy shadows, glass effects, or decorative elevation.",
+      "Don't turn every data group into a rounded card or build generic KPI-card grids.",
+      "Don't use oversized decorative metrics or add charts without an evidence task.",
+      "Don't drift into generic AI-dashboard or generic medical-blue styling.",
+      "Don't universalize a page-specific behavior or composition as a visual-system law."
+    ]
+  }
+}

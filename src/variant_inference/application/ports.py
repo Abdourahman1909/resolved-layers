@@ -3,7 +3,17 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Mapping, Protocol, Sequence
 
-from variant_inference.domain.models import ModelPackageIdentity, SourceIdentity, SourceValueFilter
+from variant_inference.domain.models import (
+    ArchivedRun,
+    LoadedVerifiedRun,
+    ModelPackageIdentity,
+    PredictionRecord,
+    RunArchiveEntry,
+    SourceIdentity,
+    SourceReferenceStatus,
+    SourceValueFilter,
+    VerifiedRun,
+)
 
 
 class SourceDataset(Protocol):
@@ -31,11 +41,16 @@ class ModelPackageRepository(Protocol):
 
 
 class DeterministicInference(Protocol):
-    def predict(self, source: SourceDataset, package: ModelPackageIdentity) -> Sequence[Mapping[str, Any]]: ...
+    def predict(
+        self, source: SourceDataset, package: ModelPackageIdentity
+    ) -> Sequence[PredictionRecord]: ...
 
 
 class RunArchive(Protocol):
-    def save_manifest(self, run_manifest: Mapping[str, Any]) -> str: ...
+    def save(self, run: VerifiedRun) -> ArchivedRun: ...
+    def load(self, run_id: str) -> LoadedVerifiedRun: ...
+    def list_entries(self) -> Sequence[RunArchiveEntry]: ...
+    def source_status(self, run_id: str) -> SourceReferenceStatus: ...
 
 
 class EvaluationService(Protocol):

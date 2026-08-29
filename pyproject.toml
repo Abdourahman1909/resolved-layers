@@ -9,7 +9,12 @@ description = "Resolved Layers, Computational Health Lab's evidence-first deskto
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+  "catboost==1.2.10",
+  "lightgbm==4.7.0",
+  "numpy==2.2.6",
+  "pandas==2.3.3",
   "PySide6>=6.7,<7",
+  "scikit-learn==1.7.2",
 ]
 
 [project.optional-dependencies]
