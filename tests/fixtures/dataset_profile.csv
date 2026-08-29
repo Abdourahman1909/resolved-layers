@@ -1,0 +1,13 @@
+Record_ID,Feature_A,Feature_B,Category,Panel,_panel,Study,Reference_Label,Research_Note
+SYN-P001,0.84,1.23,A,Panel-A,Cohort-A,North,case,synthetic alpha
+SYN-P002,1.10,0.98,B,Panel-B,Cohort-A,North,control,synthetic beta
+SYN-P003,0.53,1.45,A,Panel-A,Cohort-B,South,case,synthetic gamma
+SYN-P004,0.62,1.11,C,Panel-C,Cohort-B,South,control,synthetic delta
+SYN-P005,0.91,,A,Panel-A,Cohort-A,North,case,synthetic epsilon
+SYN-P006,1.25,0.77,B,Panel-B,Cohort-B,South,,synthetic zeta
+SYN-P007,0.41,1.67,C,Panel-C,Cohort-A,North,pending,synthetic eta
+SYN-P008,,1.20,A,Panel-A,Cohort-C,South,case,synthetic theta
+SYN-P009,0.64,0.89,B,Panel-B,Cohort-C,North,control,synthetic iota
+SYN-P010,1.02,1.30,C,Panel-C,Cohort-C,South,review,synthetic kappa
+SYN-P011,0.72,1.04,A,Panel-A,Cohort-A,North,case,synthetic lambda
+SYN-P012,0.88,0.93,B,Panel-B,Cohort-B,South,control,synthetic mu

@@ -16,6 +16,12 @@ class FeatureKind(str, Enum):
     CATEGORICAL = "categorical"
 
 
+class SourceValueFilterMode(str, Enum):
+    EXACT = "exact"
+    MISSING = "missing"
+    UNRECOGNIZED = "unrecognized"
+
+
 @dataclass(frozen=True)
 class SourceIdentity:
     path: Path
@@ -26,6 +32,52 @@ class SourceIdentity:
     delimiter: str
     encoding: str
     last_modified: str
+
+
+@dataclass(frozen=True)
+class SourceValueFilter:
+    column_index: int
+    mode: SourceValueFilterMode
+    value: str = ""
+    recognized_values: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class GroundTruthAuthorization:
+    column_name: str
+    pathogenic_value: str
+    benign_value: str
+
+    def __post_init__(self) -> None:
+        if not self.column_name:
+            raise ValueError("Ground-Truth Authorization requires a label column.")
+        if not self.pathogenic_value or not self.benign_value:
+            raise ValueError("Pathogenic and Benign mappings must both be explicit.")
+        if self.pathogenic_value == self.benign_value:
+            raise ValueError("Pathogenic and Benign must map to different source values.")
+
+
+@dataclass(frozen=True)
+class LabelCoverage:
+    total: int
+    pathogenic: int
+    benign: int
+    missing: int
+    unrecognized: int
+
+    @property
+    def recognized(self) -> int:
+        return self.pathogenic + self.benign
+
+
+@dataclass(frozen=True)
+class GroupBreakdown:
+    value: str
+    total: int
+    share: float
+    pathogenic: int = 0
+    benign: int = 0
+    missing_or_unrecognized: int = 0
 
 
 @dataclass(frozen=True)
@@ -142,4 +194,3 @@ class TransformationAudit:
 
     def summary_for(self, topic: str, default: str = "—") -> str:
         return next((entry.summary for entry in self.entries if entry.topic == topic), default)
-

@@ -39,6 +39,11 @@ class MemorySource:
 
 
 @pytest.fixture
+def fixture_dir() -> Path:
+    return Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture
 def inference_contract() -> InferenceContract:
     return InferenceContract(
         contract_id="synthetic-contract",
@@ -76,4 +81,3 @@ def model_package(inference_contract: InferenceContract) -> ModelPackageIdentity
         manifest_checksum=hashlib.sha256(b"synthetic").hexdigest(),
         contract=inference_contract,
     )
-

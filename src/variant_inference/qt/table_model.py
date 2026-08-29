@@ -12,17 +12,30 @@ class CsvTableModel(QAbstractTableModel):
         super().__init__()
         self._source: SourceDataset | None = None
         self._visible_columns: list[int] = []
+        self._source_rows: tuple[int, ...] | None = None
 
     def set_source(self, source: SourceDataset | None) -> None:
         self.beginResetModel()
         self._source = source
         self._visible_columns = list(range(len(source.columns))) if source else []
+        self._source_rows = None
         self.endResetModel()
+
+    def set_row_filter(self, source_rows: tuple[int, ...] | None) -> None:
+        self.beginResetModel()
+        self._source_rows = source_rows
+        self.endResetModel()
+
+    @property
+    def filtered_row_count(self) -> int:
+        if self._source is None:
+            return 0
+        return len(self._source_rows) if self._source_rows is not None else self._source.identity.row_count
 
     def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:  # noqa: N802
         if parent.isValid() or self._source is None:
             return 0
-        return self._source.identity.row_count
+        return self.filtered_row_count
 
     def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:  # noqa: N802
         if parent.isValid() or self._source is None:
@@ -32,10 +45,11 @@ class CsvTableModel(QAbstractTableModel):
     def data(self, index: QModelIndex, role: int = Qt.DisplayRole):
         if not index.isValid() or self._source is None or role not in (Qt.DisplayRole, Qt.EditRole):
             return None
+        source_row = self._source_rows[index.row()] if self._source_rows is not None else index.row() + 1
         if index.column() == 0:
-            return index.row() + 1
+            return source_row
         source_column = self._visible_columns[index.column() - 1]
-        value = self._source.row_at(index.row())[source_column]
+        value = self._source.row_at(source_row - 1)[source_column]
         return value if value != "" else "—"
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole):  # noqa: N802
@@ -63,4 +77,3 @@ class CsvTableModel(QAbstractTableModel):
     @Slot()
     def reset_columns(self) -> None:
         self.filter_columns("")
-
