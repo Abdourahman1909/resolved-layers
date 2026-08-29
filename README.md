@@ -1,6 +1,6 @@
 # Resolved Layers
 
-**Resolved Layers** is Computational Health Lab's evidence-first desktop product for traceable model inference. Its current `Variant Inference` workflow focuses on missense-variant prediction. The present vertical slices implement the approved Source Review and pre-prediction Dataset Profile workflows in PySide6 and Qt Quick; deterministic Production Model execution is deliberately the next integration milestone.
+**Resolved Layers** is Computational Health Lab's evidence-first desktop product for traceable model inference. Its current `Variant Inference` workflow focuses on missense-variant prediction. The present vertical slices implement the approved Source Review and pre-prediction Dataset Profile workflows in PySide6 and Qt Quick. The deterministic CatBoost–LightGBM inference core and its trusted Model Package boundary are implemented; Verified Run orchestration and results persistence are the next integration milestone.
 
 ## What works now
 
@@ -15,9 +15,10 @@
 - Inference Contract Fit with distinct Required, Omissible, and surplus-column policy; blockers and warnings remain separate.
 - Transformation Audit summaries for type handling, missing values, fixed category mappings, column alignment, and row filtering.
 - Mandatory explicit operator confirmation. Changing the source resets confirmation; blocking findings keep the run action disabled.
+- Deterministic, label-excluding CatBoost–LightGBM inference through an explicitly trusted, integrity-checked Model Package. The external restricted PDR package reproduces all 736 saved ensemble and component probabilities after four-decimal rounding and the expected TN 109 / FP 80 / FN 27 / TP 520 confusion matrix at threshold 0.61.
 - The approved Split Evidence Desk hybrid v2 shell and the full-color Resolved Layers identity, currently shown from the approved raster reference without vector reinterpretation.
 
-The run button records the completed Source Review gate but does not execute model inference yet. Dataset Profile is descriptive and never calculates F1 or other performance metrics. Run Archive persistence, Evaluation, Competition Export Profiles, and read-only AI integration are represented by separate application ports and are not implemented as UI logic.
+The current run button records the completed Source Review gate but does not create or persist a Verified Run yet. Dataset Profile is descriptive and never calculates F1 or other performance metrics. Run Archive persistence, Evaluation, Competition Export Profiles, and read-only AI integration are represented by separate application ports and are not implemented as UI logic.
 
 ## Setup
 
