@@ -8,6 +8,7 @@ from typing import Any, Mapping
 from variant_inference.domain.models import (
     FeatureSpec,
     InferenceContract,
+    ModelArtifact,
     ModelPackageIdentity,
 )
 
@@ -36,8 +37,9 @@ class JsonModelPackageRepository:
         artifacts = payload.get("artifacts")
         if not isinstance(artifacts, list) or not artifacts:
             raise ModelPackageValidationError("A Model Package must declare integrity-checked artifacts.")
-        for artifact in artifacts:
-            self._validate_artifact(manifest_path.parent, artifact)
+        validated_artifacts = tuple(
+            self._validate_artifact(manifest_path.parent, artifact) for artifact in artifacts
+        )
 
         contract_payload = payload.get("inference_contract")
         if not isinstance(contract_payload, dict):
@@ -64,6 +66,14 @@ class JsonModelPackageRepository:
                 release_threshold=float(contract_payload["release_threshold"]),
                 row_filtering=str(contract_payload.get("row_filtering", "none")),
                 checksum=declared_checksum or contract_checksum,
+                component_input_policy={
+                    str(component): {
+                        str(key): str(value) for key, value in policy.items()
+                    }
+                    for component, policy in contract_payload.get(
+                        "component_input_policy", {}
+                    ).items()
+                },
             )
             return ModelPackageIdentity(
                 package_id=str(payload["package_id"]),
@@ -72,11 +82,12 @@ class JsonModelPackageRepository:
                 root=manifest_path.parent,
                 manifest_checksum=hashlib.sha256(raw).hexdigest(),
                 contract=contract,
+                artifacts=validated_artifacts,
             )
         except (KeyError, TypeError, ValueError) as error:
             raise ModelPackageValidationError(f"Invalid Model Package contract: {error}") from error
 
-    def _validate_artifact(self, root: Path, artifact: Mapping[str, Any]) -> None:
+    def _validate_artifact(self, root: Path, artifact: Mapping[str, Any]) -> ModelArtifact:
         try:
             relative_path = Path(str(artifact["path"]))
             expected = str(artifact["sha256"]).lower()
@@ -84,14 +95,23 @@ class JsonModelPackageRepository:
             raise ModelPackageValidationError("Every artifact needs a relative path and SHA-256.") from error
         if relative_path.is_absolute() or ".." in relative_path.parts:
             raise ModelPackageValidationError("Model Package artifact paths must remain inside the package.")
-        artifact_path = (root / relative_path).resolve()
+        resolved_root = root.resolve()
+        artifact_path = (resolved_root / relative_path).resolve()
+        if not artifact_path.is_relative_to(resolved_root):
+            raise ModelPackageValidationError(
+                "Model Package artifact paths must remain inside the package."
+            )
         if not artifact_path.is_file():
             raise ModelPackageValidationError(f"Model Package artifact missing: {relative_path}")
         digest = hashlib.sha256(artifact_path.read_bytes()).hexdigest()
         if digest != expected:
             raise ModelPackageValidationError(f"Model Package artifact checksum mismatch: {relative_path}")
+        return ModelArtifact(
+            role=str(artifact.get("role", "")),
+            path=relative_path,
+            sha256=expected,
+        )
 
     def _canonical_checksum(self, payload: Mapping[str, Any]) -> str:
         canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-

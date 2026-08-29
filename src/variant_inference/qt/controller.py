@@ -449,7 +449,7 @@ class SourceReviewController(QObject):
         if not self._session.run_enabled:
             return
         self._status_message = (
-            "Source confirmation recorded. The deterministic inference adapter is the next milestone."
+            "Source confirmation recorded. Verified Run orchestration is the next milestone."
         )
         self._status_kind = "success"
         self._emit()

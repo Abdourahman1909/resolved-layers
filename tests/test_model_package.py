@@ -62,3 +62,18 @@ def test_tampered_artifact_is_rejected(tmp_path):
     with pytest.raises(ModelPackageValidationError, match="checksum mismatch"):
         JsonModelPackageRepository().load(manifest)
 
+
+def test_artifact_symlink_cannot_escape_the_package(tmp_path):
+    package_root = tmp_path / "package"
+    package_root.mkdir()
+    outside_artifact = tmp_path / "outside-model.bin"
+    outside_artifact.write_bytes(b"outside the trusted package")
+    (package_root / "synthetic-model.bin").symlink_to(outside_artifact)
+    manifest = package_root / "manifest.json"
+    manifest.write_text(
+        json.dumps(package_payload(hashlib.sha256(outside_artifact.read_bytes()).hexdigest())),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ModelPackageValidationError, match="remain inside the package"):
+        JsonModelPackageRepository().load(manifest)

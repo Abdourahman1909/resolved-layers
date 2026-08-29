@@ -116,6 +116,7 @@ class InferenceContract:
     release_threshold: float
     row_filtering: str = "none"
     checksum: str = ""
+    component_input_policy: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         names = [feature.name for feature in self.features]
@@ -156,6 +157,23 @@ class ModelPackageIdentity:
     root: Path
     manifest_checksum: str
     contract: InferenceContract
+    artifacts: tuple["ModelArtifact", ...] = ()
+
+
+@dataclass(frozen=True)
+class ModelArtifact:
+    role: str
+    path: Path
+    sha256: str
+
+
+@dataclass(frozen=True)
+class PredictionRecord:
+    source_row: int
+    ensemble_score: float
+    prediction: str
+    component_scores: Mapping[str, float]
+    model_disagreement: float
 
 
 @dataclass(frozen=True)
