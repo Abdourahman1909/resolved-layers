@@ -6,6 +6,7 @@ from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
 
 from variant_inference.application.dataset_profile import DatasetProfileSession
 from variant_inference.application.source_review import SourceReviewSession
+from variant_inference.application.verified_run import VerifiedRunService
 from variant_inference.domain.models import ModelPackageIdentity
 from variant_inference.infrastructure.csv_source import CsvSourceError, CsvSourceReader
 from variant_inference.qt.table_model import CsvTableModel
@@ -22,6 +23,8 @@ class SourceReviewController(QObject):
         package: ModelPackageIdentity | None,
         package_error: str = "",
         identity_reference: Path | None = None,
+        verified_runs: VerifiedRunService | None = None,
+        run_unavailable_reason: str = "",
     ) -> None:
         super().__init__()
         self._table_model = table_model
@@ -31,6 +34,10 @@ class SourceReviewController(QObject):
         self._profile = DatasetProfileSession()
         self._package = package
         self._package_error = package_error
+        self._verified_runs = verified_runs
+        self._run_unavailable_reason = run_unavailable_reason
+        self._last_run_id = ""
+        self._last_run_path = ""
         self._status_message = "Open a Source Dataset to begin review."
         self._status_kind = "neutral"
         self._identity_reference = identity_reference
@@ -303,7 +310,7 @@ class SourceReviewController(QObject):
 
     @Property(bool, notify=stateChanged)
     def runEnabled(self) -> bool:  # noqa: N802
-        return self._session.run_enabled
+        return self._session.run_enabled and self._verified_runs is not None
 
     @Property(str, notify=stateChanged)
     def runButtonText(self) -> str:  # noqa: N802
@@ -313,7 +320,17 @@ class SourceReviewController(QObject):
             return "Resolve blocking issues"
         if not self._session.operator_confirmed:
             return "Confirm the reviewed source"
-        return "Confirm source & request prediction"
+        if self._verified_runs is None:
+            return self._run_unavailable_reason or "Trusted inference unavailable"
+        return "Create immutable Verified Run"
+
+    @Property(str, notify=stateChanged)
+    def lastRunId(self) -> str:  # noqa: N802
+        return self._last_run_id
+
+    @Property(str, notify=stateChanged)
+    def lastRunPath(self) -> str:  # noqa: N802
+        return self._last_run_path
 
     @Property(str, notify=stateChanged)
     def statusMessage(self) -> str:  # noqa: N802
@@ -333,6 +350,8 @@ class SourceReviewController(QObject):
         path = Path(url.toLocalFile() if url.isLocalFile() else value)
         try:
             source = self._reader.open(path)
+            self._last_run_id = ""
+            self._last_run_path = ""
             self._session.load_source(source, self._package)
             self._table_model.set_source(source)
             context_columns = list(source.columns)
@@ -446,12 +465,27 @@ class SourceReviewController(QObject):
 
     @Slot()
     def requestRun(self) -> None:  # noqa: N802
-        if not self._session.run_enabled:
+        if not self._session.run_enabled or self._verified_runs is None:
             return
-        self._status_message = (
-            "Source confirmation recorded. Verified Run orchestration is the next milestone."
-        )
-        self._status_kind = "success"
+        assert self._session.source is not None
+        assert self._session.package is not None
+        assert self._session.fit is not None
+        assert self._session.audit is not None
+        try:
+            archived = self._verified_runs.execute(
+                source=self._session.source,
+                package=self._session.package,
+                fit=self._session.fit,
+                audit=self._session.audit,
+                operator_confirmed=self._session.operator_confirmed,
+            )
+            self._last_run_id = archived.run_id
+            self._last_run_path = str(archived.directory)
+            self._status_message = f"Verified Run {archived.run_id} saved to the local Run Archive."
+            self._status_kind = "success"
+        except (OSError, RuntimeError, ValueError) as error:
+            self._status_message = str(error)
+            self._status_kind = "error"
         self._emit()
 
     @Slot()
