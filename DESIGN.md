@@ -8,9 +8,10 @@ colors:
   evidence-ink: "#303847"
   secondary-text: "#566176"
   muted-text: "#7E8798"
+  small-muted-text: "#626C7F"
   pathogenic: "#263B72"
   benign: "#6D9B91"
-  threshold-amber: "#A86E12"
+  threshold-amber: "#8A590E"
   success: "#14804A"
   error: "#B52921"
   rule: "#D8DEE8"
@@ -92,7 +93,7 @@ components:
 
 Resolved Layers is a light-first computational-health desktop workspace. Its visual language resembles an orderly evidence desk: source material, model fit, transformation details, and results remain visible as connected layers separated by fine rules rather than decorative containers. The system is calm, professional, compact, and explicit about state.
 
-The interface earns trust through alignment, restrained laboratory blue, near-flat tonal surfaces, and evidence-bearing language. It avoids generic dashboard theater: hierarchy comes from type, dividers, and spatial grouping rather than gradients, large metric cards, heavy shadows, or ornamental data graphics. Surface-specific workflows may compose these primitives differently; the design system does not make any single page layout universal.
+The interface earns trust through alignment, restrained laboratory blue, near-flat tonal surfaces, and evidence-bearing language. It avoids generic dashboard theater: hierarchy comes from type, dividers, and spatial grouping rather than gradients, large metric cards, heavy shadows, or ornamental data graphics. Selected-record work preserves the active Records table beside a resizable, Source Row-anchored evidence pane instead of replacing context with a modal. Surface-specific workflows may compose these primitives differently; the design system does not make any single page layout universal.
 
 **Key Characteristics:**
 
@@ -102,6 +103,7 @@ The interface earns trust through alignment, restrained laboratory blue, near-fl
 - Compact Arial/native-sans typography supports scanning at desktop density.
 - Small radii soften controls without turning the workspace into a card grid.
 - Status and evidence are named directly; color supports meaning but never carries it alone.
+- Record detail preserves table context and follows immutable Source Row identity.
 
 ## Colors
 
@@ -116,12 +118,12 @@ The palette combines crisp paper whites, cool slate neutrals, and one restrained
 
 - **Pathogenic Navy:** Identifies Pathogenic prediction evidence and distribution segments.
 - **Benign Sage:** Identifies Benign prediction evidence and composition segments.
-- **Threshold Amber:** Marks the Release Threshold and warning-related evidence, never general decoration.
+- **Threshold Amber:** Provides the readable foreground for Release Threshold values, warning text, and modified-source evidence; it also marks the threshold line and is never general decoration.
 
 ### Neutral
 
 - **Evidence Ink:** Primary text and high-emphasis values use ink; evidence labels use the slightly softer evidence-ink role.
-- **Secondary and Muted Text:** Supporting explanations, metadata, placeholders, and disabled labels step down through secondary-text and muted-text.
+- **Secondary, Muted, and Small Muted Text:** Supporting explanations use secondary-text; disabled button labels use muted-text; very small field-type, missing-value, and disabled-field text uses the stronger small-muted-text role so compact copy remains readable.
 - **Canvas and Quiet Surfaces:** Canvas remains white. Quiet, header, selected, disabled, and alternating-row surfaces provide shallow tonal grouping.
 - **Rule Family:** Rule, control-rule, and soft-rule create the system's structural hierarchy, from section boundaries to dense table grids.
 
@@ -156,7 +158,11 @@ The incumbent desktop frame is designed at 1536 × 980 with a 1120 × 720 minimu
 
 Screens use split workspaces, ruled bands, tables, and focused panes rather than a universal card grid. Repeated internal spacing centers on 8, 12, 16, and 24px; 34px is the outer workspace gutter. Dense tables use approximately 35–41px body rows and 47–58px headers. Navigation and evidence remain compact so source context survives beside active work.
 
+In Records, selecting a prediction opens the Variant Inspector as a resizable right pane while the table remains visible and active. The Inspector is bounded to 360–650px with a preferred width of roughly 39% and the table retains at least 500px while detail is open. The 9px separator supports pointer resizing and Left/Right Arrow resizing in 24px steps.
+
 **The Surface Boundary Rule.** Split panes, cohort charts, records tables, and evidence bands are valid compositions for their respective tasks, not mandatory templates for every new surface.
+
+**The Table-Context Rule.** Record detail opens beside the Records table, never over it; selection, resizing, and dismissal preserve the immutable Source Row as the shared reference.
 
 ## Elevation & Depth
 
@@ -179,7 +185,7 @@ The form language is gently squared. Dense containers and selection rows use 3px
 - **Shape:** Compact rectangular controls with a 5px radius and a 42px default height; bounded contexts may use observed 29–38px compact heights.
 - **Primary:** Laboratory-blue fill, white Medium label, and 15px horizontal inset. Hover darkens the fill without lifting the control.
 - **Secondary:** White fill, ink label, and a 1px control-rule border. Hover moves to the quiet surface; keyboard focus turns the border laboratory blue.
-- **Quiet:** Borderless white/transparent-adjacent command treatment for low-emphasis actions such as archive and back controls.
+- **Quiet:** Borderless white/transparent-adjacent command treatment for low-emphasis actions such as archive, back, and Inspector Close controls. Quiet appearance never suppresses keyboard operation or the visible 2px laboratory-blue focus boundary.
 - **Disabled:** Disabled-surface fill, muted label, and reduced opacity; state remains legible without relying on opacity alone.
 
 ### Chips
@@ -211,7 +217,17 @@ Evidence rows use a stable 46/52 label-to-value split, 13px type, right-aligned 
 
 ### Tables
 
-Tables are framed by a 1px rule with clipped 3px corners. Header surfaces are pale and centered; body rows alternate white and the alternate-row surface. Fine soft-rule cell boundaries and 10–12px text support exact record inspection at high density.
+Tables are framed by a 1px rule with clipped 3px corners. Header surfaces are pale and centered; body rows alternate white and the alternate-row surface. Fine soft-rule cell boundaries and 10–12px text support exact record inspection at high density. A selected row receives selected-blue fill and a selected border while the focused table receives a visible laboratory-blue perimeter.
+
+Prediction tables expose table semantics and accessible cell semantics. Each cell names its column, immutable Source Row, and value, carries selected state, and supports an accessible press action. Up/Down and Home/End move row selection; Return, Enter, or Space establishes a selection when none exists; Escape closes the Inspector without losing the table.
+
+### Variant Inspector
+
+The Inspector is a table-visible, resizable right pane rather than a modal. Its evidence order is stable: selected Source Row with prediction and ensemble score; score, Release Threshold, threshold relationship, and disagreement; separate CatBoost and LightGBM component-model scores; immutable run, package, and contract identity; then checksum state and the complete original Source Row.
+
+The Inspector's evidence scroll and its Close and search controls participate in the tab sequence. The evidence scroll supports Up/Down, Page Up/Page Down, Home, and End. The splitter is an accessible separator with a visible blue focus line and Left/Right Arrow resizing.
+
+**The Evidence-Lane Rule.** Component-model outputs are model-output evidence only; keep them explicitly separate from biological causation, clinical evidence, and model explainability.
 
 ## Do's and Don'ts
 
@@ -222,6 +238,8 @@ Tables are framed by a 1px rule with clipped 3px corners. Header surfaces are pa
 - **Do** reserve laboratory blue for interaction, focus, selection, and structural emphasis.
 - **Do** pair every semantic color with explicit status, evidence, or category language.
 - **Do** reuse the same shell, type, color, control, and rule vocabulary across Source Review, Dataset Profile, Overview, Records, and Run Archive.
+- **Do** keep the Records table visible while selected Source Row evidence opens, resizes, scrolls, or closes beside it.
+- **Do** preserve visible focus and accessible names, roles, selected states, and keyboard actions for quiet controls, table cells, the Inspector, and its splitter.
 
 ### Don't:
 
@@ -230,3 +248,4 @@ Tables are framed by a 1px rule with clipped 3px corners. Header surfaces are pa
 - **Don't** use oversized decorative metrics or add charts without an evidence task.
 - **Don't** drift into generic AI-dashboard or generic medical-blue styling.
 - **Don't** universalize a page-specific behavior or composition as a visual-system law.
+- **Don't** describe component scores as biological causation, clinical evidence, or explainability.

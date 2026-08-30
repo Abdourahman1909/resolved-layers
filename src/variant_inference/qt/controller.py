@@ -518,6 +518,8 @@ class SourceReviewController(QObject):
     @Slot()
     def close(self) -> None:
         self._session.close()
+        if self._results_controller is not None:
+            self._results_controller.close()
 
     def _refresh_profile(self) -> None:
         self._group_model.set_groups(self._profile.groups, self._profile.authorization is not None)

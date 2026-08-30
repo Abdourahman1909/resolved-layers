@@ -7,10 +7,14 @@ from variant_inference.domain.models import (
     PredictionRecord,
     RunArchiveEntry,
     ScoreBin,
+    SourceFieldEvidence,
 )
 
 
 class PredictionTableModel(QAbstractTableModel):
+    SourceRowRole = Qt.UserRole + 1
+    ColumnLabelRole = Qt.UserRole + 2
+
     HEADERS = (
         "Source Row",
         "Prediction",
@@ -43,9 +47,15 @@ class PredictionTableModel(QAbstractTableModel):
         return 0 if parent.isValid() else len(self.HEADERS)
 
     def data(self, index: QModelIndex, role: int = Qt.DisplayRole):
-        if not index.isValid() or role not in (Qt.DisplayRole, Qt.EditRole):
+        if not index.isValid():
             return None
         record = self._visible[index.row()]
+        if role == self.SourceRowRole:
+            return record.source_row
+        if role == self.ColumnLabelRole:
+            return self.HEADERS[index.column()]
+        if role not in (Qt.DisplayRole, Qt.EditRole):
+            return None
         component_scores = record.component_scores
         values = (
             record.source_row,
@@ -56,6 +66,13 @@ class PredictionTableModel(QAbstractTableModel):
             f"{record.model_disagreement:.6f}",
         )
         return values[index.column()]
+
+    def roleNames(self):  # noqa: N802
+        return {
+            Qt.DisplayRole: b"display",
+            self.SourceRowRole: b"sourceRow",
+            self.ColumnLabelRole: b"columnLabel",
+        }
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole):  # noqa: N802
         if role != Qt.DisplayRole or orientation != Qt.Horizontal:
@@ -68,6 +85,21 @@ class PredictionTableModel(QAbstractTableModel):
         self._query = query.strip().casefold()
         self._visible = self._apply_query(self._records, self._query)
         self.endResetModel()
+
+    def record_at(self, visible_row: int) -> PredictionRecord:
+        if not 0 <= visible_row < len(self._visible):
+            raise IndexError(visible_row)
+        return self._visible[visible_row]
+
+    def visible_index_for_source_row(self, source_row: int) -> int:
+        return next(
+            (
+                index
+                for index, record in enumerate(self._visible)
+                if record.source_row == source_row
+            ),
+            -1,
+        )
 
     @staticmethod
     def _apply_query(
@@ -120,6 +152,70 @@ class ScoreHistogramModel(QAbstractListModel):
             self.UpperRole: b"upper",
             self.CountRole: b"count",
             self.HeightRole: b"heightRatio",
+        }
+
+
+class SourceFieldListModel(QAbstractListModel):
+    NameRole = Qt.UserRole + 1
+    ValueRole = Qt.UserRole + 2
+    ValueTypeRole = Qt.UserRole + 3
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._fields: tuple[SourceFieldEvidence, ...] = ()
+        self._visible: tuple[SourceFieldEvidence, ...] = ()
+        self._query = ""
+
+    def set_fields(self, fields: tuple[SourceFieldEvidence, ...]) -> None:
+        self.beginResetModel()
+        self._fields = fields
+        self._visible = self._apply_query(fields, self._query)
+        self.endResetModel()
+
+    @property
+    def total_count(self) -> int:
+        return len(self._fields)
+
+    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:  # noqa: N802
+        return 0 if parent.isValid() else len(self._visible)
+
+    def data(self, index: QModelIndex, role: int = Qt.DisplayRole):
+        if not index.isValid():
+            return None
+        field = self._visible[index.row()]
+        values = {
+            Qt.DisplayRole: field.value,
+            self.NameRole: field.name,
+            self.ValueRole: field.value,
+            self.ValueTypeRole: field.value_type,
+        }
+        return values.get(role)
+
+    def set_search(self, query: str) -> None:
+        self.beginResetModel()
+        self._query = query.strip().casefold()
+        self._visible = self._apply_query(self._fields, self._query)
+        self.endResetModel()
+
+    @staticmethod
+    def _apply_query(
+        fields: tuple[SourceFieldEvidence, ...], query: str
+    ) -> tuple[SourceFieldEvidence, ...]:
+        if not query:
+            return fields
+        return tuple(
+            field
+            for field in fields
+            if query in field.name.casefold()
+            or query in field.value.casefold()
+            or query in field.value_type.casefold()
+        )
+
+    def roleNames(self):  # noqa: N802
+        return {
+            self.NameRole: b"fieldName",
+            self.ValueRole: b"fieldValue",
+            self.ValueTypeRole: b"fieldType",
         }
 
 

@@ -45,6 +45,12 @@ def test_dataset_profile_qml_starts_without_runtime_errors(fixture_dir):
 
 
 def test_results_qml_reopens_archived_verified_run(tmp_path):
+    source_path = tmp_path / "source.csv"
+    source_path.write_text(
+        "Variant_ID,AL_1,note\nVAR-001,0.58,near threshold\nVAR-002,0.84,selected row\n",
+        encoding="utf-8",
+    )
+    source_checksum = hashlib.sha256(source_path.read_bytes()).hexdigest()
     predictions = (
         PredictionRecord(1, 0.58, "Benign", {"catboost": 0.52, "lightgbm": 0.64}, 0.06),
         PredictionRecord(2, 0.84, "Pathogenic", {"catboost": 0.82, "lightgbm": 0.86}, 0.02),
@@ -56,11 +62,11 @@ def test_results_qml_reopens_archived_verified_run(tmp_path):
         completed_at="2026-08-29T12:00:01+00:00",
         duration_ms=1000,
         source=SourceIdentity(
-            path=tmp_path / "source.csv",
+            path=source_path,
             file_name="source.csv",
             row_count=2,
-            column_count=352,
-            sha256="0" * 64,
+            column_count=3,
+            sha256=source_checksum,
             delimiter="Comma (,)",
             encoding="UTF-8",
             last_modified="2026-08-29T12:00:00+00:00",
@@ -92,6 +98,8 @@ def test_results_qml_reopens_archived_verified_run(tmp_path):
             str(archive.root),
             "--open-run",
             run.run_id,
+            "--inspect-source-row",
+            "2",
             "--smoke",
         ),
         check=False,

@@ -14,7 +14,7 @@ ComboBox {
 
     contentItem: Text {
         text: control.displayText || control.placeholder
-        color: control.enabled ? "#101522" : "#7E8798"
+        color: control.enabled ? "#101522" : "#626C7F"
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
         font.family: "Arial"

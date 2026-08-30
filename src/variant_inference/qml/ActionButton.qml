@@ -13,7 +13,7 @@ Rectangle {
     activeFocusOnTab: enabled
     radius: 5
     color: !enabled ? "#E9EDF3" : primary ? (hover.hovered ? "#0B35C5" : "#0B42E7") : (hover.hovered ? "#F1F4F8" : "#FFFFFF")
-    border.width: primary || quiet ? 0 : 1
+    border.width: activeFocus ? 2 : (primary || quiet ? 0 : 1)
     border.color: activeFocus ? "#0B42E7" : "#CCD3DE"
     opacity: enabled ? 1 : 0.72
 
