@@ -232,6 +232,27 @@ class SourceReferenceStatus:
 
 
 @dataclass(frozen=True)
+class SourceFieldEvidence:
+    name: str
+    value: str
+    value_type: str
+
+
+@dataclass(frozen=True)
+class SourceRowEvidence:
+    source_row: int
+    state: SourceReferenceState
+    expected_sha256: str
+    current_sha256: str = ""
+    detail: str = ""
+    fields: tuple[SourceFieldEvidence, ...] = ()
+
+    @property
+    def is_available(self) -> bool:
+        return self.state is SourceReferenceState.AVAILABLE and bool(self.fields)
+
+
+@dataclass(frozen=True)
 class LoadedVerifiedRun:
     run_id: str
     created_at: str

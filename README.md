@@ -1,6 +1,6 @@
 # Resolved Layers
 
-**Resolved Layers** is Computational Health Lab's evidence-first desktop product for traceable model inference. Its current `Variant Inference` workflow focuses on missense-variant prediction. The present vertical slices implement Source Review, pre-prediction Dataset Profile, trusted deterministic CatBoost–LightGBM inference, immutable local Verified Runs, and a read-only post-prediction Results workspace in PySide6 and Qt Quick.
+**Resolved Layers** is Computational Health Lab's evidence-first desktop product for traceable model inference. Its current `Variant Inference` workflow focuses on missense-variant prediction. The present vertical slices implement Source Review, pre-prediction Dataset Profile, trusted deterministic CatBoost–LightGBM inference, immutable local Verified Runs, and a read-only post-prediction Results workspace with record-level inspection in PySide6 and Qt Quick.
 
 ## What works now
 
@@ -18,6 +18,7 @@
 - Deterministic, label-excluding CatBoost–LightGBM inference through an explicitly trusted, integrity-checked Model Package. The external restricted PDR package reproduces all 736 saved ensemble and component probabilities after four-decimal rounding and the expected TN 109 / FP 80 / FN 27 / TP 520 confusion matrix at threshold 0.61.
 - An atomic local Run Archive that stores ordered prediction evidence plus package, contract, source, output-checksum, warning, audit, and timing evidence. It records the source path and checksum by default and never copies the Source Dataset without a future explicit opt-in flow.
 - Run Archive reopening with prediction-evidence checksum verification, a compact score-distribution Overview, truthful run-level warning evidence, purposeful investigation sets, and a separate searchable Records table that retains exact Source Row identity.
+- A table-visible, resizable Variant Inspector with complete prediction, component-score, threshold, run, package, contract, and source-reference evidence. It recovers the complete original row only while the archived external source remains checksum-valid and reports modified or missing sources without exposing stale values.
 - The approved Split Evidence Desk hybrid v2 shell and the full-color Resolved Layers identity, currently shown from the approved raster reference without vector reinterpretation.
 
 With an explicitly trusted manifest checksum configured, the run button creates and persists a Verified Run after Source Review confirmation, then opens its read-only Results workspace. Dataset Profile remains descriptive and never calculates F1 or other performance metrics. Evaluation, Competition Export Profiles, and read-only AI integration remain separate later workspaces.

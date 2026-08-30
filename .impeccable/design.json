@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-29T00:00:00+03:00",
+  "generatedAt": "2026-08-30T07:01:20+03:00",
   "title": "Design System: Resolved Layers",
   "extensions": {
     "colorMeta": {
@@ -8,9 +8,11 @@
       "laboratory-blue-hover": { "role": "primary", "displayName": "Laboratory Blue Hover", "canonical": "#0B35C5", "tonalRamp": ["#06123F", "#081E63", "#0A2A8E", "#0B35C5", "#4263D4", "#7F91E3", "#BCC3F1", "#F0F2FC"] },
       "ink": { "role": "neutral", "displayName": "Evidence Ink", "canonical": "#101522", "tonalRamp": ["#101522", "#28303F", "#434C5C", "#626B7B", "#858D9B", "#ACB2BC", "#D5D9DF", "#F4F5F7"] },
       "secondary-text": { "role": "neutral", "displayName": "Secondary Slate", "canonical": "#566176", "tonalRamp": ["#171C25", "#2A3240", "#414B5C", "#566176", "#7A8496", "#A1A8B4", "#CCD0D7", "#F2F3F5"] },
+      "muted-text": { "role": "neutral", "displayName": "Disabled Muted Text", "canonical": "#7E8798", "tonalRamp": ["#1C2028", "#323842", "#4B5360", "#626C7B", "#7E8798", "#A4ABB7", "#CED2D9", "#F3F4F6"] },
+      "small-muted-text": { "role": "neutral", "displayName": "Readable Small Muted Text", "canonical": "#626C7F", "tonalRamp": ["#171B24", "#2A303A", "#414956", "#626C7F", "#858E9D", "#ADB4C0", "#D6DAE0", "#F4F5F7"] },
       "pathogenic": { "role": "secondary", "displayName": "Pathogenic Navy", "canonical": "#263B72", "tonalRamp": ["#111A32", "#1A294F", "#263B72", "#3C5795", "#657BB0", "#92A1C9", "#C6CEE1", "#F1F3F8"] },
       "benign": { "role": "secondary", "displayName": "Benign Sage", "canonical": "#6D9B91", "tonalRamp": ["#162B27", "#294841", "#42695F", "#6D9B91", "#8DB3AA", "#B1CCC6", "#D8E5E2", "#F3F8F7"] },
-      "threshold-amber": { "role": "tertiary", "displayName": "Threshold Amber", "canonical": "#A86E12", "tonalRamp": ["#321F04", "#543507", "#7A4D0B", "#A86E12", "#C99443", "#DEB875", "#EFDAAD", "#FBF4E7"] },
+      "threshold-amber": { "role": "tertiary", "displayName": "Readable Threshold Amber", "canonical": "#8A590E", "tonalRamp": ["#2C1B03", "#493006", "#684209", "#8A590E", "#AF8137", "#CEA568", "#E6CCA4", "#FAF2E5"] },
       "success": { "role": "tertiary", "displayName": "Verified Green", "canonical": "#14804A", "tonalRamp": ["#062719", "#0A4028", "#0E5D36", "#14804A", "#45A473", "#7DC3A0", "#B9DFCC", "#ECF8F2"] },
       "error": { "role": "tertiary", "displayName": "Blocking Red", "canonical": "#B52921", "tonalRamp": ["#380B08", "#5B120E", "#841C17", "#B52921", "#D3564F", "#E68B86", "#F3C2BF", "#FCEDEC"] },
       "rule": { "role": "neutral", "displayName": "Structural Rule", "canonical": "#D8DEE8", "tonalRamp": ["#202631", "#3D4655", "#626C7B", "#8993A1", "#AEB6C2", "#C7CED8", "#D8DEE8", "#F4F6F8"] },
@@ -47,6 +49,13 @@
       "css": ".ds-btn-secondary { height: 42px; padding: 0 15px; border: 1px solid #CCD3DE; border-radius: 5px; background: #FFFFFF; color: #101522; font: 500 14px Arial, sans-serif; } .ds-btn-secondary:hover { background: #F1F4F8; } .ds-btn-secondary:focus-visible { outline: none; border-color: #0B42E7; } .ds-btn-secondary:active { background: #E9EDF3; }"
     },
     {
+      "name": "Quiet Action Button",
+      "kind": "button",
+      "description": "A low-emphasis command whose quiet surface retains full keyboard operation and an unmistakable focus boundary.",
+      "html": "<button class=\"ds-btn-quiet\">Close</button>",
+      "css": ".ds-btn-quiet { height: 32px; padding: 0 12px; border: 0; border-radius: 5px; background: #FFFFFF; color: #101522; font: 500 13px Arial, sans-serif; } .ds-btn-quiet:hover { background: #F1F4F8; } .ds-btn-quiet:focus-visible { outline: 2px solid #0B42E7; outline-offset: -2px; } .ds-btn-quiet:active { background: #E9EDF3; }"
+    },
+    {
       "name": "Select Field",
       "kind": "input",
       "refersTo": "select-field",
@@ -79,43 +88,56 @@
     {
       "name": "Evidence Table",
       "kind": "custom",
-      "description": "A fine-ruled, alternating-row table for exact record inspection at compact desktop density.",
-      "html": "<table class=\"ds-table\"><thead><tr><th>Source Row</th><th>Variant_ID</th><th>Prediction</th></tr></thead><tbody><tr><td>1</td><td>VAR-0001</td><td>Pathogenic</td></tr><tr><td>2</td><td>VAR-0002</td><td>Benign</td></tr></tbody></table>",
-      "css": ".ds-table { width: 100%; border-collapse: collapse; border: 1px solid #D8DEE8; border-radius: 3px; overflow: hidden; color: #101522; font: 400 11px Arial, sans-serif; } .ds-table th { height: 47px; padding: 0 10px; border: 1px solid #D8DEE8; background: #F8FAFC; color: #566176; font-size: 10px; font-weight: 600; text-align: center; } .ds-table td { height: 36px; padding: 0 10px; border: 1px solid #E8ECF2; text-align: center; } .ds-table tbody tr:nth-child(even) { background: #FBFCFE; } .ds-table tbody tr:hover { background: #F5F7FB; } .ds-table:focus-visible { outline: 2px solid #0B42E7; outline-offset: 2px; }"
+      "description": "A keyboard-operable prediction table whose semantic cells name the column, immutable Source Row, value, and selected state.",
+      "html": "<table class=\"ds-table\" aria-label=\"Prediction Records\" tabindex=\"0\"><thead><tr><th scope=\"col\">Source Row</th><th scope=\"col\">Variant_ID</th><th scope=\"col\">Prediction</th></tr></thead><tbody><tr class=\"ds-table-selected\" aria-selected=\"true\"><td>1</td><td>VAR-0001</td><td>Pathogenic</td></tr><tr><td>2</td><td>VAR-0002</td><td>Benign</td></tr></tbody></table>",
+      "css": ".ds-table { width: 100%; border-collapse: collapse; border: 1px solid #D8DEE8; border-radius: 3px; overflow: hidden; color: #101522; font: 400 11px Arial, sans-serif; } .ds-table th { height: 47px; padding: 0 10px; border: 1px solid #D8DEE8; background: #F8FAFC; color: #566176; font-size: 10px; font-weight: 600; text-align: center; } .ds-table td { height: 36px; padding: 0 10px; border: 1px solid #E8ECF2; text-align: center; } .ds-table tbody tr:nth-child(even) { background: #FBFCFE; } .ds-table tbody tr:hover { background: #F5F7FB; } .ds-table .ds-table-selected { background: #EEF3FF; } .ds-table .ds-table-selected td { border-color: #C5D2FA; } .ds-table:focus-visible { outline: 2px solid #0B42E7; outline-offset: 2px; }"
+    },
+    {
+      "name": "Records and Variant Inspector Split",
+      "kind": "custom",
+      "description": "The table-visible detail pattern: a selected Source Row keeps the Records table active beside a bounded, resizable evidence pane.",
+      "html": "<section class=\"ds-records-split\"><div class=\"ds-records-pane\"><div class=\"ds-records-header\">Source Row · Prediction · Score</div><div class=\"ds-records-selected\">142 · Pathogenic · 0.843201</div></div><div class=\"ds-splitter\" role=\"separator\" aria-label=\"Resize Records table and Variant Inspector\" aria-orientation=\"vertical\" tabindex=\"0\"></div><aside class=\"ds-inspector\" aria-label=\"Variant Inspector for Source Row 142\"><header><strong>Variant Inspector</strong><span>Source Row 142</span></header><div class=\"ds-inspector-body\"><b>Prediction evidence</b><dl><dt>Release Threshold</dt><dd>0.610000</dd></dl><b>Component-model evidence</b><p>CatBoost 0.851240 · LightGBM 0.835162</p><small>Model-output evidence, not biological causation, clinical evidence, or explainability.</small></div></aside></section>",
+      "css": ".ds-records-split { display: grid; grid-template-columns: minmax(500px, 1fr) 9px minmax(360px, 39%); min-height: 300px; color: #101522; font: 400 11px Arial, sans-serif; } .ds-records-pane { border: 1px solid #D8DEE8; background: #FFFFFF; } .ds-records-header { padding: 12px; background: #F8FAFC; color: #566176; font-weight: 600; } .ds-records-selected { padding: 13px 12px; border-top: 1px solid #C5D2FA; background: #EEF3FF; font-weight: 600; } .ds-splitter { position: relative; background: #F8FAFC; cursor: col-resize; } .ds-splitter::after { content: ''; position: absolute; top: 0; bottom: 0; left: 4px; width: 1px; background: #D8DEE8; } .ds-splitter:hover { background: #EEF3FF; } .ds-splitter:hover::after, .ds-splitter:focus-visible::after { width: 2px; background: #0B42E7; } .ds-splitter:focus-visible { outline: 2px solid #0B42E7; outline-offset: -2px; } .ds-inspector { border: 1px solid #D8DEE8; border-radius: 3px; overflow: hidden; background: #FFFFFF; } .ds-inspector header { display: flex; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid #E8ECF2; background: #F8FAFC; font-size: 13px; } .ds-inspector header span { color: #0B42E7; font-weight: 600; } .ds-inspector-body { padding: 18px; } .ds-inspector-body b { display: block; margin: 0 0 10px; color: #303847; } .ds-inspector-body dl { display: flex; justify-content: space-between; margin: 0 0 18px; } .ds-inspector-body dd { margin: 0; color: #8A590E; font-weight: 600; } .ds-inspector-body p { margin: 0 0 8px; } .ds-inspector-body small { color: #626C7F; }"
     }
   ],
   "narrative": {
     "northStar": "The Evidence Desk",
-    "overview": "Resolved Layers is a light-first computational-health desktop workspace. Its visual language resembles an orderly evidence desk: source material, model fit, transformation details, and results remain visible as connected layers separated by fine rules rather than decorative containers. The system is calm, professional, compact, and explicit about state.\n\nThe interface earns trust through alignment, restrained laboratory blue, near-flat tonal surfaces, and evidence-bearing language. It avoids generic dashboard theater: hierarchy comes from type, dividers, and spatial grouping rather than gradients, large metric cards, heavy shadows, or ornamental data graphics. Surface-specific workflows may compose these primitives differently; the design system does not make any single page layout universal.",
+    "overview": "Resolved Layers is a light-first computational-health desktop workspace. Its visual language resembles an orderly evidence desk: source material, model fit, transformation details, and results remain visible as connected layers separated by fine rules rather than decorative containers. The system is calm, professional, compact, and explicit about state.\n\nThe interface earns trust through alignment, restrained laboratory blue, near-flat tonal surfaces, and evidence-bearing language. It avoids generic dashboard theater: hierarchy comes from type, dividers, and spatial grouping rather than gradients, large metric cards, heavy shadows, or ornamental data graphics. Selected-record work preserves the active Records table beside a resizable, Source Row-anchored evidence pane instead of replacing context with a modal. Surface-specific workflows may compose these primitives differently; the design system does not make any single page layout universal.",
     "keyCharacteristics": [
       "Light-first white canvas with cool, nearly neutral supporting surfaces.",
       "Thin rules and tonal shifts organize dense evidence without visual clutter.",
       "Laboratory blue is reserved for interaction, focus, selection, and section signals.",
       "Compact Arial/native-sans typography supports scanning at desktop density.",
       "Small radii soften controls without turning the workspace into a card grid.",
-      "Status and evidence are named directly; color supports meaning but never carries it alone."
+      "Status and evidence are named directly; color supports meaning but never carries it alone.",
+      "Record detail preserves table context and follows immutable Source Row identity."
     ],
     "rules": [
       { "name": "The One Blue Voice Rule", "body": "Laboratory blue communicates action, focus, selection, or structural emphasis; it is not a decorative fill.", "section": "colors" },
       { "name": "The Evidence Color Rule", "body": "Pathogenic, Benign, threshold, success, and error colors accompany explicit labels or values and never substitute for them.", "section": "colors" },
       { "name": "The Working-Type Rule", "body": "Most operational information stays within 10–14px; only page and major local titles rise above that compact evidence scale.", "section": "typography" },
       { "name": "The Surface Boundary Rule", "body": "Split panes, cohort charts, records tables, and evidence bands are valid compositions for their respective tasks, not mandatory templates for every new surface.", "section": "layout" },
+      { "name": "The Table-Context Rule", "body": "Record detail opens beside the Records table, never over it; selection, resizing, and dismissal preserve the immutable Source Row as the shared reference.", "section": "layout" },
       { "name": "The Flat Evidence Rule", "body": "Use borders and restrained tonal layering before considering elevation; heavy shadows and glass effects do not belong in this system.", "section": "elevation" },
-      { "name": "The Small-Radius Rule", "body": "Corners support clarity at desktop density; they do not turn every section into a soft standalone card.", "section": "shapes" }
+      { "name": "The Small-Radius Rule", "body": "Corners support clarity at desktop density; they do not turn every section into a soft standalone card.", "section": "shapes" },
+      { "name": "The Evidence-Lane Rule", "body": "Component-model outputs are model-output evidence only; keep them explicitly separate from biological causation, clinical evidence, and model explainability.", "section": "components" }
     ],
     "dos": [
       "Do use thin rules, alignment, and subtle tonal surfaces to make relationships inspectable.",
       "Do preserve compact evidence density with the observed 10–14px working type and small radii.",
       "Do reserve laboratory blue for interaction, focus, selection, and structural emphasis.",
       "Do pair every semantic color with explicit status, evidence, or category language.",
-      "Do reuse the same shell, type, color, control, and rule vocabulary across Source Review, Dataset Profile, Overview, Records, and Run Archive."
+      "Do reuse the same shell, type, color, control, and rule vocabulary across Source Review, Dataset Profile, Overview, Records, and Run Archive.",
+      "Do keep the Records table visible while selected Source Row evidence opens, resizes, scrolls, or closes beside it.",
+      "Do preserve visible focus and accessible names, roles, selected states, and keyboard actions for quiet controls, table cells, the Inspector, and its splitter."
     ],
     "donts": [
       "Don't introduce gradients, heavy shadows, glass effects, or decorative elevation.",
       "Don't turn every data group into a rounded card or build generic KPI-card grids.",
       "Don't use oversized decorative metrics or add charts without an evidence task.",
       "Don't drift into generic AI-dashboard or generic medical-blue styling.",
-      "Don't universalize a page-specific behavior or composition as a visual-system law."
+      "Don't universalize a page-specific behavior or composition as a visual-system law.",
+      "Don't describe component scores as biological causation, clinical evidence, or explainability."
     ]
   }
 }

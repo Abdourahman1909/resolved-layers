@@ -10,6 +10,8 @@ from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 
 from variant_inference.application.verified_run import VerifiedRunService
+from variant_inference.application.variant_inspector import SourceRowEvidenceService
+from variant_inference.infrastructure.csv_source import CsvSourceReader
 from variant_inference.infrastructure.model_package import (
     JsonModelPackageRepository,
     ModelPackageValidationError,
@@ -24,6 +26,7 @@ from variant_inference.qt.results_models import (
     PredictionTableModel,
     RunArchiveListModel,
     ScoreHistogramModel,
+    SourceFieldListModel,
 )
 from variant_inference.qt.table_model import CsvTableModel
 
@@ -52,6 +55,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--open-run",
         help="Open one immutable Verified Run from the configured archive",
+    )
+    parser.add_argument(
+        "--inspect-source-row",
+        type=int,
+        help="Open Records and select one Source Row for verification",
     )
     parser.add_argument("--smoke", action="store_true", help="Load the QML shell, then exit")
     parser.add_argument("--screenshot", type=Path, help="Save one startup screenshot, then exit")
@@ -126,12 +134,15 @@ def main(argv: list[str] | None = None) -> int:
     histogram_model = ScoreHistogramModel()
     investigation_set_model = InvestigationSetModel()
     archive_model = RunArchiveListModel()
+    source_field_model = SourceFieldListModel()
     results_controller = ResultsController(
         archive,
         prediction_model,
         histogram_model,
         investigation_set_model,
         archive_model,
+        SourceRowEvidenceService(archive, CsvSourceReader()),
+        source_field_model,
     )
     controller = SourceReviewController(
         table_model,
@@ -152,6 +163,7 @@ def main(argv: list[str] | None = None) -> int:
     engine.rootContext().setContextProperty("scoreHistogramModel", histogram_model)
     engine.rootContext().setContextProperty("investigationSetModel", investigation_set_model)
     engine.rootContext().setContextProperty("runArchiveModel", archive_model)
+    engine.rootContext().setContextProperty("sourceFieldModel", source_field_model)
     qml_file = Path(__file__).with_name("qml") / "Main.qml"
     engine.load(QUrl.fromLocalFile(str(qml_file)))
     if not engine.rootObjects():
@@ -180,6 +192,12 @@ def main(argv: list[str] | None = None) -> int:
             QTimer.singleShot(100, lambda: controller.setActiveSurface("profile"))
     if args.open_run:
         QTimer.singleShot(0, lambda: controller.openArchivedRun(args.open_run))
+    if args.inspect_source_row:
+        def open_inspector() -> None:
+            results_controller.showRecords()
+            results_controller.selectRecordAt(args.inspect_source_row - 1)
+
+        QTimer.singleShot(180, open_inspector)
     if args.screenshot:
         destination = args.screenshot.resolve()
 

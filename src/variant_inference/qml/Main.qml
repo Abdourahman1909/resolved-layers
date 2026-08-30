@@ -19,7 +19,7 @@ ApplicationWindow {
     readonly property color blue: "#0B42E7"
     readonly property color pathogenic: "#263B72"
     readonly property color benign: "#6D9B91"
-    readonly property color amber: "#A86E12"
+    readonly property color amber: "#8A590E"
     readonly property color rule: "#D8DEE8"
     readonly property color softRule: "#E8ECF2"
     readonly property int evidenceWidth: Math.max(398, Math.min(468, width * 0.305))
@@ -1400,33 +1400,130 @@ ApplicationWindow {
                     onTextChanged: resultsController.searchRecords(text)
                 }
 
-                HorizontalHeaderView {
-                    id: predictionHeader
+                SplitView {
+                    id: recordsWorkspace
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: backOverview.bottom
                     anchors.topMargin: 14
-                    height: 35
-                    syncView: predictionTable
-                    clip: true
-                    delegate: Rectangle { implicitWidth: model.column === 0 ? 120 : 190; implicitHeight: 35; color: "#F3F5F8"; border.width: 1; border.color: root.rule; Text { anchors.fill: parent; anchors.leftMargin: 10; anchors.rightMargin: 10; text: model.display; color: root.secondary; verticalAlignment: Text.AlignVCenter; horizontalAlignment: Text.AlignHCenter; font.family: "Arial"; font.pixelSize: 10; font.weight: Font.DemiBold } }
-                }
-                TableView {
-                    id: predictionTable
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: predictionHeader.bottom
                     anchors.bottom: parent.bottom
-                    model: predictionTableModel
-                    clip: true
-                    reuseItems: true
-                    columnSpacing: -1
-                    rowSpacing: -1
-                    columnWidthProvider: function(column) { return column === 0 ? 120 : 190 }
-                    rowHeightProvider: function() { return 36 }
-                    delegate: Rectangle { required property int row; required property int column; implicitWidth: column === 0 ? 120 : 190; implicitHeight: 36; color: row % 2 === 0 ? "#FFFFFF" : "#FBFCFE"; border.width: 1; border.color: root.softRule; Text { anchors.fill: parent; anchors.leftMargin: 10; anchors.rightMargin: 10; text: model.display; color: column === 1 && model.display === "Pathogenic" ? root.pathogenic : root.ink; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight; font.family: "Arial"; font.pixelSize: 11; font.weight: column === 1 ? Font.DemiBold : Font.Normal } }
-                    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
-                    ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
+                    orientation: Qt.Horizontal
+                    handle: Rectangle {
+                        id: splitHandle
+                        implicitWidth: 9
+                        implicitHeight: 9
+                        color: SplitHandle.hovered || SplitHandle.pressed ? "#EEF3FF" : "#F8FAFC"
+                        activeFocusOnTab: resultsController.hasSelectedRecord
+                        Accessible.role: Accessible.Separator
+                        Accessible.name: "Resize Records table and Variant Inspector"
+                        Accessible.description: "Use Left and Right Arrow keys to resize the Variant Inspector"
+                        Rectangle { anchors.horizontalCenter: parent.horizontalCenter; width: splitHandle.activeFocus ? 2 : 1; height: parent.height; color: splitHandle.activeFocus || SplitHandle.hovered || SplitHandle.pressed ? root.blue : root.rule }
+                        Keys.onPressed: function(event) {
+                            if (event.key !== Qt.Key_Left && event.key !== Qt.Key_Right)
+                                return
+                            var change = event.key === Qt.Key_Left ? 24 : -24
+                            variantInspector.SplitView.preferredWidth = Math.max(
+                                variantInspector.SplitView.minimumWidth,
+                                Math.min(variantInspector.SplitView.maximumWidth, variantInspector.width + change)
+                            )
+                            event.accepted = true
+                        }
+                    }
+
+                    Item {
+                        id: recordsTablePane
+                        SplitView.fillWidth: true
+                        SplitView.minimumWidth: resultsController.hasSelectedRecord ? 500 : 680
+
+                        HorizontalHeaderView {
+                            id: predictionHeader
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            height: 35
+                            syncView: predictionTable
+                            clip: true
+                            delegate: Rectangle { implicitWidth: model.column === 0 ? 120 : 190; implicitHeight: 35; color: "#F3F5F8"; border.width: 1; border.color: root.rule; Text { anchors.fill: parent; anchors.leftMargin: 10; anchors.rightMargin: 10; text: model.display; color: root.secondary; verticalAlignment: Text.AlignVCenter; horizontalAlignment: Text.AlignHCenter; font.family: "Arial"; font.pixelSize: 10; font.weight: Font.DemiBold } }
+                        }
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: predictionHeader.bottom
+                            anchors.bottom: parent.bottom
+                            color: "transparent"
+                            border.width: predictionTable.activeFocus ? 1 : 0
+                            border.color: root.blue
+
+                            TableView {
+                                id: predictionTable
+                                anchors.fill: parent
+                                anchors.margins: parent.border.width
+                                model: predictionTableModel
+                                clip: true
+                                reuseItems: true
+                                activeFocusOnTab: true
+                                Accessible.role: Accessible.Table
+                                Accessible.name: "Prediction Records. Use arrow keys to select a Source Row."
+                                columnSpacing: -1
+                                rowSpacing: -1
+                                columnWidthProvider: function(column) { return column === 0 ? 120 : 190 }
+                                rowHeightProvider: function() { return 36 }
+                                delegate: Rectangle {
+                                    required property int row
+                                    required property int column
+                                    required property int sourceRow
+                                    required property string columnLabel
+                                    implicitWidth: column === 0 ? 120 : 190
+                                    implicitHeight: 36
+                                    color: row === resultsController.selectedVisibleRow ? "#EEF3FF" : (row % 2 === 0 ? "#FFFFFF" : "#FBFCFE")
+                                    border.width: 1
+                                    border.color: row === resultsController.selectedVisibleRow ? "#C5D2FA" : root.softRule
+                                    Accessible.role: Accessible.Cell
+                                    Accessible.name: columnLabel + ", Source Row " + sourceRow + ": " + model.display
+                                    Accessible.selected: row === resultsController.selectedVisibleRow
+                                    Accessible.onPressAction: resultsController.selectRecordAt(row)
+                                    Text { anchors.fill: parent; anchors.leftMargin: 10; anchors.rightMargin: 10; text: model.display; color: column === 1 && model.display === "Pathogenic" ? root.pathogenic : root.ink; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight; font.family: "Arial"; font.pixelSize: 11; font.weight: column === 1 || column === 0 ? Font.DemiBold : Font.Normal }
+                                    TapHandler { onTapped: { predictionTable.forceActiveFocus(); resultsController.selectRecordAt(row) } }
+                                }
+                                Keys.onPressed: function(event) {
+                                    if (event.key === Qt.Key_Escape && resultsController.hasSelectedRecord) {
+                                        resultsController.closeInspector()
+                                        event.accepted = true
+                                        return
+                                    }
+                                    if (resultsController.visibleRecordCount < 1)
+                                        return
+                                    var current = resultsController.selectedVisibleRow
+                                    var next = current
+                                    if (event.key === Qt.Key_Down)
+                                        next = Math.min(resultsController.visibleRecordCount - 1, current < 0 ? 0 : current + 1)
+                                    else if (event.key === Qt.Key_Up)
+                                        next = Math.max(0, current < 0 ? 0 : current - 1)
+                                    else if (event.key === Qt.Key_Home)
+                                        next = 0
+                                    else if (event.key === Qt.Key_End)
+                                        next = resultsController.visibleRecordCount - 1
+                                    else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) && current < 0)
+                                        next = 0
+                                    else
+                                        return
+                                    resultsController.selectRecordAt(next)
+                                    positionViewAtRow(next, TableView.Contain)
+                                    event.accepted = true
+                                }
+                                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+                                ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
+                            }
+                        }
+                    }
+
+                    VariantInspector {
+                        id: variantInspector
+                        visible: resultsController.hasSelectedRecord
+                        SplitView.preferredWidth: Math.max(390, recordsWorkspace.width * 0.39)
+                        SplitView.minimumWidth: 360
+                        SplitView.maximumWidth: 650
+                    }
                 }
             }
 
@@ -1438,7 +1535,7 @@ ApplicationWindow {
                 anchors.rightMargin: 34
                 anchors.bottom: parent.bottom
                 height: 34
-                Text { anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; text: "Immutable predictions · Source state: " + resultsController.sourceState + " · " + resultsController.warningCount + " warnings"; color: resultsController.sourceState === "unchanged" ? root.secondary : root.amber; font.family: "Arial"; font.pixelSize: 11 }
+                Text { anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; text: "Immutable predictions · Source state: " + resultsController.sourceState + " · " + resultsController.warningCount + " warnings"; color: resultsController.sourceState === "available" ? root.secondary : root.amber; font.family: "Arial"; font.pixelSize: 11 }
                 Text { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: "Source Row identity preserved"; color: root.secondary; font.family: "Arial"; font.pixelSize: 11 }
             }
         }
