@@ -99,6 +99,24 @@ QT_QPA_PLATFORM=offscreen .venv/bin/variant-inference \
   --screenshot /tmp/chl-source-review.png
 ```
 
+## Install as a desktop application
+
+Build a distributable wheel and install it for the current user, with an
+applications-menu entry and the Computational Health Lab icon:
+
+```bash
+packaging/build-linux.sh
+packaging/install-linux.sh dist/chl_resolved_layers-*.whl
+```
+
+The installer needs no administrator rights. Remove it with
+`packaging/uninstall-linux.sh`, which leaves the local Run Archive untouched.
+
+An installed build ships **no Model Package**. Source Review, Dataset Profile,
+and archived Verified Runs stay fully usable; prediction reports
+`No Model Package installed` until an authorized package is supplied with
+`--model-package`. See [packaging/README.md](packaging/README.md).
+
 ## Architecture
 
 ```text
