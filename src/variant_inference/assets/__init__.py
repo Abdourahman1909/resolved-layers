@@ -14,6 +14,8 @@ ASSETS_ROOT = Path(__file__).resolve().parent
 
 SYMBOL = ASSETS_ROOT / "identity" / "resolved-layers-symbol.png"
 LOCKUP = ASSETS_ROOT / "identity" / "resolved-layers-lockup.png"
+# Paired with live wordmark text in the application bar.
+SYMBOL_BAR = ASSETS_ROOT / "identity" / "resolved-layers-symbol-bar.png"
 
 WINDOW_ICON_SIZES = (16, 24, 32, 48, 64, 128, 256, 512)
 

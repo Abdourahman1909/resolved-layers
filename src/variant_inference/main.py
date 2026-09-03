@@ -253,7 +253,7 @@ def main(argv: list[str] | None = None) -> int:
             archive,
         )
 
-    identity_lockup = assets.LOCKUP if assets.LOCKUP.is_file() else None
+    identity_symbol = assets.SYMBOL_BAR if assets.SYMBOL_BAR.is_file() else None
     model_package_controller = ModelPackageController(model_packages)
     model_package_controller.refresh_installed()
     application.aboutToQuit.connect(model_package_controller.shutdown)
@@ -290,7 +290,7 @@ def main(argv: list[str] | None = None) -> int:
         group_model,
         package,
         package_error=package_error,
-        identity_lockup=identity_lockup,
+        identity_symbol=identity_symbol,
         verified_runs=verified_runs,
         run_unavailable_reason=run_unavailable_reason,
         results_controller=results_controller,

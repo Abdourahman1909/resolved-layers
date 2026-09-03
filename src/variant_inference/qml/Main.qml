@@ -45,37 +45,45 @@ ApplicationWindow {
         border.width: 1
         border.color: root.rule
 
-        Image {
+        // Identity lockup: the approved symbol beside live wordmark text.
+        // A baked raster wordmark cannot stay legible at app-bar size, where its
+        // cap height falls to about ten pixels, so only the symbol is an image.
+        Row {
             id: identityLockup
             anchors.left: parent.left
-            anchors.leftMargin: 18
+            anchors.leftMargin: 20
             anchors.verticalCenter: parent.verticalCenter
-            height: 34
-            width: height * (implicitWidth > 0 ? implicitWidth / implicitHeight : 5.14)
-            source: sourceController.identityLockupUrl
-            visible: sourceController.identityLockupUrl !== "" && status === Image.Ready
-            fillMode: Image.PreserveAspectFit
-            smooth: true
-            mipmap: true
-            Accessible.role: Accessible.Graphic
-            Accessible.name: "Computational Health Lab"
-        }
+            spacing: 11
 
-        Text {
-            visible: !identityLockup.visible
-            anchors.left: parent.left
-            anchors.leftMargin: 24
-            anchors.verticalCenter: parent.verticalCenter
-            text: "Computational\nHealth Lab"
-            color: root.ink
-            font.family: "Arial"
-            font.pixelSize: 15
-            lineHeight: 0.92
+            Image {
+                id: identitySymbol
+                height: 36
+                width: height * (implicitHeight > 0 ? implicitWidth / implicitHeight : 0.93)
+                anchors.verticalCenter: parent.verticalCenter
+                source: sourceController.identitySymbolUrl
+                visible: sourceController.identitySymbolUrl !== "" && status === Image.Ready
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                mipmap: true
+                Accessible.role: Accessible.Graphic
+                Accessible.name: "Computational Health Lab"
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Computational Health Lab"
+                color: root.ink
+                font.family: "Arial"
+                font.pixelSize: 14
+                font.weight: Font.DemiBold
+                font.letterSpacing: 0.1
+            }
         }
 
         Rectangle {
-            anchors.left: parent.left
-            anchors.leftMargin: 214
+            id: identityDivider
+            anchors.left: identityLockup.right
+            anchors.leftMargin: 22
             anchors.verticalCenter: parent.verticalCenter
             width: 1
             height: 38
@@ -84,8 +92,8 @@ ApplicationWindow {
 
         Text {
             id: productTitle
-            anchors.left: parent.left
-            anchors.leftMargin: 242
+            anchors.left: identityDivider.right
+            anchors.leftMargin: 24
             anchors.verticalCenter: parent.verticalCenter
             text: "Resolved Layers"
             color: root.ink
@@ -1017,7 +1025,7 @@ ApplicationWindow {
                         anchors.rightMargin: 17
                         anchors.top: labelColumnSelect.bottom
                         anchors.topMargin: 58
-                        height: 36
+                        height: 30
                         primary: true
                         enabled: pathogenicSelect.currentIndex > 0 && benignSelect.currentIndex > 0 && pathogenicSelect.currentText !== benignSelect.currentText
                         text: sourceController.labelsAuthorized ? "Update authorized mapping" : "Authorize label mapping"
