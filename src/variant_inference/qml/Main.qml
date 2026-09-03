@@ -227,6 +227,35 @@ ApplicationWindow {
                 Keys.onReturnPressed: sourceController.setActiveSurface("evaluation")
                 Keys.onSpacePressed: sourceController.setActiveSurface("evaluation")
             }
+
+            Item {
+                width: 66
+                height: 46
+                activeFocusOnTab: true
+                Accessible.role: Accessible.Button
+                Accessible.name: "Settings"
+                Accessible.description: "Install the Model Package this machine uses for prediction"
+                Accessible.selected: sourceController.activeSurface === "settings"
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "Settings"
+                    color: sourceController.activeSurface === "settings" ? root.ink : root.secondary
+                    font.family: "Arial"
+                    font.pixelSize: 13
+                    font.weight: sourceController.activeSurface === "settings" ? Font.DemiBold : Font.Normal
+                }
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: 2
+                    color: sourceController.activeSurface === "settings" ? root.blue : "transparent"
+                }
+                TapHandler { onTapped: sourceController.setActiveSurface("settings") }
+                Keys.onReturnPressed: sourceController.setActiveSurface("settings")
+                Keys.onSpacePressed: sourceController.setActiveSurface("settings")
+            }
         }
 
         ActionButton {
@@ -1582,6 +1611,12 @@ ApplicationWindow {
         EvaluationWorkspace {
             id: evaluationWorkspace
             visible: sourceController.activeSurface === "evaluation"
+            anchors.fill: parent
+        }
+
+        ModelPackageSettings {
+            id: modelPackageSettings
+            visible: sourceController.activeSurface === "settings"
             anchors.fill: parent
         }
 

@@ -215,3 +215,60 @@ def test_evaluation_qml_smoke_paths_cover_authorized_unlabeled_missing_and_modif
 
     source_path.unlink()
     _run_evaluation_smoke(archive, run)
+
+
+def _run_settings_smoke(tmp_path, *arguments: str) -> None:
+    environment = dict(os.environ)
+    environment["QT_QPA_PLATFORM"] = "offscreen"
+    environment["XDG_CONFIG_HOME"] = str(tmp_path / "config")
+    # Settings must stand on its own, so neither inherited variable may leak in.
+    environment.pop("CHL_MODEL_PACKAGE_MANIFEST", None)
+    environment.pop("CHL_TRUSTED_MODEL_PACKAGE_SHA256", None)
+
+    result = subprocess.run(
+        (sys.executable, "-m", "variant_inference", "--surface", "settings", "--smoke", *arguments),
+        check=False,
+        capture_output=True,
+        env=environment,
+        text=True,
+        timeout=15,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "QQmlApplicationEngine failed" not in result.stderr
+    assert "ReferenceError" not in result.stderr
+    assert "Unable to assign" not in result.stderr
+
+
+def test_settings_qml_starts_without_a_model_package(tmp_path):
+    _run_settings_smoke(tmp_path)
+
+
+def test_settings_qml_starts_with_an_installed_model_package(tmp_path, fixture_dir):
+    from variant_inference.application.model_package_settings import (
+        ModelPackageInstallationService,
+    )
+    from variant_inference.infrastructure.model_package import JsonModelPackageRepository
+    from variant_inference.infrastructure.model_package_store import (
+        JsonModelPackageSettingsStore,
+    )
+
+    config = tmp_path / "config" / "Computational Health Lab" / "Resolved Layers"
+    store = JsonModelPackageSettingsStore(config / "model-package.json")
+    service = ModelPackageInstallationService(JsonModelPackageRepository(), store)
+    service.install(service.confirm(service.inspect(fixture_dir / "development-package")))
+
+    _run_settings_smoke(tmp_path)
+
+
+def test_settings_qml_starts_when_the_installed_package_has_vanished(tmp_path):
+    from variant_inference.domain.models import ModelPackageSettings
+    from variant_inference.infrastructure.model_package_store import (
+        JsonModelPackageSettingsStore,
+    )
+
+    config = tmp_path / "config" / "Computational Health Lab" / "Resolved Layers"
+    store = JsonModelPackageSettingsStore(config / "model-package.json")
+    store.save(ModelPackageSettings(manifest_path=tmp_path / "gone" / "manifest.json"))
+
+    # Fail closed and still render, rather than refusing to start.
+    _run_settings_smoke(tmp_path)

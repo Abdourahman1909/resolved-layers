@@ -114,8 +114,14 @@ The installer needs no administrator rights. Remove it with
 
 An installed build ships **no Model Package**. Source Review, Dataset Profile,
 and archived Verified Runs stay fully usable; prediction reports
-`No Model Package installed` until an authorized package is supplied with
-`--model-package`. See [packaging/README.md](packaging/README.md).
+`No Model Package installed` until a package is installed.
+
+Install one from **Settings** inside the application: choose the package folder,
+review its identity and manifest checksum, and install it. Packages recognised
+as official load directly; any other package requires an explicit one-time
+confirmation of its exact checksum, because loading a package deserializes
+model artifacts. See [packaging/README.md](packaging/README.md) and
+[ADR 0015](docs/adr/0015-trust-model-packages-by-pinned-or-confirmed-checksum.md).
 
 ## Architecture
 

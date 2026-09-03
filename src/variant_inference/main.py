@@ -10,6 +10,9 @@ from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtQml import QQmlApplicationEngine
 
 from variant_inference import assets
+from variant_inference.application.model_package_settings import (
+    ModelPackageInstallationService,
+)
 from variant_inference.application.verified_run import VerifiedRunService
 from variant_inference.application.variant_inspector import SourceRowEvidenceService
 from variant_inference.application.evaluation import GroundTruthEvaluationService
@@ -18,9 +21,13 @@ from variant_inference.infrastructure.model_package import (
     JsonModelPackageRepository,
     ModelPackageValidationError,
 )
+from variant_inference.infrastructure.model_package_store import (
+    JsonModelPackageSettingsStore,
+)
 from variant_inference.infrastructure.production_inference import PickleEnsembleInference
 from variant_inference.infrastructure.run_archive import DirectoryRunArchive
 from variant_inference.qt.controller import SourceReviewController
+from variant_inference.qt.model_package_controller import ModelPackageController
 from variant_inference.qt.profile_model import GroupBreakdownModel
 from variant_inference.qt.results_controller import ResultsController
 from variant_inference.qt.evaluation_controller import EvaluationController
@@ -76,9 +83,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--surface",
-        choices=("review", "profile", "results", "evaluation"),
+        choices=("review", "profile", "results", "evaluation", "settings"),
         default="review",
         help="Initial surface used by automated visual verification",
+    )
+    parser.add_argument(
+        "--select-model-package",
+        type=Path,
+        help="Preselect a Model Package in Settings for verification",
     )
     parser.add_argument(
         "--evaluation-label-column",
@@ -108,9 +120,25 @@ def main(argv: list[str] | None = None) -> int:
     if not window_icon.isNull():
         application.setWindowIcon(window_icon)
 
+    settings_store = JsonModelPackageSettingsStore(
+        Path(QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation))
+        / "model-package.json"
+    )
+    model_packages = ModelPackageInstallationService(
+        JsonModelPackageRepository(), settings_store
+    )
+
+    # Resolution order: an explicit argument wins, then the environment, then
+    # the package the operator installed through Settings. The last of those is
+    # the only route that does not require a terminal.
     package_path = args.model_package
     if package_path is None and os.environ.get("CHL_MODEL_PACKAGE_MANIFEST"):
         package_path = Path(os.environ["CHL_MODEL_PACKAGE_MANIFEST"])
+    if package_path is None:
+        configured = model_packages.settings().manifest_path
+        if configured is not None:
+            package_path = configured
+
     package = None
     package_error = ""
     if package_path:
@@ -129,6 +157,9 @@ def main(argv: list[str] | None = None) -> int:
         for value in os.environ.get("CHL_TRUSTED_MODEL_PACKAGE_SHA256", "").split(",")
         if value.strip()
     )
+    # Pinned official packages and the operator's own confirmations. Neither
+    # widens the gate: each is still an exact manifest checksum.
+    trusted_checksums.update(model_packages.trusted_checksums())
     run_archive_path = args.run_archive
     if run_archive_path is None and os.environ.get("CHL_RUN_ARCHIVE"):
         run_archive_path = Path(os.environ["CHL_RUN_ARCHIVE"])
@@ -156,6 +187,9 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     identity_lockup = assets.LOCKUP if assets.LOCKUP.is_file() else None
+    model_package_controller = ModelPackageController(model_packages)
+    model_package_controller.refresh_installed()
+    application.aboutToQuit.connect(model_package_controller.shutdown)
 
     table_model = CsvTableModel()
     group_model = GroupBreakdownModel()
@@ -193,6 +227,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("sourceController", controller)
+    engine.rootContext().setContextProperty("modelPackageController", model_package_controller)
     engine.rootContext().setContextProperty("sourceTableModel", table_model)
     engine.rootContext().setContextProperty("groupBreakdownModel", group_model)
     engine.rootContext().setContextProperty("resultsController", results_controller)
@@ -226,6 +261,16 @@ def main(argv: list[str] | None = None) -> int:
             roots[0].deleteLater()
         QTimer.singleShot(50, application.quit)
 
+    if args.surface == "settings":
+        # Settings needs neither a source nor a completed run to be reachable.
+        QTimer.singleShot(0, lambda: controller.setActiveSurface("settings"))
+    if args.select_model_package:
+        QTimer.singleShot(
+            0,
+            lambda: model_package_controller.selectPackage(
+                str(args.select_model_package.resolve())
+            ),
+        )
     if args.source_path:
         QTimer.singleShot(0, lambda: controller.openSource(str(args.source_path.resolve())))
         if args.surface == "profile":

@@ -27,12 +27,27 @@ Prediction is unavailable and reports `No Model Package installed`. It does not
 report a fabricated fault, and it does not blame the reviewed Source Dataset for
 blocking issues that dataset does not have.
 
-Supply a package at launch once it is authorized:
+## Installing a Model Package
+
+Open **Settings** in the application, choose the package folder, review the
+identity and manifest checksum it reports, and install it. This is the route
+that needs no terminal, and it is how someone who is not the developer installs
+a package they received separately.
+
+A package recognised as official loads directly. Any other package shows an
+explicit trust warning and cannot be installed until the operator confirms that
+exact manifest checksum, because loading a package deserializes model artifacts.
+Installing records only the package location and checksum; no artifact is copied.
+
+The command-line route remains available and takes precedence:
 
 ```
 resolved-layers --model-package /path/to/MANIFEST.json \
                 --trusted-manifest-sha256 <sha256>
 ```
+
+Resolution order is argument, then `CHL_MODEL_PACKAGE_MANIFEST`, then the
+package installed through Settings.
 
 ## Build
 
