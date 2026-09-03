@@ -242,6 +242,8 @@ The README was rewritten from a developer changelog into a product README: ident
 
 Accepted positioning, on the user's explicit instruction: the product and the laboratory lead; **TEKNOFEST is described as one deployment context the lab competes in, not as the project's identity or purpose.** This matches the already-recorded direction that TEKNOFEST is the first demanding deployment context rather than the permanent product boundary.
 
+A product page was designed and published as a private Artifact at https://claude.ai/code/artifact/40cdeabb-3552-495b-95e8-ce29fe334eff, with its source committed at `docs/site/index.html`. It inherits the Evidence Desk system rather than inventing a palette: laboratory blue `#0B42E7` as the sole accent on the established ink, secondary, and rule values, with a derived dark theme. Its structure is the application's own evidence row, label left and value right over a hairline, and its hero is a real run receipt showing the actual 736-row verified run with its true score distribution and threshold marker rather than invented marketing content. The page uses the locked identity asset directly; a hand-drawn approximation of the symbol was written during drafting and removed before publication, because introducing replacement logo geometry is forbidden.
+
 The repository remains private and is deliberately left so. Publishing it is now recorded as its own open decision, separate from the licence, because it would publish all source and history while artifact-publication permissions remain unresolved.
 
 ## 7. Authoritative files
