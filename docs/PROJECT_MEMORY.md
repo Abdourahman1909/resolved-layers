@@ -110,7 +110,7 @@ This hypothesis is not fully accepted until the remaining grilling questions are
 - Offline-only versus optional hosted deployment.
 - Production vector assets and usage rules for the approved Resolved Layers identity and product lockup.
 - Accessibility target and supported languages.
-- License for application source code.
+- Whether the repository becomes public, and when. Making it public would publish all source and history, and the artifact-publication questions below remain unresolved, so it is deliberately a separate decision from choosing a license.
 - Whether organizer agreements permit publishing trained weights, feature schema, categorical mappings, or example data.
 - Whether organizers permit changing the PDR-reported threshold or retraining the model before the final.
 - Deferred AI assistant questions: external-data boundary, consent model, retention requirements, and local-provider support.
@@ -231,6 +231,20 @@ Two environment facts were discovered and must not be relitigated. PyInstaller s
 Verification: the AppImage produced results identical to the development environment on the restricted PDR package and the 736-row held-out source, reporting 736 records, 600 Pathogenic, 136 Benign, and row 1 ensemble 0.905836765998 to twelve decimals. The interface starts from the AppImage with the shipped identity and all five surfaces. The suite passes 102 tests; Python compilation and `git diff --check` pass.
 
 Known limit carried forward: a build made on Ubuntu 22.04 requires glibc 2.35 or newer and will not start on Ubuntu 20.04 or older. Building inside a container with an older base is the fix and remains undone. AppImage does not address this, because it is a glibc question rather than a packaging one.
+
+The repository presentation and licensing milestone completed on September 3, 2026 on `codex/professional-repo`.
+
+Accepted licence, chosen by the user on September 3, 2026, resolving a previously open decision: **MIT**, copyright Computational Health Lab, 2026. `LICENSE` is committed, declared in `pyproject.toml`, and ships inside the wheel.
+
+A dependency licence review was performed rather than assumed. PySide6 is offered under LGPL-3.0 or GPL; the free option used here is **LGPL-3.0**, which the project's own memory had already flagged as a release gate. MIT for this project's own source is compatible because the standalone build links Qt dynamically, shipping Qt as separate shared objects inside the AppImage rather than compiling it in, so recipients keep the LGPL right to replace those libraries. `THIRD-PARTY-NOTICES.md` records every bundled component, states the LGPL position and how to exercise it, and notes that no GPL-only Qt module is used. Other bundled components are Apache-2.0, MIT, BSD-3-Clause, and PSF-2.0.
+
+The README was rewritten from a developer changelog into a product README: identity lockup, licence and release badges, a rendered screenshot, why the product exists, installation from the AppImage with an explicit warning not to download the source archives GitHub attaches automatically, the Model Package separation, capabilities in plain language, development instructions, and a lab section.
+
+Accepted positioning, on the user's explicit instruction: the product and the laboratory lead; **TEKNOFEST is described as one deployment context the lab competes in, not as the project's identity or purpose.** This matches the already-recorded direction that TEKNOFEST is the first demanding deployment context rather than the permanent product boundary.
+
+A product page was designed and published as a private Artifact at https://claude.ai/code/artifact/40cdeabb-3552-495b-95e8-ce29fe334eff, with its source committed at `docs/site/index.html`. It inherits the Evidence Desk system rather than inventing a palette: laboratory blue `#0B42E7` as the sole accent on the established ink, secondary, and rule values, with a derived dark theme. Its structure is the application's own evidence row, label left and value right over a hairline, and its hero is a real run receipt showing the actual 736-row verified run with its true score distribution and threshold marker rather than invented marketing content. The page uses the locked identity asset directly; a hand-drawn approximation of the symbol was written during drafting and removed before publication, because introducing replacement logo geometry is forbidden.
+
+The repository remains private and is deliberately left so. Publishing it is now recorded as its own open decision, separate from the licence, because it would publish all source and history while artifact-publication permissions remain unresolved.
 
 ## 7. Authoritative files
 

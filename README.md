@@ -1,173 +1,171 @@
+<div align="center">
+
+<img src="src/variant_inference/assets/identity/resolved-layers-lockup.png" alt="Computational Health Lab" width="360">
+
 # Resolved Layers
 
-**Resolved Layers** is Computational Health Lab's evidence-first desktop product for traceable model inference. Its current `Variant Inference` workflow focuses on missense-variant prediction. The present vertical slices implement Source Review, pre-prediction Dataset Profile, trusted deterministic CatBoost–LightGBM inference, immutable local Verified Runs, read-only post-prediction Results and Variant Inspector surfaces, and a label-dependent Observed Evaluation workspace in PySide6 and Qt Quick.
+**A desktop application for model inference you can actually verify.**
 
-## What works now
+[![License: MIT](https://img.shields.io/badge/License-MIT-0B42E7.svg)](LICENSE)
+[![Release](https://img.shields.io/badge/release-v0.1.0-0B42E7.svg)](https://github.com/Abdourahman1909/resolved-layers/releases/latest)
+[![Platform](https://img.shields.io/badge/platform-Linux%20x86--64-303847.svg)](#install)
+[![Built with](https://img.shields.io/badge/built%20with-PySide6%20%2B%20Qt%20Quick-303847.svg)](https://doc.qt.io/qtforpython/)
 
-- Compact local CSV selection and a faithful, read-only Source Dataset preview.
-- Virtualized QML `TableView` delegates backed by a disk-based row store and bounded 1,024-row Python cache, tested with 10,000 rows.
-- A Dataset Profile available immediately after opening a CSV, with dimensions, source missingness, selectable categorical grouping, and exact raw-record drill-down before prediction.
-- Explicit Ground-Truth Authorization for descriptive class composition: the operator selects a label column and maps distinct source values to Pathogenic and Benign. Missing and unrecognized values remain visible and no label-like column is interpreted automatically.
-- One restrained Pathogenic/Benign composition bar, exact class coverage, compact group counts/percentages, and visible removable class/group filters that preserve immutable Source Row identity.
-- SQLite-backed aggregation and filtering for the Dataset Profile, including a synthetic 10,000-row verification that does not hydrate the bounded row-page cache.
-- Source Identity evidence: filename, dimensions, SHA-256, delimiter, encoding, and last-modified time.
-- Integrity-checked JSON Model Package manifest loading. Loose pickle files are never accepted by the application boundary.
-- Inference Contract Fit with distinct Required, Omissible, and surplus-column policy; blockers and warnings remain separate.
-- Transformation Audit summaries for type handling, missing values, fixed category mappings, column alignment, and row filtering.
-- Mandatory explicit operator confirmation. Changing the source resets confirmation; blocking findings keep the run action disabled.
-- Deterministic, label-excluding CatBoost–LightGBM inference through an explicitly trusted, integrity-checked Model Package. The external restricted PDR package reproduces all 736 saved ensemble and component probabilities after four-decimal rounding and the expected TN 109 / FP 80 / FN 27 / TP 520 confusion matrix at threshold 0.61.
-- An atomic local Run Archive that stores ordered prediction evidence plus package, contract, source, output-checksum, warning, audit, and timing evidence. It records the source path and checksum by default and never copies the Source Dataset without a future explicit opt-in flow.
-- Run Archive reopening with prediction-evidence checksum verification, a compact score-distribution Overview, truthful run-level warning evidence, purposeful investigation sets, and a separate searchable Records table that retains exact Source Row identity.
-- A table-visible, resizable Variant Inspector with complete prediction, component-score, threshold, run, package, contract, and source-reference evidence. It recovers the complete original row only while the archived external source remains checksum-valid and reports modified or missing sources without exposing stale values.
-- A distinct Observed Evaluation workspace gated by checksum-valid source evidence and explicit Ground-Truth Authorization. It joins immutable predictions to exact raw labels by Source Row, discloses evaluated/missing/unrecognized denominators, calculates TP/FP/FN/TN plus F1, precision, recall, MCC, and accuracy in Python, and carries exact error cohorts into Records and the Variant Inspector. Zero-denominator formulas display `Undefined` rather than a fabricated value.
-- The approved Split Evidence Desk hybrid v2 shell and the full-color Resolved Layers identity, currently shown from the approved raster reference without vector reinterpretation.
+</div>
 
-With an explicitly trusted manifest checksum configured, the run button creates and persists a Verified Run after Source Review confirmation, then opens its read-only Results workspace. Dataset Profile remains descriptive and never calculates F1 or other performance metrics. Evaluation is separate and requires explicit authorized labels; Competition Export Profiles and read-only AI integration remain later workspaces.
+---
 
-## Setup
+Most model tooling asks you to trust a number. Resolved Layers is built the other
+way round: every prediction stays connected to the exact row it came from, the
+exact model that produced it, and the exact file you opened.
 
-Python 3.10 or newer is required.
+Its current workflow, **Variant Inference**, predicts missense-variant
+pathogenicity. The application itself is not tied to that problem.
+
+<div align="center">
+<img src="docs/media/results-overview.png" alt="Prediction results with the ensemble score distribution and investigation sets" width="900">
+</div>
+
+## Why it exists
+
+Running a model is easy. Defending the result is not.
+
+When someone asks *"where did this number come from?"*, the usual answer is a
+notebook and a hope that nothing changed since. Resolved Layers answers with
+evidence: a checksummed source, a fixed model package, an immutable run, and a
+record-level trail from any prediction back to the original row.
+
+| | |
+| --- | --- |
+| **Nothing runs unreviewed** | You see the exact source, its SHA-256, and how it fits the model's contract, then confirm it explicitly before anything executes. |
+| **Runs are immutable** | Each completed run is written once, with checksums over its own predictions. It cannot be edited into agreement with a later story. |
+| **Evidence, not vibes** | Scores are model output, labelled as such. No prediction is presented as biological or clinical fact. |
+| **Metrics require permission** | Accuracy is never guessed from a column that looks like labels. You choose the column, map the classes, and authorize it. |
+| **Nothing is invented** | Where a value cannot be trusted, the application says so and withholds it, rather than showing something plausible. |
+
+## Install
+
+Download the latest **`Resolved_Layers-<version>-x86_64.AppImage`** from
+[Releases](https://github.com/Abdourahman1909/resolved-layers/releases/latest),
+then:
 
 ```bash
-cd resolved-layers
-python -m venv .venv
-.venv/bin/python -m pip install --upgrade pip
-.venv/bin/python -m pip install -e '.[dev]'
+chmod +x Resolved_Layers-0.1.0-x86_64.AppImage
+./Resolved_Layers-0.1.0-x86_64.AppImage
 ```
 
-On Windows, use `.venv\Scripts\python` in the equivalent commands.
+That is the whole installation. The file bundles its own Python runtime, Qt,
+and model libraries, so nothing else is needed. Deleting it removes the
+application completely.
 
-## Run
+> Download the **AppImage**, not the "Source code" archives that GitHub attaches
+> automatically. Those contain this repository's code rather than a runnable
+> application.
 
-Start the shell without a package:
+**Requires** Linux x86-64 with glibc 2.35 or newer (Ubuntu 22.04+, Fedora 36+).
+
+Prefer a menu entry and a launcher on `PATH`? See
+[packaging/README.md](packaging/README.md) for the wheel-based installer.
+
+## Model Packages
+
+**The application ships without a model.** A Model Package is supplied
+separately and installed once, from **Settings**.
+
+That separation is deliberate. Loading a package deserializes model artifacts,
+and deserialization executes code, so a package runs only when its exact
+manifest SHA-256 is either recognised by the release or explicitly confirmed by
+you. Loose model files and unpackaged folders are never accepted.
+
+Everything that does not need the model works immediately: source review,
+dataset profiling, and any runs already in the local archive, including their
+records, evaluation, and export.
+
+## What it does
+
+**Review before you run.** Open a CSV and see its exact identity — filename,
+dimensions, SHA-256, delimiter, encoding — beside a faithful read-only view of
+the rows themselves. A transformation audit reports how the data will be aligned
+to the model's contract. Nothing executes until you confirm.
+
+**Understand the dataset first.** Dimensions, missingness, categorical group
+breakdowns, and class composition, with filters that drill straight through to
+the exact source rows behind any group.
+
+**Run it once, immutably.** A verified run records ordered predictions with
+checksums over the predictions themselves, plus the source, model package,
+contract, threshold, and audit that produced them.
+
+**Investigate the cohort.** The score distribution and the fixed release
+threshold, with purposeful investigation sets — records near the threshold, and
+records where the ensemble's components disagree. These are where a model is
+least certain, and you can find them without any labels at all.
+
+**Inspect single records.** Select any prediction and the complete original
+source row opens beside it, recovered only while the source file remains
+checksum-valid. If it changed, the application says so instead of showing stale
+values.
+
+**Evaluate, when you have truth.** Choose a ground-truth column, map its values,
+authorize it, and get F1, precision, recall, MCC, accuracy and the confusion
+counts — with the evaluated denominator and every excluded row disclosed. Error
+cohorts carry straight into the records table.
+
+**Export what you need.** Every original column beside the predictions, in
+source-row order regardless of how you were sorting, with a traceability sidecar
+recording exactly what produced the file.
+
+## Development
+
+Python 3.10 or newer.
 
 ```bash
-.venv/bin/variant-inference
-```
-
-Open a Source Dataset against a validated package manifest:
-
-```bash
-.venv/bin/variant-inference \
-  --model-package /absolute/path/to/package/manifest.json \
-  --open /absolute/path/to/source.csv
-```
-
-Creating a Verified Run additionally requires the expected manifest SHA-256 as an independent trust anchor. The Run Archive defaults to the platform's local application-data directory:
-
-```bash
-.venv/bin/variant-inference \
-  --model-package /absolute/path/to/package/manifest.json \
-  --trusted-manifest-sha256 EXPECTED_SHA256 \
-  --run-archive /absolute/path/to/local/run-archive \
-  --open /absolute/path/to/source.csv
-```
-
-`CHL_MODEL_PACKAGE_MANIFEST`, `CHL_TRUSTED_MODEL_PACKAGE_SHA256`, and `CHL_RUN_ARCHIVE` provide equivalent local configuration. Keep machine-specific paths and restricted package material out of committed defaults. The application validates all declared artifact checksums before exposing contract policy and requires the independent manifest checksum before model deserialization.
-
-Reopen a saved run directly from the configured archive:
-
-```bash
-.venv/bin/variant-inference \
-  --run-archive /absolute/path/to/local/run-archive \
-  --open-run RUN_ID
-```
-
-A clearly synthetic fixture is included only for exercising Source Review; it contains no organizer rows, mappings, or trained weights:
-
-```bash
-.venv/bin/variant-inference \
-  --model-package tests/fixtures/development-package/manifest.json \
-  --open tests/fixtures/source_review.csv
-```
-
-## Test and smoke check
-
-Some ROS-enabled Linux environments globally register unrelated pytest plugins. Disabling auto-loading keeps this repository's test run isolated:
-
-```bash
+python3 -m venv .venv
+.venv/bin/pip install -e ".[dev]"
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -m pytest
-QT_QPA_PLATFORM=offscreen .venv/bin/variant-inference --smoke
+.venv/bin/resolved-layers
 ```
 
-For a rendered headless check:
-
-```bash
-QT_QPA_PLATFORM=offscreen .venv/bin/variant-inference \
-  --model-package tests/fixtures/development-package/manifest.json \
-  --open tests/fixtures/source_review.csv \
-  --screenshot /tmp/chl-source-review.png
-```
-
-## Export
-
-Open a Verified Run and use **Export CSV** in Results. Research Export writes
-every original Source Dataset column beside the predictions, plus a companion
-`.evidence.json` recording the run, source checksum, Model Package, and Release
-Threshold.
-
-Rows are written in Source Row order regardless of table sorting or active
-cohort filters, and the export is refused if the original source has changed or
-is missing. Competition Export is separate and awaits the official organizer
-format.
-
-## Standalone application (no Python required)
-
-```bash
-packaging/build-standalone.sh
-```
-
-Produces `dist/Resolved_Layers-x86_64.AppImage`, one file that bundles its own
-Python runtime, Qt, CatBoost, and LightGBM. The recipient makes it executable
-and opens it; nothing else is needed on their machine.
-
-Verify that a build can actually predict with
-`--verify-inference --model-package MANIFEST --open SOURCE`.
-
-## Install as a desktop application
-
-Build a distributable wheel and install it for the current user, with an
-applications-menu entry and the Computational Health Lab icon:
-
-```bash
-packaging/build-linux.sh
-packaging/install-linux.sh dist/chl_resolved_layers-*.whl
-```
-
-The installer needs no administrator rights. Remove it with
-`packaging/uninstall-linux.sh`, which leaves the local Run Archive untouched.
-
-An installed build ships **no Model Package**. Source Review, Dataset Profile,
-and archived Verified Runs stay fully usable; prediction reports
-`No Model Package installed` until a package is installed.
-
-Install one from **Settings** inside the application: choose the package folder,
-review its identity and manifest checksum, and install it. Packages recognised
-as official load directly; any other package requires an explicit one-time
-confirmation of its exact checksum, because loading a package deserializes
-model artifacts. See [packaging/README.md](packaging/README.md) and
-[ADR 0015](docs/adr/0015-trust-model-packages-by-pinned-or-confirmed-checksum.md).
-
-## Architecture
+Build the standalone application with `packaging/build-standalone.sh`.
 
 ```text
 src/variant_inference/
 ├── domain/          immutable product language and validation policy
-├── application/     product use cases and typed capability ports
-├── infrastructure/  CSV and validated Model Package adapters
+├── application/     use cases and typed capability ports
+├── infrastructure/  CSV, model package, and archive adapters
 ├── qt/              thin PySide6 presentation adapters
-└── qml/             custom Qt Quick application interface
+└── qml/             Qt Quick interface
 ```
 
-The important boundary is intentional: CSV parsing, model-package validation, deterministic inference, Run Archive persistence, evaluation, Competition Export Profiles, and future read-only investigation evidence each have a separate port or adapter. QML does not parse data, infer schema policy, deserialize models, calculate metrics, or write exports.
+The boundary is deliberate. CSV parsing, package validation, inference, archive
+persistence, evaluation, and export each sit behind a separate port. QML parses
+no data, deserializes no models, and calculates no metrics.
 
-## Safety and artifact policy
+Architectural decisions are recorded in [docs/adr/](docs/adr/), product language
+in [CONTEXT.md](CONTEXT.md), and project history in
+[docs/PROJECT_MEMORY.md](docs/PROJECT_MEMORY.md).
 
-- Do not commit organizer data, trained weights, or category mappings derived from restricted data.
-- The Production Model remains the current CatBoost–LightGBM release, but it becomes runnable only as a validated immutable Model Package with a complete Inference Contract.
-- Required versus Omissible feature status must be declared by that contract. It is never inferred from an incoming final CSV.
-- Source Row identity and original order are immutable.
-- Evaluation and Competition Submission are separate workspaces. Unlabeled competition data never produce local F1; missing, modified, or unauthorized source evidence withholds observed metrics.
-- Until the official organizer schema is published, Competition Submission must report `Organizer format pending` and cannot label an invented format as official.
+## About Computational Health Lab
 
-Read [docs/PROJECT_MEMORY.md](docs/PROJECT_MEMORY.md), [CONTEXT.md](CONTEXT.md), and [docs/PRD.md](docs/PRD.md) before extending the product.
+Computational Health Lab turns complex health data into transparent, testable
+computational evidence.
+
+We build tools where the reasoning is inspectable rather than asserted — because
+a result nobody can check is not a result. Resolved Layers is our desktop
+product for exactly that.
+
+The lab's current variant-inference model was developed for the TEKNOFEST 2026
+AI in Health competition, where we compete as a finalist. The competition is one
+deployment context for this work, not its purpose.
+
+## License
+
+Released under the [MIT License](LICENSE). Copyright © 2026 Computational Health
+Lab.
+
+The distributed application bundles third-party components under their own
+licenses, including Qt under the LGPL-3.0. See
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+Model packages, trained weights, and datasets are **not** covered by this
+license and are not distributed with the application.
