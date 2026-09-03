@@ -218,6 +218,20 @@ Verified against the real 736-row PDR run: 736 rows, all 353 original source col
 
 Competition Export remains deliberately unimplemented. The organizer schema and transfer mechanism are still unpublished and must not be guessed.
 
+The standalone binary milestone completed on September 3, 2026 on `codex/standalone-binary`, based on `main` after Research Export merged. The application can now be handed to someone with no Python installed.
+
+Accepted packaging decision: PyInstaller, not Nuitka. The user confirmed on September 3, 2026 that hiding source is not a requirement, which removed Nuitka's only substantial advantage while leaving its costs, namely fragile builds against PySide6/QML and 30 to 60 minute build attempts. The earlier memory direction of `pyside6-deploy`/Nuitka is therefore superseded for this reason and not on technical failure. The build bundles bytecode, which is recoverable; that is accepted.
+
+The deliverable is `dist/Resolved_Layers-x86_64.AppImage`, one file, 298 MB compressed and about 916 MB extracted, bundling its own Python runtime, Qt, CatBoost, and LightGBM. Excluding the Qt modules the application never uses cut roughly 235 MB from PySide6; the application uses only QtCore, QtGui, QtQml and the QtQuick runtime. Plotting libraries reachable through CatBoost, namely matplotlib, plotly, and fontTools, are also excluded. The remainder is CatBoost, Qt, and the scientific stack and cannot be reduced further without removing functionality.
+
+Two environment facts were discovered and must not be relitigated. PyInstaller splits paths on whitespace when resolving shared-library dependencies, so a build fails while the project or its virtual environment sits under `CORE TRAINING CELLS (copie)`; `packaging/build-standalone.sh` therefore stages a space-free copy and builds in a fresh isolated environment. Second, a correction to an earlier claim in this memory: the inference core does not import CatBoost, LightGBM, scikit-learn, pandas, or NumPy at startup. NumPy and pandas are imported inside the prediction function and the boosters arrive only through unpickling; startup was measured and loads none of the ML stack. Making imports lazy would not have reduced bundle size in any case, because a bundler includes what is reachable rather than what is loaded.
+
+`--verify-inference` was added because a bundled build loads CatBoost and LightGBM as native libraries that no static import names, so a broken bundle starts normally and fails only at prediction, and the interface requires an operator to confirm before predicting. The flag loads a package, runs deterministic inference on a source, prints package identity, threshold, record count, class counts, and the first row's ensemble score, then exits. It runs before any Qt object is constructed so it needs no display.
+
+Verification: the AppImage produced results identical to the development environment on the restricted PDR package and the 736-row held-out source, reporting 736 records, 600 Pathogenic, 136 Benign, and row 1 ensemble 0.905836765998 to twelve decimals. The interface starts from the AppImage with the shipped identity and all five surfaces. The suite passes 102 tests; Python compilation and `git diff --check` pass.
+
+Known limit carried forward: a build made on Ubuntu 22.04 requires glibc 2.35 or newer and will not start on Ubuntu 20.04 or older. Building inside a container with an older base is the fix and remains undone. AppImage does not address this, because it is a glibc question rather than a packaging one.
+
 ## 7. Authoritative files
 
 1. `docs/adr/` for accepted architectural decisions.

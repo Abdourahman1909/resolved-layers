@@ -86,3 +86,45 @@ def test_icons_are_square_and_transparent(size: int) -> None:
 
     assert (width, height) == (size, size)
     assert colour_type == 6, "icons must keep an alpha channel"
+
+
+# Standalone build verification ---------------------------------------------
+
+
+def test_verify_inference_needs_a_package_and_a_source(capsys) -> None:
+    """The packaging self-test refuses to report success on missing inputs."""
+    from variant_inference.main import build_parser, verify_inference
+
+    args = build_parser().parse_args(["--verify-inference"])
+
+    assert verify_inference(args) == 2
+    assert "--model-package" in capsys.readouterr().err
+
+
+def test_verify_inference_reports_an_invalid_package(tmp_path, capsys) -> None:
+    from variant_inference.main import build_parser, verify_inference
+
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text("{ not a manifest", encoding="utf-8")
+    source = tmp_path / "source.csv"
+    source.write_text("a,b\n1,2\n", encoding="utf-8")
+
+    args = build_parser().parse_args(
+        ["--verify-inference", "--model-package", str(manifest), "--open", str(source)]
+    )
+
+    assert verify_inference(args) == 3
+    assert "rejected" in capsys.readouterr().err
+
+
+def test_verify_inference_does_not_need_a_display() -> None:
+    """It must run before any Qt object exists, so a headless build can self-test."""
+    import inspect
+
+    from variant_inference import main as main_module
+
+    body = inspect.getsource(main_module.main)
+    verify_call = body.index("verify_inference(args)")
+    application_construction = body.index("QGuiApplication(")
+
+    assert verify_call < application_construction

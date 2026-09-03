@@ -111,6 +111,19 @@ cohort filters, and the export is refused if the original source has changed or
 is missing. Competition Export is separate and awaits the official organizer
 format.
 
+## Standalone application (no Python required)
+
+```bash
+packaging/build-standalone.sh
+```
+
+Produces `dist/Resolved_Layers-x86_64.AppImage`, one file that bundles its own
+Python runtime, Qt, CatBoost, and LightGBM. The recipient makes it executable
+and opens it; nothing else is needed on their machine.
+
+Verify that a build can actually predict with
+`--verify-inference --model-package MANIFEST --open SOURCE`.
+
 ## Install as a desktop application
 
 Build a distributable wheel and install it for the current user, with an

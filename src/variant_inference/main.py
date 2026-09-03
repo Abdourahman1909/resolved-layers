@@ -78,6 +78,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Open Records and select one Source Row for verification",
     )
     parser.add_argument("--smoke", action="store_true", help="Load the QML shell, then exit")
+    parser.add_argument(
+        "--verify-inference",
+        action="store_true",
+        help=(
+            "Run deterministic inference once with --model-package and --open, "
+            "report the class counts, and exit. Verifies that a packaged build "
+            "can actually load and execute its models."
+        ),
+    )
     parser.add_argument("--screenshot", type=Path, help="Save one startup screenshot, then exit")
     parser.add_argument(
         "--window-size",
@@ -109,8 +118,57 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def verify_inference(args: argparse.Namespace) -> int:
+    """Prove a build can load and execute its models, without the interface.
+
+    A packaged build bundles CatBoost and LightGBM as native libraries that no
+    static import names. This exercises the real path end to end so a broken
+    bundle is caught by running it, rather than discovered during a demonstration.
+    """
+    if not args.model_package or not args.source_path:
+        print("--verify-inference needs --model-package and --open", file=sys.stderr)
+        return 2
+
+    trusted = {value.strip().lower() for value in args.trusted_manifest_sha256 if value.strip()}
+    trusted.update(
+        value.strip().lower()
+        for value in os.environ.get("CHL_TRUSTED_MODEL_PACKAGE_SHA256", "").split(",")
+        if value.strip()
+    )
+
+    try:
+        package = JsonModelPackageRepository().load(args.model_package)
+    except ModelPackageValidationError as error:
+        print(f"Model Package rejected: {error}", file=sys.stderr)
+        return 3
+
+    trusted.add(package.manifest_checksum.lower())
+    source = CsvSourceReader().open(args.source_path)
+    try:
+        predictions = PickleEnsembleInference(trusted).predict(source, package)
+    except Exception as error:  # any failure here means the build cannot predict
+        print(f"Inference failed: {type(error).__name__}: {error}", file=sys.stderr)
+        return 4
+    finally:
+        source.close()
+
+    pathogenic = sum(1 for record in predictions if record.prediction == "Pathogenic")
+    print(f"package     {package.display_name} {package.version}")
+    print(f"threshold   {package.contract.release_threshold}")
+    print(f"records     {len(predictions)}")
+    print(f"pathogenic  {pathogenic}")
+    print(f"benign      {len(predictions) - pathogenic}")
+    if predictions:
+        first = predictions[0]
+        print(f"row 1       {first.prediction} ensemble={first.ensemble_score:.12f}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.verify_inference:
+        # Deliberately before any Qt object exists: this path needs no display.
+        return verify_inference(args)
     application = QGuiApplication(sys.argv[:1])
     application.setApplicationName("Resolved Layers")
     application.setOrganizationName("Computational Health Lab")
