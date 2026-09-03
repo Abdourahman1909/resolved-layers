@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Resolved Layers
+GenericName=Variant Inference
+Comment=Evidence-first desktop inference for missense-variant pathogenicity
+Exec=resolved-layers %f
+TryExec=resolved-layers
+Icon=org.computationalhealthlab.ResolvedLayers
+Terminal=false
+Categories=Science;Biology;MedicalSoftware;Education;
+Keywords=variant;genomics;pathogenicity;inference;evidence;
+MimeType=text/csv;
+StartupNotify=true
+StartupWMClass=Resolved Layers
