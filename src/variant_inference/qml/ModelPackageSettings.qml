@@ -290,6 +290,47 @@ Item {
             Item { width: 1; height: 26 }
 
             Text {
+                text: "ABOUT"
+                color: settings.blue
+                font.family: "Arial"
+                font.pixelSize: 12
+                font.weight: Font.DemiBold
+                font.letterSpacing: 0.6
+            }
+
+            Item { width: 1; height: 12 }
+
+            Rectangle {
+                width: body.width
+                implicitHeight: aboutColumn.implicitHeight + 34
+                radius: 6
+                color: "#FBFCFD"
+                border.width: 1
+                border.color: settings.softRule
+
+                Column {
+                    id: aboutColumn
+                    x: 20
+                    y: 17
+                    width: parent.width - 40
+                    spacing: 2
+
+                    EvidenceRow {
+                        width: parent.width
+                        label: "Application"
+                        value: "Resolved Layers " + modelPackageController.applicationVersion
+                    }
+                    EvidenceRow {
+                        width: parent.width
+                        label: "Owner"
+                        value: "Computational Health Lab"
+                    }
+                }
+            }
+
+            Item { width: 1; height: 26 }
+
+            Text {
                 width: body.width
                 text: "Model Packages are supplied separately and are never bundled with the "
                     + "application. Installing one records its location and checksum only; no model "

@@ -128,3 +128,33 @@ def test_verify_inference_does_not_need_a_display() -> None:
     application_construction = body.index("QGuiApplication(")
 
     assert verify_call < application_construction
+
+
+# Version identity -----------------------------------------------------------
+
+
+def test_the_package_declares_a_single_version() -> None:
+    """One source of truth, so a released build cannot misreport itself."""
+    import re
+
+    import variant_inference
+
+    assert re.fullmatch(r"\d+\.\d+\.\d+", variant_inference.__version__)
+
+    pyproject = (Path(variant_inference.__file__).parents[2] / "pyproject.toml").read_text()
+    assert 'dynamic = ["version"]' in pyproject
+    assert 'version = {attr = "variant_inference.__version__"}' in pyproject
+    # A literal version in pyproject would be a second, driftable source.
+    assert '\nversion = "' not in pyproject
+
+
+def test_the_version_is_reportable_without_a_display(capsys) -> None:
+    """--version must work on a machine with no graphical session."""
+    import variant_inference
+    from variant_inference.main import build_parser
+
+    with pytest.raises(SystemExit) as exit_info:
+        build_parser().parse_args(["--version"])
+
+    assert exit_info.value.code == 0
+    assert variant_inference.__version__ in capsys.readouterr().out

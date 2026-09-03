@@ -12,6 +12,7 @@ from pathlib import Path
 
 from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
 
+from variant_inference import __version__
 from variant_inference.application.model_package_settings import (
     ModelPackageInstallationService,
 )
@@ -217,6 +218,11 @@ class ModelPackageController(QObject):
     def installedPath(self) -> str:  # noqa: N802
         installed = self._installed
         return str(installed.manifest_path.parent) if installed else "—"
+
+    @Property(str, constant=True)
+    def applicationVersion(self) -> str:  # noqa: N802
+        """The build version, so a report can name the exact build in use."""
+        return __version__
 
     def shutdown(self) -> None:
         self._executor.shutdown(wait=False, cancel_futures=True)
