@@ -68,6 +68,24 @@ Set `BUILD_APPIMAGE=0` to produce a tarball instead, and `APPIMAGE_TOOL=/path/to
 if the tool is not on `PATH`. Get it from
 https://github.com/AppImage/appimagetool/releases.
 
+### Adding it to the applications menu
+
+An AppImage runs on its own, but nothing registers it with the desktop, so
+searching for it finds nothing.
+
+```
+packaging/install-appimage.sh Resolved_Layers-0.1.0-x86_64.AppImage
+```
+
+This copies the AppImage to `~/Applications`, installs its icons, and writes a
+desktop entry pointing at that exact path. It reads the icons out of the
+AppImage itself, so it needs no repository checkout and no administrator rights.
+Moving or deleting the AppImage afterwards breaks the entry; rerun the script
+if you relocate it.
+
+Remove the entry again with `packaging/uninstall-appimage.sh`, which leaves the
+AppImage file and the local Run Archive alone.
+
 ### Verifying a build can actually predict
 
 A bundled build loads CatBoost and LightGBM as native libraries that no static
