@@ -64,8 +64,21 @@ application completely.
 
 **Requires** Linux x86-64 with glibc 2.35 or newer (Ubuntu 22.04+, Fedora 36+).
 
-Prefer a menu entry and a launcher on `PATH`? See
-[packaging/README.md](packaging/README.md) for the wheel-based installer.
+### Add it to the applications menu
+
+An AppImage runs on its own, but nothing registers it with the desktop, so
+searching for it finds nothing. To get a proper menu entry and icon:
+
+```bash
+packaging/install-appimage.sh Resolved_Layers-0.1.0-x86_64.AppImage
+```
+
+It reads the icons out of the AppImage itself, so it needs no repository
+checkout and no administrator rights. Remove the entry again with
+`packaging/uninstall-appimage.sh`.
+
+A wheel-based installer is also available for a launcher on `PATH` — see
+[packaging/README.md](packaging/README.md).
 
 ## Model Packages
 
