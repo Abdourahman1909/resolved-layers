@@ -8,9 +8,9 @@
 # It needs only the AppImage. No repository checkout and no administrator
 # rights are required.
 #
-#   packaging/install-appimage.sh Resolved_Layers-0.1.0-x86_64.AppImage
+#   ./install-appimage.sh Resolved_Layers-0.1.0-x86_64.AppImage
 #
-# Remove it again with packaging/uninstall-appimage.sh.
+# Remove it again with uninstall-appimage.sh.
 
 set -euo pipefail
 
@@ -22,7 +22,7 @@ DESKTOP_DIR="$PREFIX/share/applications"
 
 SOURCE="${1:-}"
 if [ -z "$SOURCE" ] || [ ! -f "$SOURCE" ]; then
-  echo "Usage: $0 /path/to/Resolved_Layers-<version>-x86_64.AppImage" >&2
+  echo "Usage: $(basename "$0") /path/to/Resolved_Layers-<version>-x86_64.AppImage" >&2
   exit 1
 fi
 

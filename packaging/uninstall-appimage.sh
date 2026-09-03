@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Remove a Resolved Layers AppImage from the applications menu.
 #
+# Run it from anywhere:  ./uninstall-appimage.sh
+#
 # This removes the desktop entry and the installed icons. The AppImage file
 # itself and the local Run Archive are left alone, so persisted Verified Runs
 # survive and the application can still be run directly.
