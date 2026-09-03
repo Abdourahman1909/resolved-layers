@@ -1276,6 +1276,33 @@ ApplicationWindow {
                 }
             }
 
+            // Research Export. Every original Source Dataset column beside the
+            // immutable predictions, in Source Row order regardless of how the
+            // table is currently sorted or filtered. Competition Export stays
+            // separate and awaits the organizer format.
+            FileDialog {
+                id: researchExportDialog
+                title: "Export predictions with every source column"
+                fileMode: FileDialog.SaveFile
+                defaultSuffix: "csv"
+                nameFilters: ["CSV files (*.csv)"]
+                currentFile: "file:" + exportController.suggestedFileName
+                onAccepted: exportController.exportResearchCsv(selectedFile)
+            }
+
+            ActionButton {
+                id: exportButton
+                anchors.right: parent.right
+                anchors.rightMargin: 34
+                anchors.verticalCenter: resultsTabs.verticalCenter
+                height: 34
+                quiet: true
+                text: exportController.busy ? "Exporting…" : "Export CSV"
+                enabled: exportController.canExport
+                Accessible.description: "Write every source column and its prediction in Source Row order"
+                onClicked: researchExportDialog.open()
+            }
+
             Rectangle { anchors.left: parent.left; anchors.leftMargin: 34; anchors.right: parent.right; anchors.rightMargin: 34; anchors.top: resultsTabs.bottom; height: 1; color: root.rule }
 
             Item {
@@ -1604,7 +1631,20 @@ ApplicationWindow {
                 anchors.bottom: parent.bottom
                 height: 34
                 Text { anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; text: "Immutable predictions · Source state: " + resultsController.sourceState + " · " + resultsController.warningCount + " warnings"; color: resultsController.sourceState === "available" ? root.secondary : root.amber; font.family: "Arial"; font.pixelSize: 11 }
-                Text { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: "Source Row identity preserved"; color: root.secondary; font.family: "Arial"; font.pixelSize: 11 }
+                Text {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Math.min(implicitWidth, parent.width * 0.62)
+                    elide: Text.ElideMiddle
+                    visible: exportController.message !== ""
+                    text: exportController.message
+                    color: exportController.messageKind === "error" ? "#A32217"
+                         : exportController.messageKind === "success" ? "#1F6B4B"
+                         : root.secondary
+                    font.family: "Arial"
+                    font.pixelSize: 11
+                }
+                Text { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; visible: exportController.message === ""; text: "Source Row identity preserved"; color: root.secondary; font.family: "Arial"; font.pixelSize: 11 }
             }
         }
 

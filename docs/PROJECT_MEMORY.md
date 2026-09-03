@@ -206,6 +206,18 @@ Selecting a package validates the manifest, verifies every declared artifact che
 
 Verification: the suite passes 81 tests including tampered-artifact rejection, per-checksum confirmation isolation, install-survives-restart, changed-package invalidation, damaged-configuration startup, and three offscreen Settings QML paths covering no package, an installed package, and a vanished package. Python compilation and `git diff --check` pass, and the surface was checked at 1400x900 and 1120x720 in both the unrecognized-package and no-package states. The real restricted PDR package was confirmed to resolve as `official` with no prompt, reporting 352 Model Features, threshold 0.61, and 3 verified artifacts; it remains outside this repository and no artifact entered the configuration store.
 
+The Research Export milestone completed on September 3, 2026 on `codex/research-export`, stacked on `codex/model-package-settings`. The application can now produce a file. Until this milestone it could not: predictions existed only as JSONL inside the Run Archive, keyed by Source Row with no Record Identifier, so nothing could be handed to anyone.
+
+`ResearchExportService` writes every original Source Dataset column beside the immutable predictions, appending `source_row`, `prediction`, `ensemble_score`, `model_disagreement`, and one score column per ensemble component. It needs no organizer format and guesses none. Two boundaries are enforced: source values are read only while the archived SHA-256 and recorded dimensions still match the file on disk, matching the ADR 0014 rule, and a modified or missing source fails closed leaving no partial file; and row order is Source Row order, which the `LoadedVerifiedRun` invariant already guarantees upstream, so no sorting or cohort filter can reach an exported file.
+
+Appended column names never shadow a source column: a Source Dataset legitimately containing `prediction` keeps it, and the added column becomes `prediction__resolved_layers`. Traceability lives in a companion `.evidence.json` sidecar rather than repeated on every row, so the CSV stays directly readable by ordinary analysis tools. The sidecar records run identity, source path and checksum, Model Package and Inference Contract identity, Release Threshold, prediction-evidence checksum, column list, and an explicit statement that it is a Research Export and not an official submission format.
+
+Export runs off the QML thread. One defect was found and corrected during visual verification: the export action read the results controller but was notified only by its own controller, so it stayed disabled after a run loaded; a regression test now pins that the action becomes available when a run opens.
+
+Verified against the real 736-row PDR run: 736 rows, all 353 original source columns preserved including the `label` column, 600 Pathogenic and 136 Benign matching the Results surface, Source Row ascending 1 to 736, and row 1 ensemble score 0.905836765998 matching the archived prediction exactly. The suite passes 99 tests; Python compilation and `git diff --check` pass.
+
+Competition Export remains deliberately unimplemented. The organizer schema and transfer mechanism are still unpublished and must not be guessed.
+
 ## 7. Authoritative files
 
 1. `docs/adr/` for accepted architectural decisions.
