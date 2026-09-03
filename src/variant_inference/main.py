@@ -13,6 +13,7 @@ from variant_inference import assets
 from variant_inference.application.model_package_settings import (
     ModelPackageInstallationService,
 )
+from variant_inference.application.research_export import ResearchExportService
 from variant_inference.application.verified_run import VerifiedRunService
 from variant_inference.application.variant_inspector import SourceRowEvidenceService
 from variant_inference.application.evaluation import GroundTruthEvaluationService
@@ -27,6 +28,7 @@ from variant_inference.infrastructure.model_package_store import (
 from variant_inference.infrastructure.production_inference import PickleEnsembleInference
 from variant_inference.infrastructure.run_archive import DirectoryRunArchive
 from variant_inference.qt.controller import SourceReviewController
+from variant_inference.qt.export_controller import ExportController
 from variant_inference.qt.model_package_controller import ModelPackageController
 from variant_inference.qt.profile_model import GroupBreakdownModel
 from variant_inference.qt.results_controller import ResultsController
@@ -214,6 +216,10 @@ def main(argv: list[str] | None = None) -> int:
         SourceRowEvidenceService(archive, CsvSourceReader()),
         source_field_model,
     )
+    export_controller = ExportController(
+        ResearchExportService(CsvSourceReader()), results_controller
+    )
+    application.aboutToQuit.connect(export_controller.shutdown)
     controller = SourceReviewController(
         table_model,
         group_model,
@@ -228,6 +234,7 @@ def main(argv: list[str] | None = None) -> int:
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("sourceController", controller)
     engine.rootContext().setContextProperty("modelPackageController", model_package_controller)
+    engine.rootContext().setContextProperty("exportController", export_controller)
     engine.rootContext().setContextProperty("sourceTableModel", table_model)
     engine.rootContext().setContextProperty("groupBreakdownModel", group_model)
     engine.rootContext().setContextProperty("resultsController", results_controller)
