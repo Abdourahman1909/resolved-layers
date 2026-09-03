@@ -99,6 +99,18 @@ QT_QPA_PLATFORM=offscreen .venv/bin/variant-inference \
   --screenshot /tmp/chl-source-review.png
 ```
 
+## Export
+
+Open a Verified Run and use **Export CSV** in Results. Research Export writes
+every original Source Dataset column beside the predictions, plus a companion
+`.evidence.json` recording the run, source checksum, Model Package, and Release
+Threshold.
+
+Rows are written in Source Row order regardless of table sorting or active
+cohort filters, and the export is refused if the original source has changed or
+is missing. Competition Export is separate and awaits the official organizer
+format.
+
 ## Install as a desktop application
 
 Build a distributable wheel and install it for the current user, with an
