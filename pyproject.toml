@@ -9,6 +9,18 @@ dynamic = ["version"]
 description = "Resolved Layers, Computational Health Lab's evidence-first desktop inference product"
 readme = "README.md"
 requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Computational Health Lab" }]
+keywords = ["genomics", "variant", "pathogenicity", "inference", "evidence", "desktop"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: X11 Applications :: Qt",
+  "Intended Audience :: Science/Research",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
 dependencies = [
   "catboost==1.2.10",
   "lightgbm==4.7.0",
