@@ -1,12 +1,13 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-30T07:01:20+03:00",
+  "generatedAt": "2026-08-31T00:16:27+03:00",
   "title": "Design System: Resolved Layers",
   "extensions": {
     "colorMeta": {
       "laboratory-blue": { "role": "primary", "displayName": "Laboratory Blue", "canonical": "#0B42E7", "tonalRamp": ["#06144B", "#082272", "#0A319E", "#0B42E7", "#426CF0", "#7E99F6", "#BCC9FB", "#F0F4FF"] },
       "laboratory-blue-hover": { "role": "primary", "displayName": "Laboratory Blue Hover", "canonical": "#0B35C5", "tonalRamp": ["#06123F", "#081E63", "#0A2A8E", "#0B35C5", "#4263D4", "#7F91E3", "#BCC3F1", "#F0F2FC"] },
       "ink": { "role": "neutral", "displayName": "Evidence Ink", "canonical": "#101522", "tonalRamp": ["#101522", "#28303F", "#434C5C", "#626B7B", "#858D9B", "#ACB2BC", "#D5D9DF", "#F4F5F7"] },
+      "evidence-ink": { "role": "neutral", "displayName": "Evidence Label Ink", "canonical": "#303847", "tonalRamp": ["#11151C", "#202733", "#303847", "#4D586A", "#747E8D", "#9EA6B1", "#CDD1D7", "#F2F3F5"] },
       "secondary-text": { "role": "neutral", "displayName": "Secondary Slate", "canonical": "#566176", "tonalRamp": ["#171C25", "#2A3240", "#414B5C", "#566176", "#7A8496", "#A1A8B4", "#CCD0D7", "#F2F3F5"] },
       "muted-text": { "role": "neutral", "displayName": "Disabled Muted Text", "canonical": "#7E8798", "tonalRamp": ["#1C2028", "#323842", "#4B5360", "#626C7B", "#7E8798", "#A4ABB7", "#CED2D9", "#F3F4F6"] },
       "small-muted-text": { "role": "neutral", "displayName": "Readable Small Muted Text", "canonical": "#626C7F", "tonalRamp": ["#171B24", "#2A303A", "#414956", "#626C7F", "#858E9D", "#ADB4C0", "#D6DAE0", "#F4F5F7"] },
@@ -16,6 +17,13 @@
       "success": { "role": "tertiary", "displayName": "Verified Green", "canonical": "#14804A", "tonalRamp": ["#062719", "#0A4028", "#0E5D36", "#14804A", "#45A473", "#7DC3A0", "#B9DFCC", "#ECF8F2"] },
       "error": { "role": "tertiary", "displayName": "Blocking Red", "canonical": "#B52921", "tonalRamp": ["#380B08", "#5B120E", "#841C17", "#B52921", "#D3564F", "#E68B86", "#F3C2BF", "#FCEDEC"] },
       "rule": { "role": "neutral", "displayName": "Structural Rule", "canonical": "#D8DEE8", "tonalRamp": ["#202631", "#3D4655", "#626C7B", "#8993A1", "#AEB6C2", "#C7CED8", "#D8DEE8", "#F4F6F8"] },
+      "control-rule": { "role": "neutral", "displayName": "Control Rule", "canonical": "#CCD3DE", "tonalRamp": ["#20252D", "#3C434D", "#5E6773", "#838C98", "#A7AFBA", "#CCD3DE", "#E1E5EB", "#F5F7F9"] },
+      "soft-rule": { "role": "neutral", "displayName": "Soft Evidence Rule", "canonical": "#E8ECF2", "tonalRamp": ["#24282F", "#464B54", "#6C727C", "#959BA4", "#BEC3CA", "#D7DBE0", "#E8ECF2", "#F8F9FA"] },
+      "selected-blue": { "role": "neutral", "displayName": "Selected Evidence Blue", "canonical": "#EEF3FF", "tonalRamp": ["#16213D", "#30466F", "#536FA4", "#7F9BD1", "#ABC2ED", "#D0DDF8", "#E4EBFC", "#EEF3FF"] },
+      "disabled-surface": { "role": "neutral", "displayName": "Disabled Surface", "canonical": "#E9EDF3", "tonalRamp": ["#25292F", "#484D55", "#6E747D", "#979DA5", "#C0C5CB", "#D9DDE2", "#E9EDF3", "#F8F9FA"] },
+      "quiet-surface": { "role": "neutral", "displayName": "Quiet Surface", "canonical": "#F1F4F8", "tonalRamp": ["#26292E", "#4B4F55", "#73777D", "#9DA1A6", "#C7CACF", "#DFE2E5", "#ECEEF1", "#F1F4F8"] },
+      "header-surface": { "role": "neutral", "displayName": "Evidence Header Surface", "canonical": "#F8FAFC", "tonalRamp": ["#27292C", "#4D5054", "#777A7E", "#A2A5A8", "#CDD0D2", "#E5E7E9", "#F1F3F5", "#F8FAFC"] },
+      "alternate-row": { "role": "neutral", "displayName": "Alternate Evidence Row", "canonical": "#FBFCFE", "tonalRamp": ["#28292B", "#4F5053", "#797B7D", "#A5A6A8", "#D1D2D4", "#E8E9EB", "#F4F5F7", "#FBFCFE"] },
       "canvas": { "role": "neutral", "displayName": "Evidence Paper", "canonical": "#FFFFFF", "tonalRamp": ["#24272C", "#464A50", "#6B6F75", "#92969B", "#B9BCC0", "#D8DADE", "#ECEDEF", "#FFFFFF"] }
     },
     "typographyMeta": {
@@ -93,6 +101,13 @@
       "css": ".ds-table { width: 100%; border-collapse: collapse; border: 1px solid #D8DEE8; border-radius: 3px; overflow: hidden; color: #101522; font: 400 11px Arial, sans-serif; } .ds-table th { height: 47px; padding: 0 10px; border: 1px solid #D8DEE8; background: #F8FAFC; color: #566176; font-size: 10px; font-weight: 600; text-align: center; } .ds-table td { height: 36px; padding: 0 10px; border: 1px solid #E8ECF2; text-align: center; } .ds-table tbody tr:nth-child(even) { background: #FBFCFE; } .ds-table tbody tr:hover { background: #F5F7FB; } .ds-table .ds-table-selected { background: #EEF3FF; } .ds-table .ds-table-selected td { border-color: #C5D2FA; } .ds-table:focus-visible { outline: 2px solid #0B42E7; outline-offset: 2px; }"
     },
     {
+      "name": "Observed Evaluation Evidence Ledger",
+      "kind": "custom",
+      "description": "The signature label-dependent pattern: traceability, explicit raw-label authorization, one contiguous metric ledger, confusion evidence, disclosed denominator, and cohort handoff remain visibly connected.",
+      "html": "<section class=\"ds-evaluation\" aria-label=\"Observed Evaluation evidence ledger\"><header class=\"ds-evaluation-heading\"><strong>Observed Evaluation</strong><span>AUTHORIZED LABELS</span></header><div class=\"ds-evaluation-trace\"><p><b>Source Dataset</b>cohort.csv</p><p><b>Model Package</b>TEKNOFEST PDR v1</p><p><b>Inference Contract</b>contract-1 · 1.0</p><p><b>Release Threshold</b>0.610000</p><p><b>Evaluated Denominator</b>842 of 1,000</p></div><div class=\"ds-evaluation-auth\"><div><b>Ground-Truth Authorization</b><span>Label · “1” → Pathogenic · “0” → Benign</span></div><button class=\"ds-evaluation-action\">Re-authorize</button></div><div class=\"ds-evaluation-metrics\"><p class=\"ds-evaluation-primary\"><b>F1</b><strong>0.9067</strong><span>Precision–recall balance</span></p><p><b>Precision</b><strong>0.8667</strong><span>TP / predicted positive</span></p><p><b>Recall</b><strong>0.9506</strong><span>TP / actual positive</span></p><p><b>MCC</b><strong>0.6241</strong><span>Balanced correlation</span></p><p><b>Accuracy</b><strong>0.9157</strong><span>Correct / evaluated</span></p></div><div class=\"ds-evaluation-body\"><div class=\"ds-evaluation-matrix\"><b>Traceable Confusion Matrix</b><small>Rows are predictions · columns are authorized Ground Truth</small><div><span><i>TP</i><strong>520</strong></span><span><i>FP</i><strong>80</strong></span><span><i>FN</i><strong>27</strong></span><span><i>TN</i><strong>109</strong></span></div><small>842 of 1,000 Source Rows evaluated · 158 excluded</small></div><aside class=\"ds-evaluation-cohorts\"><b>Evaluation Cohorts</b><button class=\"ds-evaluation-action\">Inspect 80 FP records</button><button class=\"ds-evaluation-action\">Inspect 27 FN records</button><small>Exact Source Rows open in Records and the Variant Inspector.</small></aside></div></section>",
+      "css": ".ds-evaluation { border: 1px solid #D8DEE8; border-radius: 3px; overflow: hidden; background: #FFFFFF; color: #101522; font: 400 11px/1.2 Arial, sans-serif; } .ds-evaluation-heading { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid #D8DEE8; } .ds-evaluation-heading strong { font-size: 20px; font-weight: 500; } .ds-evaluation-heading span { padding: 6px 12px; border-radius: 999px; background: #EDF7F2; color: #147A4A; font-size: 10px; font-weight: 700; letter-spacing: .045em; } .ds-evaluation-trace { display: grid; grid-template-columns: 1fr 1.05fr 1.05fr .7fr 1.2fr; border-bottom: 1px solid #D8DEE8; background: #FAFBFD; } .ds-evaluation-trace p { min-width: 0; margin: 0; padding: 12px; border-right: 1px solid #D8DEE8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-evaluation-trace p:last-child { border-right: 0; } .ds-evaluation-trace b, .ds-evaluation-metrics b { display: block; margin-bottom: 5px; color: #566176; font-size: 10px; font-weight: 600; } .ds-evaluation-auth { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #D8DEE8; } .ds-evaluation-auth b, .ds-evaluation-auth span { display: block; } .ds-evaluation-auth span { margin-top: 5px; color: #147A4A; } .ds-evaluation-action { min-height: 29px; padding: 0 11px; border: 1px solid #CCD3DE; border-radius: 5px; background: #FFFFFF; color: #101522; font: 500 11px Arial, sans-serif; } .ds-evaluation-action:hover { background: #F1F4F8; } .ds-evaluation-action:focus-visible { outline: 2px solid #0B42E7; outline-offset: 2px; } .ds-evaluation-action:active { background: #E9EDF3; } .ds-evaluation-metrics { display: grid; grid-template-columns: repeat(5, 1fr); border-bottom: 1px solid #D8DEE8; } .ds-evaluation-metrics p { margin: 0; padding: 13px; border-right: 1px solid #E8ECF2; } .ds-evaluation-metrics p:last-child { border-right: 0; } .ds-evaluation-metrics strong { display: block; margin-bottom: 6px; font-size: 18px; font-weight: 500; } .ds-evaluation-metrics .ds-evaluation-primary strong { color: #0B42E7; font-size: 22px; } .ds-evaluation-metrics span, .ds-evaluation-matrix small, .ds-evaluation-cohorts small { color: #566176; font-size: 9px; } .ds-evaluation-body { display: grid; grid-template-columns: 64% 36%; } .ds-evaluation-matrix, .ds-evaluation-cohorts { padding: 15px 16px; } .ds-evaluation-matrix { border-right: 1px solid #D8DEE8; } .ds-evaluation-matrix > b, .ds-evaluation-matrix > small, .ds-evaluation-cohorts > b, .ds-evaluation-cohorts > small { display: block; } .ds-evaluation-matrix > div { display: grid; grid-template-columns: repeat(2, 1fr); margin: 12px 0; border-top: 1px solid #D8DEE8; border-left: 1px solid #D8DEE8; } .ds-evaluation-matrix span { display: flex; justify-content: space-between; padding: 10px; border-right: 1px solid #D8DEE8; border-bottom: 1px solid #D8DEE8; background: #FAFBFD; } .ds-evaluation-matrix i { color: #263B72; font-style: normal; font-weight: 700; } .ds-evaluation-cohorts { display: grid; gap: 9px; align-content: start; }"
+    },
+    {
       "name": "Records and Variant Inspector Split",
       "kind": "custom",
       "description": "The table-visible detail pattern: a selected Source Row keeps the Records table active beside a bounded, resizable evidence pane.",
@@ -110,6 +125,7 @@
       "Compact Arial/native-sans typography supports scanning at desktop density.",
       "Small radii soften controls without turning the workspace into a card grid.",
       "Status and evidence are named directly; color supports meaning but never carries it alone.",
+      "Label-dependent performance remains authorization-, denominator-, and source-led rather than card-led.",
       "Record detail preserves table context and follows immutable Source Row identity."
     ],
     "rules": [
@@ -120,6 +136,7 @@
       { "name": "The Table-Context Rule", "body": "Record detail opens beside the Records table, never over it; selection, resizing, and dismissal preserve the immutable Source Row as the shared reference.", "section": "layout" },
       { "name": "The Flat Evidence Rule", "body": "Use borders and restrained tonal layering before considering elevation; heavy shadows and glass effects do not belong in this system.", "section": "elevation" },
       { "name": "The Small-Radius Rule", "body": "Corners support clarity at desktop density; they do not turn every section into a soft standalone card.", "section": "shapes" },
+      { "name": "The Authorized Observation Rule", "body": "Current-run metrics appear only after checksum-valid source access and explicit Ground-Truth Authorization; they never stand in for saved release validation or external Organizer Scoring.", "section": "components" },
       { "name": "The Evidence-Lane Rule", "body": "Component-model outputs are model-output evidence only; keep them explicitly separate from biological causation, clinical evidence, and model explainability.", "section": "components" }
     ],
     "dos": [
@@ -127,7 +144,9 @@
       "Do preserve compact evidence density with the observed 10–14px working type and small radii.",
       "Do reserve laboratory blue for interaction, focus, selection, and structural emphasis.",
       "Do pair every semantic color with explicit status, evidence, or category language.",
-      "Do reuse the same shell, type, color, control, and rule vocabulary across Source Review, Dataset Profile, Overview, Records, and Run Archive.",
+      "Do reuse the same shell, type, color, control, and rule vocabulary across Source Review, Dataset Profile, Overview, Records, Evaluation, and Run Archive.",
+      "Do keep the Evaluation traceability band, exact label mapping, evaluated denominator, confusion evidence, and calculation provenance visible as one connected ledger.",
+      "Do route Evaluation Cohorts into filtered Records with an explicit `Inspect N` action so exact error rows and the Variant Inspector remain available.",
       "Do keep the Records table visible while selected Source Row evidence opens, resizes, scrolls, or closes beside it.",
       "Do preserve visible focus and accessible names, roles, selected states, and keyboard actions for quiet controls, table cells, the Inspector, and its splitter."
     ],
@@ -135,6 +154,8 @@
       "Don't introduce gradients, heavy shadows, glass effects, or decorative elevation.",
       "Don't turn every data group into a rounded card or build generic KPI-card grids.",
       "Don't use oversized decorative metrics or add charts without an evidence task.",
+      "Don't split observed metrics into freestanding KPI cards or separate them from authorization, denominator, confusion, and calculation evidence.",
+      "Don't show current-run F1, confusion counts, or other observed performance for an unlabeled run awaiting Organizer Scoring.",
       "Don't drift into generic AI-dashboard or generic medical-blue styling.",
       "Don't universalize a page-specific behavior or composition as a visual-system law.",
       "Don't describe component scores as biological causation, clinical evidence, or explainability."

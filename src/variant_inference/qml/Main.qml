@@ -89,6 +89,7 @@ ApplicationWindow {
         }
 
         Text {
+            id: productTitle
             anchors.left: parent.left
             anchors.leftMargin: 242
             anchors.verticalCenter: parent.verticalCenter
@@ -99,13 +100,23 @@ ApplicationWindow {
             font.weight: Font.Medium
         }
 
-        Row {
-            anchors.horizontalCenter: parent.horizontalCenter
+        Item {
+            id: navigationLane
+            anchors.left: productTitle.right
+            anchors.leftMargin: 40
+            anchors.right: archiveButton.left
+            anchors.rightMargin: 40
+            anchors.top: parent.top
             anchors.bottom: parent.bottom
-            spacing: 26
+        }
+
+        Row {
+            anchors.horizontalCenter: navigationLane.horizontalCenter
+            anchors.bottom: parent.bottom
+            spacing: 18
 
             Item {
-                width: 104
+                width: 98
                 height: 46
                 activeFocusOnTab: true
                 Accessible.role: Accessible.Button
@@ -129,10 +140,11 @@ ApplicationWindow {
                 }
                 TapHandler { onTapped: sourceController.setActiveSurface("review") }
                 Keys.onReturnPressed: sourceController.setActiveSurface("review")
+                Keys.onSpacePressed: sourceController.setActiveSurface("review")
             }
 
             Item {
-                width: 112
+                width: 106
                 height: 46
                 enabled: sourceController.hasSource
                 opacity: enabled ? 1 : 0.48
@@ -158,10 +170,11 @@ ApplicationWindow {
                 }
                 TapHandler { enabled: parent.enabled; onTapped: sourceController.setActiveSurface("profile") }
                 Keys.onReturnPressed: sourceController.setActiveSurface("profile")
+                Keys.onSpacePressed: sourceController.setActiveSurface("profile")
             }
 
             Item {
-                width: 76
+                width: 68
                 height: 46
                 enabled: sourceController.hasResults
                 opacity: enabled ? 1 : 0.48
@@ -187,6 +200,38 @@ ApplicationWindow {
                 }
                 TapHandler { enabled: parent.enabled; onTapped: sourceController.setActiveSurface("results") }
                 Keys.onReturnPressed: sourceController.setActiveSurface("results")
+                Keys.onSpacePressed: sourceController.setActiveSurface("results")
+            }
+
+            Item {
+                width: 82
+                height: 46
+                enabled: sourceController.hasResults
+                opacity: enabled ? 1 : 0.48
+                activeFocusOnTab: enabled
+                Accessible.role: Accessible.Button
+                Accessible.name: "Evaluation"
+                Accessible.description: "Observed metrics require a checksum-valid source and explicit Ground-Truth Authorization"
+                Accessible.selected: sourceController.activeSurface === "evaluation"
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "Evaluation"
+                    color: sourceController.activeSurface === "evaluation" ? root.ink : root.secondary
+                    font.family: "Arial"
+                    font.pixelSize: 13
+                    font.weight: sourceController.activeSurface === "evaluation" ? Font.DemiBold : Font.Normal
+                }
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: 2
+                    color: sourceController.activeSurface === "evaluation" ? root.blue : "transparent"
+                }
+                TapHandler { enabled: parent.enabled; onTapped: sourceController.setActiveSurface("evaluation") }
+                Keys.onReturnPressed: sourceController.setActiveSurface("evaluation")
+                Keys.onSpacePressed: sourceController.setActiveSurface("evaluation")
             }
         }
 
@@ -1538,6 +1583,12 @@ ApplicationWindow {
                 Text { anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; text: "Immutable predictions · Source state: " + resultsController.sourceState + " · " + resultsController.warningCount + " warnings"; color: resultsController.sourceState === "available" ? root.secondary : root.amber; font.family: "Arial"; font.pixelSize: 11 }
                 Text { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: "Source Row identity preserved"; color: root.secondary; font.family: "Arial"; font.pixelSize: 11 }
             }
+        }
+
+        EvaluationWorkspace {
+            id: evaluationWorkspace
+            visible: sourceController.activeSurface === "evaluation"
+            anchors.fill: parent
         }
 
         Rectangle {

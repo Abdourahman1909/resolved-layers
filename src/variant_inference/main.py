@@ -11,6 +11,7 @@ from PySide6.QtQml import QQmlApplicationEngine
 
 from variant_inference.application.verified_run import VerifiedRunService
 from variant_inference.application.variant_inspector import SourceRowEvidenceService
+from variant_inference.application.evaluation import GroundTruthEvaluationService
 from variant_inference.infrastructure.csv_source import CsvSourceReader
 from variant_inference.infrastructure.model_package import (
     JsonModelPackageRepository,
@@ -21,6 +22,8 @@ from variant_inference.infrastructure.run_archive import DirectoryRunArchive
 from variant_inference.qt.controller import SourceReviewController
 from variant_inference.qt.profile_model import GroupBreakdownModel
 from variant_inference.qt.results_controller import ResultsController
+from variant_inference.qt.evaluation_controller import EvaluationController
+from variant_inference.qt.evaluation_models import EvaluationCohortModel, EvaluationMetricModel
 from variant_inference.qt.results_models import (
     InvestigationSetModel,
     PredictionTableModel,
@@ -69,9 +72,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--surface",
-        choices=("review", "profile", "results"),
+        choices=("review", "profile", "results", "evaluation"),
         default="review",
         help="Initial surface used by automated visual verification",
+    )
+    parser.add_argument(
+        "--evaluation-label-column",
+        help="Explicit label column for Evaluation verification",
+    )
+    parser.add_argument(
+        "--evaluation-pathogenic-value",
+        help="Exact raw value mapped to Pathogenic for Evaluation verification",
+    )
+    parser.add_argument(
+        "--evaluation-benign-value",
+        help="Exact raw value mapped to Benign for Evaluation verification",
     )
     return parser
 
@@ -135,6 +150,13 @@ def main(argv: list[str] | None = None) -> int:
     investigation_set_model = InvestigationSetModel()
     archive_model = RunArchiveListModel()
     source_field_model = SourceFieldListModel()
+    evaluation_metric_model = EvaluationMetricModel()
+    evaluation_cohort_model = EvaluationCohortModel()
+    evaluation_controller = EvaluationController(
+        GroundTruthEvaluationService(archive, CsvSourceReader()),
+        evaluation_metric_model,
+        evaluation_cohort_model,
+    )
     results_controller = ResultsController(
         archive,
         prediction_model,
@@ -153,6 +175,7 @@ def main(argv: list[str] | None = None) -> int:
         verified_runs=verified_runs,
         run_unavailable_reason=run_unavailable_reason,
         results_controller=results_controller,
+        evaluation_controller=evaluation_controller,
     )
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("sourceController", controller)
@@ -164,6 +187,9 @@ def main(argv: list[str] | None = None) -> int:
     engine.rootContext().setContextProperty("investigationSetModel", investigation_set_model)
     engine.rootContext().setContextProperty("runArchiveModel", archive_model)
     engine.rootContext().setContextProperty("sourceFieldModel", source_field_model)
+    engine.rootContext().setContextProperty("evaluationController", evaluation_controller)
+    engine.rootContext().setContextProperty("evaluationMetricModel", evaluation_metric_model)
+    engine.rootContext().setContextProperty("evaluationCohortModel", evaluation_cohort_model)
     qml_file = Path(__file__).with_name("qml") / "Main.qml"
     engine.load(QUrl.fromLocalFile(str(qml_file)))
     if not engine.rootObjects():
@@ -191,7 +217,49 @@ def main(argv: list[str] | None = None) -> int:
         if args.surface == "profile":
             QTimer.singleShot(100, lambda: controller.setActiveSurface("profile"))
     if args.open_run:
-        QTimer.singleShot(0, lambda: controller.openArchivedRun(args.open_run))
+        def authorize_visual_evaluation() -> None:
+            if not (
+                args.evaluation_label_column
+                and args.evaluation_pathogenic_value
+                and args.evaluation_benign_value
+            ):
+                return
+            if evaluation_controller.busy:
+                QTimer.singleShot(25, authorize_visual_evaluation)
+                return
+            if not evaluation_controller.sourceAvailable:
+                return
+            if evaluation_controller.selectedLabelColumn != args.evaluation_label_column:
+                evaluation_controller.selectLabelColumn(args.evaluation_label_column)
+                QTimer.singleShot(25, authorize_visual_evaluation)
+                return
+            if not evaluation_controller.labelValues:
+                QTimer.singleShot(25, authorize_visual_evaluation)
+                return
+            if not evaluation_controller.hasCoveragePreview:
+                evaluation_controller.reviewCoverage(
+                    args.evaluation_pathogenic_value,
+                    args.evaluation_benign_value,
+                )
+                QTimer.singleShot(25, authorize_visual_evaluation)
+                return
+            if not evaluation_controller.hasReport:
+                evaluation_controller.authorizeEvaluation(
+                    args.evaluation_pathogenic_value,
+                    args.evaluation_benign_value,
+                )
+
+        def open_run() -> None:
+            if controller.openArchivedRun(args.open_run) and args.surface == "evaluation":
+                controller.setActiveSurface("evaluation")
+                if (
+                    args.evaluation_label_column
+                    and args.evaluation_pathogenic_value
+                    and args.evaluation_benign_value
+                ):
+                    QTimer.singleShot(25, authorize_visual_evaluation)
+
+        QTimer.singleShot(0, open_run)
     if args.inspect_source_row:
         def open_inspector() -> None:
             results_controller.showRecords()

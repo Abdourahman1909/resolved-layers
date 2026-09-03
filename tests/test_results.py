@@ -97,6 +97,13 @@ def test_result_selection_moves_from_cohort_to_exact_records():
     session.clear_selection()
     assert [record.source_row for record in session.selected_records] == [1, 2, 3, 4]
 
+    session.select_source_rows((4, 2), "Evaluation · false negatives")
+    assert [record.source_row for record in session.selected_records] == [2, 4]
+    assert session.selection_title == "Evaluation · false negatives"
+
+    with pytest.raises(ValueError, match="outside the immutable Result Set"):
+        session.select_source_rows((7,), "Invalid cohort")
+
 
 def test_prediction_table_exposes_accessible_source_and_column_roles():
     model = PredictionTableModel()
@@ -213,6 +220,13 @@ def test_results_controller_reopens_run_and_exposes_exact_selected_records():
     assert controller.visibleRecordCount == 1
 
     controller.searchRecords("")
+    controller.showSourceRows([4, 2], "Evaluation · false negatives")
+    assert controller.activeTab == "records"
+    assert controller.selectionKey == "evaluation_cohort"
+    assert predictions.rowCount() == 2
+    assert predictions.data(predictions.index(0, 0)) == 2
+    assert predictions.data(predictions.index(1, 0)) == 4
+
     controller.showOverview()
     controller.selectInvestigationSet("pathogenic")
     controller.showRecords()

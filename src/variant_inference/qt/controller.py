@@ -12,6 +12,7 @@ from variant_inference.infrastructure.csv_source import CsvSourceError, CsvSourc
 from variant_inference.qt.table_model import CsvTableModel
 from variant_inference.qt.profile_model import GroupBreakdownModel
 from variant_inference.qt.results_controller import ResultsController
+from variant_inference.qt.evaluation_controller import EvaluationController
 
 
 class SourceReviewController(QObject):
@@ -27,6 +28,7 @@ class SourceReviewController(QObject):
         verified_runs: VerifiedRunService | None = None,
         run_unavailable_reason: str = "",
         results_controller: ResultsController | None = None,
+        evaluation_controller: EvaluationController | None = None,
     ) -> None:
         super().__init__()
         self._table_model = table_model
@@ -39,6 +41,7 @@ class SourceReviewController(QObject):
         self._verified_runs = verified_runs
         self._run_unavailable_reason = run_unavailable_reason
         self._results_controller = results_controller
+        self._evaluation_controller = evaluation_controller
         self._last_run_id = ""
         self._last_run_path = ""
         self._status_message = "Open a Source Dataset to begin review."
@@ -377,12 +380,16 @@ class SourceReviewController(QObject):
 
     @Slot(str)
     def setActiveSurface(self, surface: str) -> None:  # noqa: N802
-        if surface not in {"review", "profile", "results"}:
+        if surface not in {"review", "profile", "results", "evaluation"}:
             return
         if surface == "profile" and not self.hasSource:
             return
         if surface == "results" and not self.hasResults:
             return
+        if surface == "evaluation" and not self.hasResults:
+            return
+        if surface == "evaluation" and self._evaluation_controller is not None:
+            self._evaluation_controller.refreshSource()
         self._active_surface = surface
         self._table_model.set_row_filter(
             self._profile.filtered_source_rows if surface == "profile" else None
@@ -492,6 +499,11 @@ class SourceReviewController(QObject):
             self._last_run_path = str(archived.directory)
             if self._results_controller is not None:
                 self._results_controller.open_run(archived.run_id)
+                if (
+                    self._evaluation_controller is not None
+                    and self._results_controller.current_run is not None
+                ):
+                    self._evaluation_controller.load_run(self._results_controller.current_run)
                 self._active_surface = "results"
             self._status_message = f"Verified Run {archived.run_id} saved to the local Run Archive."
             self._status_kind = "success"
@@ -506,6 +518,11 @@ class SourceReviewController(QObject):
             return False
         opened = self._results_controller.open_run(run_id)
         if opened:
+            if (
+                self._evaluation_controller is not None
+                and self._results_controller.current_run is not None
+            ):
+                self._evaluation_controller.load_run(self._results_controller.current_run)
             self._active_surface = "results"
             self._status_message = f"Verified Run {run_id} reopened from the local Run Archive."
             self._status_kind = "success"
@@ -515,11 +532,25 @@ class SourceReviewController(QObject):
         self._emit()
         return opened
 
+    @Slot(str)
+    def inspectEvaluationCohort(self, key: str) -> None:  # noqa: N802
+        if self._evaluation_controller is None or self._results_controller is None:
+            return
+        source_rows = self._evaluation_controller.cohort_source_rows(key)
+        if not source_rows:
+            return
+        title = f"Evaluation · {self._evaluation_controller.cohort_title(key)}"
+        self._results_controller.showSourceRows(list(source_rows), title)
+        self._active_surface = "results"
+        self._emit()
+
     @Slot()
     def close(self) -> None:
         self._session.close()
         if self._results_controller is not None:
             self._results_controller.close()
+        if self._evaluation_controller is not None:
+            self._evaluation_controller.close()
 
     def _refresh_profile(self) -> None:
         self._group_model.set_groups(self._profile.groups, self._profile.authorization is not None)

@@ -67,6 +67,10 @@ class ResultsController(QObject):
     def hasRun(self) -> bool:  # noqa: N802
         return self._session.run is not None
 
+    @property
+    def current_run(self):
+        return self._session.run
+
     @Property(str, notify=stateChanged)
     def activeTab(self) -> str:  # noqa: N802
         return self._active_tab
@@ -289,6 +293,15 @@ class ResultsController(QObject):
         self._close_inspector()
         self._session.clear_selection()
         self._active_tab = "records"
+        self._predictions.set_records(self._session.selected_records)
+        self.stateChanged.emit()
+
+    @Slot("QVariantList", str)
+    def showSourceRows(self, source_rows: list[int], title: str) -> None:  # noqa: N802
+        self._close_inspector()
+        self._session.select_source_rows(tuple(int(value) for value in source_rows), title)
+        self._active_tab = "records"
+        self._predictions.set_search("")
         self._predictions.set_records(self._session.selected_records)
         self.stateChanged.emit()
 

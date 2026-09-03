@@ -1,6 +1,6 @@
 # Resolved Layers
 
-**Resolved Layers** is Computational Health Lab's evidence-first desktop product for traceable model inference. Its current `Variant Inference` workflow focuses on missense-variant prediction. The present vertical slices implement Source Review, pre-prediction Dataset Profile, trusted deterministic CatBoost–LightGBM inference, immutable local Verified Runs, and a read-only post-prediction Results workspace with record-level inspection in PySide6 and Qt Quick.
+**Resolved Layers** is Computational Health Lab's evidence-first desktop product for traceable model inference. Its current `Variant Inference` workflow focuses on missense-variant prediction. The present vertical slices implement Source Review, pre-prediction Dataset Profile, trusted deterministic CatBoost–LightGBM inference, immutable local Verified Runs, read-only post-prediction Results and Variant Inspector surfaces, and a label-dependent Observed Evaluation workspace in PySide6 and Qt Quick.
 
 ## What works now
 
@@ -19,9 +19,10 @@
 - An atomic local Run Archive that stores ordered prediction evidence plus package, contract, source, output-checksum, warning, audit, and timing evidence. It records the source path and checksum by default and never copies the Source Dataset without a future explicit opt-in flow.
 - Run Archive reopening with prediction-evidence checksum verification, a compact score-distribution Overview, truthful run-level warning evidence, purposeful investigation sets, and a separate searchable Records table that retains exact Source Row identity.
 - A table-visible, resizable Variant Inspector with complete prediction, component-score, threshold, run, package, contract, and source-reference evidence. It recovers the complete original row only while the archived external source remains checksum-valid and reports modified or missing sources without exposing stale values.
+- A distinct Observed Evaluation workspace gated by checksum-valid source evidence and explicit Ground-Truth Authorization. It joins immutable predictions to exact raw labels by Source Row, discloses evaluated/missing/unrecognized denominators, calculates TP/FP/FN/TN plus F1, precision, recall, MCC, and accuracy in Python, and carries exact error cohorts into Records and the Variant Inspector. Zero-denominator formulas display `Undefined` rather than a fabricated value.
 - The approved Split Evidence Desk hybrid v2 shell and the full-color Resolved Layers identity, currently shown from the approved raster reference without vector reinterpretation.
 
-With an explicitly trusted manifest checksum configured, the run button creates and persists a Verified Run after Source Review confirmation, then opens its read-only Results workspace. Dataset Profile remains descriptive and never calculates F1 or other performance metrics. Evaluation, Competition Export Profiles, and read-only AI integration remain separate later workspaces.
+With an explicitly trusted manifest checksum configured, the run button creates and persists a Verified Run after Source Review confirmation, then opens its read-only Results workspace. Dataset Profile remains descriptive and never calculates F1 or other performance metrics. Evaluation is separate and requires explicit authorized labels; Competition Export Profiles and read-only AI integration remain later workspaces.
 
 ## Setup
 
@@ -117,7 +118,7 @@ The important boundary is intentional: CSV parsing, model-package validation, de
 - The Production Model remains the current CatBoost–LightGBM release, but it becomes runnable only as a validated immutable Model Package with a complete Inference Contract.
 - Required versus Omissible feature status must be declared by that contract. It is never inferred from an incoming final CSV.
 - Source Row identity and original order are immutable.
-- Evaluation and Competition Submission are separate future workspaces. Unlabeled competition data never produce local F1.
+- Evaluation and Competition Submission are separate workspaces. Unlabeled competition data never produce local F1; missing, modified, or unauthorized source evidence withholds observed metrics.
 - Until the official organizer schema is published, Competition Submission must report `Organizer format pending` and cannot label an invented format as official.
 
 Read [docs/PROJECT_MEMORY.md](docs/PROJECT_MEMORY.md), [CONTEXT.md](CONTEXT.md), and [docs/PRD.md](docs/PRD.md) before extending the product.
