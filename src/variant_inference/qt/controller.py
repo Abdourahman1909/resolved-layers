@@ -24,7 +24,7 @@ class SourceReviewController(QObject):
         group_model: GroupBreakdownModel,
         package: ModelPackageIdentity | None,
         package_error: str = "",
-        identity_reference: Path | None = None,
+        identity_lockup: Path | None = None,
         verified_runs: VerifiedRunService | None = None,
         run_unavailable_reason: str = "",
         results_controller: ResultsController | None = None,
@@ -46,7 +46,7 @@ class SourceReviewController(QObject):
         self._last_run_path = ""
         self._status_message = "Open a Source Dataset to begin review."
         self._status_kind = "neutral"
-        self._identity_reference = identity_reference
+        self._identity_lockup = identity_lockup
         self._active_surface = "review"
         self._profile_message = "Select a label column and map both classes explicitly."
 
@@ -326,6 +326,11 @@ class SourceReviewController(QObject):
     def runButtonText(self) -> str:  # noqa: N802
         if not self._session.source:
             return "Open a CSV to continue"
+        if self._package is None:
+            # Without a Model Package there is no Inference Contract to fit, so
+            # the source cannot be confirmed. Name the real cause instead of
+            # blaming the reviewed source for blocking issues it does not have.
+            return self._run_unavailable_reason or "No Model Package installed"
         if not self._session.can_confirm:
             return "Resolve blocking issues"
         if not self._session.operator_confirmed:
@@ -351,8 +356,8 @@ class SourceReviewController(QObject):
         return self._status_kind
 
     @Property(str, constant=True)
-    def identityReferenceUrl(self) -> str:  # noqa: N802
-        return QUrl.fromLocalFile(str(self._identity_reference)).toString() if self._identity_reference else ""
+    def identityLockupUrl(self) -> str:  # noqa: N802
+        return QUrl.fromLocalFile(str(self._identity_lockup)).toString() if self._identity_lockup else ""
 
     @Slot(str)
     def openSource(self, value: str) -> None:  # noqa: N802

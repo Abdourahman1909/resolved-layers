@@ -45,30 +45,24 @@ ApplicationWindow {
         border.width: 1
         border.color: root.rule
 
-        Item {
-            id: identityCrop
+        Image {
+            id: identityLockup
             anchors.left: parent.left
             anchors.leftMargin: 18
             anchors.verticalCenter: parent.verticalCenter
-            width: 176
-            height: 55
-            clip: true
-            visible: sourceController.identityReferenceUrl !== ""
-
-            Image {
-                x: -10
-                y: -4
-                width: 1536
-                height: 1024
-                source: sourceController.identityReferenceUrl
-                fillMode: Image.Stretch
-                smooth: true
-                mipmap: true
-            }
+            height: 34
+            width: height * (implicitWidth > 0 ? implicitWidth / implicitHeight : 5.14)
+            source: sourceController.identityLockupUrl
+            visible: sourceController.identityLockupUrl !== "" && status === Image.Ready
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            mipmap: true
+            Accessible.role: Accessible.Graphic
+            Accessible.name: "Computational Health Lab"
         }
 
         Text {
-            visible: !identityCrop.visible
+            visible: !identityLockup.visible
             anchors.left: parent.left
             anchors.leftMargin: 24
             anchors.verticalCenter: parent.verticalCenter
