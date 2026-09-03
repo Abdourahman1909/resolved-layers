@@ -49,7 +49,49 @@ resolved-layers --model-package /path/to/MANIFEST.json \
 Resolution order is argument, then `CHL_MODEL_PACKAGE_MANIFEST`, then the
 package installed through Settings.
 
-## Build
+## Standalone build (no Python required)
+
+```
+packaging/build-standalone.sh
+```
+
+Produces `dist/Resolved_Layers-x86_64.AppImage`: one file the recipient makes
+executable and opens. It bundles its own Python runtime, Qt, CatBoost, and
+LightGBM, so the target machine needs none of them.
+
+```
+chmod +x Resolved_Layers-x86_64.AppImage
+./Resolved_Layers-x86_64.AppImage
+```
+
+Set `BUILD_APPIMAGE=0` to produce a tarball instead, and `APPIMAGE_TOOL=/path/to/appimagetool`
+if the tool is not on `PATH`. Get it from
+https://github.com/AppImage/appimagetool/releases.
+
+### Verifying a build can actually predict
+
+A bundled build loads CatBoost and LightGBM as native libraries that no static
+import names, so a broken bundle starts normally and fails only at prediction.
+Check it directly:
+
+```
+./Resolved_Layers-x86_64.AppImage --verify-inference \
+    --model-package /path/to/manifest.json \
+    --open /path/to/source.csv
+```
+
+It reports the package, threshold, record count, class counts, and the first
+row's ensemble score, then exits. Compare those against a known run.
+
+### Why the build stages a copy
+
+PyInstaller splits paths on whitespace when resolving shared-library
+dependencies, so a build fails if the project or its environment sits under a
+path containing spaces. The script stages a space-free copy and builds in a
+fresh isolated environment, which also keeps the build independent of the
+development checkout.
+
+## Build the wheel
 
 ```
 packaging/build-linux.sh
@@ -100,9 +142,18 @@ sufficient for desktop use.
 - The runtime installs CatBoost, LightGBM, scikit-learn, pandas, and NumPy
   because the inference core imports them at startup. The isolated runtime is
   therefore large even though no model ships with it.
-- The build is a wheel installed into an isolated interpreter, so the target
-  machine needs `python3` with `venv`. A fully self-contained Nuitka build that
-  removes that requirement is not yet part of this milestone.
+- Two build shapes exist. The wheel needs `python3` with `venv` on the target
+  machine; the AppImage needs nothing and is the one to hand to someone else.
+- The AppImage is around 300 MB compressed, roughly 900 MB extracted. Qt modules
+  the application never uses are already excluded; the remainder is CatBoost, Qt,
+  and the scientific stack, and cannot be reduced further without removing
+  functionality.
+- A build made on Ubuntu 22.04 requires glibc 2.35 or newer on the target
+  machine and will not start on Ubuntu 20.04 or older. Building inside a
+  container with an older base fixes this and is not yet done. AppImage does not
+  solve it; it is a glibc question, not a packaging one.
+- The standalone build bundles bytecode, not compiled source. Source hiding was
+  considered and deliberately not required.
 - The full-colour icon keeps a black element that loses contrast on a dark
   desktop dock. The locked reference sheet defines a reversed treatment for that
   case; wiring it to the desktop theme is not yet done.
