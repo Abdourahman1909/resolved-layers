@@ -72,8 +72,9 @@ mkdir -p "$OUTPUT_DIR"
 
 if [ "$BUILD_APPIMAGE" != "1" ]; then
   echo "==> Packing a tarball"
-  tar -czf "$OUTPUT_DIR/resolved-layers-linux-x86_64.tar.gz" -C "$WORK_ROOT/dist" resolved-layers
-  echo "Built: $OUTPUT_DIR/resolved-layers-linux-x86_64.tar.gz"
+  VERSION="$("$WORK_ROOT/venv/bin/python" -c 'import variant_inference; print(variant_inference.__version__)')"
+  tar -czf "$OUTPUT_DIR/resolved-layers-${VERSION}-linux-x86_64.tar.gz" -C "$WORK_ROOT/dist" resolved-layers
+  echo "Built: $OUTPUT_DIR/resolved-layers-${VERSION}-linux-x86_64.tar.gz"
   exit 0
 fi
 
@@ -120,7 +121,10 @@ if [ -z "$APPIMAGE_TOOL" ]; then
 fi
 
 echo "==> Building the AppImage"
-APPIMAGE="$OUTPUT_DIR/Resolved_Layers-x86_64.AppImage"
+VERSION="$("$WORK_ROOT/venv/bin/python" -c 'import variant_inference; print(variant_inference.__version__)')"
+# The file names its own version, so a downloaded build can still be identified
+# after it has left GitHub and the tag is no longer visible.
+APPIMAGE="$OUTPUT_DIR/Resolved_Layers-${VERSION}-x86_64.AppImage"
 rm -f "$APPIMAGE"
 ARCH=x86_64 "$APPIMAGE_TOOL" --no-appstream "$APPDIR" "$APPIMAGE"
 

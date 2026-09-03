@@ -4,7 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chl-resolved-layers"
-version = "0.1.0"
+# Single source of truth: src/variant_inference/__init__.py
+dynamic = ["version"]
 description = "Resolved Layers, Computational Health Lab's evidence-first desktop inference product"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -34,6 +35,9 @@ packaging = [
 [project.scripts]
 resolved-layers = "variant_inference.main:main"
 variant-inference = "variant_inference.main:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "variant_inference.__version__"}
 
 [tool.setuptools]
 package-dir = {"" = "src"}

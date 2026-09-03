@@ -9,7 +9,7 @@ from PySide6.QtCore import QStandardPaths, QTimer, QUrl
 from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtQml import QQmlApplicationEngine
 
-from variant_inference import assets
+from variant_inference import __version__, assets
 from variant_inference.application.model_package_settings import (
     ModelPackageInstallationService,
 )
@@ -49,6 +49,12 @@ DESKTOP_FILE_NAME = "org.computationalhealthlab.ResolvedLayers"
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Resolved Layers by Computational Health Lab")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"Resolved Layers {__version__}",
+        help="Report the build version and exit",
+    )
     parser.add_argument("--open", dest="source_path", type=Path, help="Open a CSV on startup")
     parser.add_argument(
         "--model-package",
@@ -171,6 +177,7 @@ def main(argv: list[str] | None = None) -> int:
         return verify_inference(args)
     application = QGuiApplication(sys.argv[:1])
     application.setApplicationName("Resolved Layers")
+    application.setApplicationVersion(__version__)
     application.setOrganizationName("Computational Health Lab")
     application.setDesktopFileName(DESKTOP_FILE_NAME)
 
