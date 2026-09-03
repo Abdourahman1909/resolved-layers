@@ -6,9 +6,10 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import QStandardPaths, QTimer, QUrl
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtQml import QQmlApplicationEngine
 
+from variant_inference import assets
 from variant_inference.application.verified_run import VerifiedRunService
 from variant_inference.application.variant_inspector import SourceRowEvidenceService
 from variant_inference.application.evaluation import GroundTruthEvaluationService
@@ -32,6 +33,9 @@ from variant_inference.qt.results_models import (
     SourceFieldListModel,
 )
 from variant_inference.qt.table_model import CsvTableModel
+
+
+DESKTOP_FILE_NAME = "org.computationalhealthlab.ResolvedLayers"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -96,6 +100,13 @@ def main(argv: list[str] | None = None) -> int:
     application = QGuiApplication(sys.argv[:1])
     application.setApplicationName("Resolved Layers")
     application.setOrganizationName("Computational Health Lab")
+    application.setDesktopFileName(DESKTOP_FILE_NAME)
+
+    window_icon = QIcon()
+    for icon_path in assets.window_icon_paths():
+        window_icon.addFile(str(icon_path))
+    if not window_icon.isNull():
+        application.setWindowIcon(window_icon)
 
     package_path = args.model_package
     if package_path is None and os.environ.get("CHL_MODEL_PACKAGE_MANIFEST"):
@@ -129,19 +140,22 @@ def main(argv: list[str] | None = None) -> int:
     archive = DirectoryRunArchive(run_archive_path)
     verified_runs = None
     run_unavailable_reason = ""
-    if package is not None:
-        if package.manifest_checksum.lower() not in trusted_checksums:
-            run_unavailable_reason = "Trust this Model Package checksum before prediction"
-        else:
-            verified_runs = VerifiedRunService(
-                PickleEnsembleInference(trusted_checksums),
-                archive,
-            )
+    if package is None:
+        # A build ships without a Model Package. Source Review, Dataset Profile,
+        # and archived Verified Runs stay fully usable; prediction states plainly
+        # that no package is installed rather than implying a transient fault.
+        run_unavailable_reason = (
+            package_error if package_error else "No Model Package installed"
+        )
+    elif package.manifest_checksum.lower() not in trusted_checksums:
+        run_unavailable_reason = "Trust this Model Package checksum before prediction"
+    else:
+        verified_runs = VerifiedRunService(
+            PickleEnsembleInference(trusted_checksums),
+            archive,
+        )
 
-    project_root = Path(__file__).resolve().parents[2]
-    identity_reference = project_root / ".impeccable" / "mocks" / "app" / "source-review-split-hybrid-v2.png"
-    if not identity_reference.is_file():
-        identity_reference = None
+    identity_lockup = assets.LOCKUP if assets.LOCKUP.is_file() else None
 
     table_model = CsvTableModel()
     group_model = GroupBreakdownModel()
@@ -171,7 +185,7 @@ def main(argv: list[str] | None = None) -> int:
         group_model,
         package,
         package_error=package_error,
-        identity_reference=identity_reference,
+        identity_lockup=identity_lockup,
         verified_runs=verified_runs,
         run_unavailable_reason=run_unavailable_reason,
         results_controller=results_controller,

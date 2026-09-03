@@ -22,6 +22,14 @@ dev = [
   "pytest>=7.4,<9",
   "pytest-cov>=4.1,<6",
 ]
+# Regenerating shipped identity assets from the locked reference sheet.
+assets = [
+  "pillow>=10,<12",
+]
+# Building the standalone desktop package.
+packaging = [
+  "nuitka>=2.4",
+]
 
 [project.scripts]
 resolved-layers = "variant_inference.main:main"
@@ -35,7 +43,12 @@ include-package-data = true
 where = ["src"]
 
 [tool.setuptools.package-data]
-variant_inference = ["qml/*.qml"]
+variant_inference = [
+  "qml/*.qml",
+  "assets/identity/*.png",
+  "assets/icons/*.png",
+  "assets/icons/*.ico",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
