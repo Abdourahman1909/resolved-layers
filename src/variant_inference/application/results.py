@@ -17,12 +17,14 @@ class ResultSetSession:
     selection_title: str = "All predictions"
     selected_lower: float = 0.0
     selected_upper: float = 1.0
+    selected_source_rows: tuple[int, ...] = ()
 
     BIN_COUNT = 32
     NEAR_THRESHOLD_RADIUS = 0.06
 
     def load(self, run: LoadedVerifiedRun) -> None:
         self.run = run
+        self.selected_source_rows = ()
         lower = max(0.0, run.release_threshold - self.NEAR_THRESHOLD_RADIUS)
         upper = min(1.0, run.release_threshold + self.NEAR_THRESHOLD_RADIUS)
         self.select_score_range(lower, upper, "Near release threshold")
@@ -104,6 +106,9 @@ class ResultSetSession:
             return tuple(record for record in self.predictions if record.prediction == "Pathogenic")
         if self.selection_key == "benign":
             return tuple(record for record in self.predictions if record.prediction == "Benign")
+        if self.selection_key == "evaluation_cohort":
+            selected = set(self.selected_source_rows)
+            return tuple(record for record in self.predictions if record.source_row in selected)
         return self.predictions
 
     def select_investigation_set(self, key: str) -> None:
@@ -137,6 +142,23 @@ class ResultSetSession:
         self.selection_title = "All predictions"
         self.selected_lower = 0.0
         self.selected_upper = 1.0
+        self.selected_source_rows = ()
+
+    def select_source_rows(self, source_rows: tuple[int, ...], title: str) -> None:
+        if self.run is None:
+            raise ValueError("A Verified Run must be loaded before selecting records.")
+        available = {record.source_row for record in self.predictions}
+        requested = set(source_rows)
+        invalid = requested - available
+        if invalid:
+            raise ValueError("Evaluation cohort contains Source Rows outside the immutable Result Set.")
+        self.selection_key = "evaluation_cohort"
+        self.selection_title = title
+        self.selected_lower = 0.0
+        self.selected_upper = 1.0
+        self.selected_source_rows = tuple(
+            record.source_row for record in self.predictions if record.source_row in requested
+        )
 
     def _component_conflict(self, record: PredictionRecord) -> bool:
         if self.run is None or not record.component_scores:

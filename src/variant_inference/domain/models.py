@@ -314,6 +314,80 @@ class InvestigationSet:
 
 
 @dataclass(frozen=True)
+class EvaluationSourceEvidence:
+    state: SourceReferenceState
+    expected_sha256: str
+    current_sha256: str = ""
+    detail: str = ""
+    label_columns: tuple[str, ...] = ()
+    selected_column: str = ""
+
+    @property
+    def is_available(self) -> bool:
+        return self.state is SourceReferenceState.AVAILABLE
+
+
+@dataclass(frozen=True)
+class EvaluationMetric:
+    key: str
+    label: str
+    value: float | None
+    denominator: float
+    definition: str
+
+    @property
+    def display(self) -> str:
+        return "Undefined" if self.value is None else f"{self.value:.4f}"
+
+
+@dataclass(frozen=True)
+class EvaluationCohort:
+    key: str
+    title: str
+    detail: str
+    source_rows: tuple[int, ...]
+
+    @property
+    def count(self) -> int:
+        return len(self.source_rows)
+
+
+@dataclass(frozen=True)
+class EvaluationReport:
+    run_id: str
+    source_sha256: str
+    authorization: GroundTruthAuthorization
+    total_records: int
+    evaluated_count: int
+    missing_count: int
+    unrecognized_count: int
+    true_positive: int
+    false_positive: int
+    false_negative: int
+    true_negative: int
+    metrics: tuple[EvaluationMetric, ...]
+    cohorts: tuple[EvaluationCohort, ...]
+    missing_source_rows: tuple[int, ...] = ()
+    unrecognized_source_rows: tuple[int, ...] = ()
+
+    @property
+    def excluded_count(self) -> int:
+        return self.missing_count + self.unrecognized_count
+
+    def metric(self, key: str) -> EvaluationMetric:
+        match = next((item for item in self.metrics if item.key == key), None)
+        if match is None:
+            raise KeyError(key)
+        return match
+
+    def cohort(self, key: str) -> EvaluationCohort:
+        match = next((item for item in self.cohorts if item.key == key), None)
+        if match is None:
+            raise KeyError(key)
+        return match
+
+
+@dataclass(frozen=True)
 class Finding:
     code: str
     message: str

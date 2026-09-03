@@ -5,6 +5,10 @@ from typing import Any, Mapping, Protocol, Sequence
 
 from variant_inference.domain.models import (
     ArchivedRun,
+    EvaluationReport,
+    EvaluationSourceEvidence,
+    GroundTruthAuthorization,
+    LabelCoverage,
     LoadedVerifiedRun,
     ModelPackageIdentity,
     PredictionRecord,
@@ -54,7 +58,18 @@ class RunArchive(Protocol):
 
 
 class EvaluationService(Protocol):
-    def evaluate(self, predictions: Sequence[int], ground_truth: Sequence[int]) -> Mapping[str, float]: ...
+    def prepare(self, run: LoadedVerifiedRun) -> EvaluationSourceEvidence: ...
+    def label_values(self, run: LoadedVerifiedRun, column_name: str) -> tuple[str, ...]: ...
+    def preview(
+        self,
+        run: LoadedVerifiedRun,
+        proposed_mapping: GroundTruthAuthorization,
+    ) -> LabelCoverage: ...
+    def evaluate(
+        self,
+        run: LoadedVerifiedRun,
+        authorization: GroundTruthAuthorization,
+    ) -> EvaluationReport: ...
 
 
 class CompetitionExportProfileRepository(Protocol):
