@@ -423,3 +423,69 @@ class TransformationAudit:
 
     def summary_for(self, topic: str, default: str = "—") -> str:
         return next((entry.summary for entry in self.entries if entry.topic == topic), default)
+
+
+class ModelPackageTrust(Enum):
+    """Why a Model Package is, or is not, allowed to be deserialized."""
+
+    OFFICIAL = "official"
+    """Its manifest checksum is pinned in this release as an official package."""
+
+    CONFIRMED = "confirmed"
+    """The operator explicitly confirmed this exact manifest checksum before."""
+
+    UNCONFIRMED = "unconfirmed"
+    """Structurally valid, but no one has vouched for this exact checksum yet."""
+
+    INVALID = "invalid"
+    """The candidate is not a usable Model Package at all."""
+
+
+@dataclass(frozen=True)
+class ModelPackageCandidate:
+    """A Model Package the operator is considering, and its trust standing.
+
+    A candidate is never loaded for inference merely because it is structurally
+    valid. `trust` decides that, and an `UNCONFIRMED` candidate requires an
+    explicit operator confirmation of this exact `manifest_checksum` first.
+    """
+
+    manifest_path: Path
+    trust: ModelPackageTrust
+    identity: ModelPackageIdentity | None = None
+    problem: str = ""
+
+    @property
+    def is_usable(self) -> bool:
+        return self.identity is not None and self.trust in (
+            ModelPackageTrust.OFFICIAL,
+            ModelPackageTrust.CONFIRMED,
+        )
+
+    @property
+    def needs_confirmation(self) -> bool:
+        return self.identity is not None and self.trust is ModelPackageTrust.UNCONFIRMED
+
+    @property
+    def manifest_checksum(self) -> str:
+        return self.identity.manifest_checksum if self.identity else ""
+
+
+@dataclass(frozen=True)
+class ModelPackageSettings:
+    """Durable operator choices about which Model Package this machine uses."""
+
+    manifest_path: Path | None = None
+    confirmed_checksums: frozenset[str] = frozenset()
+
+    def with_confirmed(self, checksum: str) -> "ModelPackageSettings":
+        return ModelPackageSettings(
+            manifest_path=self.manifest_path,
+            confirmed_checksums=self.confirmed_checksums | {checksum.strip().lower()},
+        )
+
+    def with_manifest(self, manifest_path: Path | None) -> "ModelPackageSettings":
+        return ModelPackageSettings(
+            manifest_path=manifest_path,
+            confirmed_checksums=self.confirmed_checksums,
+        )

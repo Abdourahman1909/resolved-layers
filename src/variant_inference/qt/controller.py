@@ -385,7 +385,9 @@ class SourceReviewController(QObject):
 
     @Slot(str)
     def setActiveSurface(self, surface: str) -> None:  # noqa: N802
-        if surface not in {"review", "profile", "results", "evaluation"}:
+        # Settings is always reachable: it is where an operator installs the
+        # Model Package, so it cannot depend on a source or a completed run.
+        if surface not in {"review", "profile", "results", "evaluation", "settings"}:
             return
         if surface == "profile" and not self.hasSource:
             return

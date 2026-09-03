@@ -11,6 +11,7 @@ from variant_inference.domain.models import (
     LabelCoverage,
     LoadedVerifiedRun,
     ModelPackageIdentity,
+    ModelPackageSettings,
     PredictionRecord,
     RunArchiveEntry,
     SourceIdentity,
@@ -70,6 +71,21 @@ class EvaluationService(Protocol):
         run: LoadedVerifiedRun,
         authorization: GroundTruthAuthorization,
     ) -> EvaluationReport: ...
+
+
+class ModelPackageRepository(Protocol):
+    def load(self, manifest_path: Path) -> ModelPackageIdentity: ...
+
+
+class ModelPackageSettingsStore(Protocol):
+    """Durable per-machine Model Package choices.
+
+    Implementations must fail soft on a missing or unreadable store and return
+    empty settings, so a damaged configuration file never prevents startup.
+    """
+
+    def load(self) -> ModelPackageSettings: ...
+    def save(self, settings: ModelPackageSettings) -> None: ...
 
 
 class CompetitionExportProfileRepository(Protocol):
