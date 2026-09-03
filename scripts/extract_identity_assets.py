@@ -72,10 +72,40 @@ def _unmatted(reference: np.ndarray, bounds: tuple[int, int, int, int]) -> Image
     colour = (patch - BACKGROUND * (1.0 - safe)) / safe
     colour = np.clip(colour, 0.0, 255.0)
 
+    # Where coverage is near zero the recovered colour is meaningless, and the
+    # division above leaves extreme values there. A renderer that scales the
+    # image blends those hidden pixels into visible edges, so bleed real ink
+    # outward instead of shipping garbage under zero alpha.
+    colour = _bleed(colour, alpha)
+
     rgba = np.zeros((*alpha.shape, 4), dtype=np.uint8)
     rgba[..., :3] = np.rint(colour).astype(np.uint8)
     rgba[..., 3] = np.rint(alpha * 255.0).astype(np.uint8)
     return Image.fromarray(rgba, mode="RGBA")
+
+
+def _bleed(colour: np.ndarray, alpha: np.ndarray, passes: int = 6) -> np.ndarray:
+    """Extend edge colour into transparent pixels so downscaling stays clean."""
+    known = alpha > 0.08
+    filled = np.where(known[..., None], colour, 0.0)
+    weight = known.astype(float)
+
+    for _ in range(passes):
+        if weight.min() > 0:
+            break
+        acc = np.zeros_like(filled)
+        acc_w = np.zeros_like(weight)
+        for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            acc += np.roll(filled, (dy, dx), axis=(0, 1))
+            acc_w += np.roll(weight, (dy, dx), axis=(0, 1))
+        spread = acc_w > 0
+        grow = spread & (weight == 0)
+        filled[grow] = (acc[grow] / acc_w[grow][..., None])
+        weight[grow] = 1.0
+
+    # Anything still unreached sits far from any ink; the nearest neutral is fine.
+    filled[weight == 0] = colour[known].mean(axis=0) if known.any() else 0.0
+    return filled
 
 
 def _square_icon(symbol: Image.Image, size: int) -> Image.Image:
@@ -105,6 +135,11 @@ def main() -> int:
     ICON_DIR.mkdir(parents=True, exist_ok=True)
 
     symbol.save(IDENTITY_DIR / "resolved-layers-symbol.png", optimize=True)
+    # The application bar pairs this with live text rather than a baked
+    # wordmark, because raster text at app-bar size cannot stay legible.
+    bar_symbol = symbol.copy()
+    bar_symbol.thumbnail((256, 256), Image.LANCZOS)
+    bar_symbol.save(IDENTITY_DIR / "resolved-layers-symbol-bar.png", optimize=True)
     lockup.save(IDENTITY_DIR / "resolved-layers-lockup.png", optimize=True)
 
     icons = [(size, _square_icon(symbol, size)) for size in ICON_SIZES]

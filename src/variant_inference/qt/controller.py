@@ -24,7 +24,7 @@ class SourceReviewController(QObject):
         group_model: GroupBreakdownModel,
         package: ModelPackageIdentity | None,
         package_error: str = "",
-        identity_lockup: Path | None = None,
+        identity_symbol: Path | None = None,
         verified_runs: VerifiedRunService | None = None,
         run_unavailable_reason: str = "",
         results_controller: ResultsController | None = None,
@@ -46,7 +46,7 @@ class SourceReviewController(QObject):
         self._last_run_path = ""
         self._status_message = "Open a Source Dataset to begin review."
         self._status_kind = "neutral"
-        self._identity_lockup = identity_lockup
+        self._identity_symbol = identity_symbol
         self._active_surface = "review"
         self._profile_message = "Select a label column and map both classes explicitly."
 
@@ -356,8 +356,8 @@ class SourceReviewController(QObject):
         return self._status_kind
 
     @Property(str, constant=True)
-    def identityLockupUrl(self) -> str:  # noqa: N802
-        return QUrl.fromLocalFile(str(self._identity_lockup)).toString() if self._identity_lockup else ""
+    def identitySymbolUrl(self) -> str:  # noqa: N802
+        return QUrl.fromLocalFile(str(self._identity_symbol)).toString() if self._identity_symbol else ""
 
     @Slot(str)
     def openSource(self, value: str) -> None:  # noqa: N802
