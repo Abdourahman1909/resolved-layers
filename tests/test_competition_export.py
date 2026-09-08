@@ -277,3 +277,103 @@ def test_a_blank_panel_is_reported_but_not_fatal(tmp_path: Path) -> None:
 
     assert report.record_count == 4
     assert any("empty panel" in check for check in report.checks)
+
+
+# Controller ----------------------------------------------------------------
+
+
+class _Results:
+    """Minimal stand-in for the results controller the surface follows."""
+
+    def __init__(self, run=None) -> None:
+        self.current_run = run
+
+
+class _Immediate:
+    def submit(self, function, *arguments):
+        from concurrent.futures import Future
+
+        future: Future = Future()
+        try:
+            future.set_result(function(*arguments))
+        except BaseException as error:  # noqa: BLE001
+            future.set_exception(error)
+        return future
+
+
+def controller_for(run):
+    from variant_inference.qt.submission_controller import SubmissionController
+
+    results = _Results(run)
+    controller = SubmissionController(
+        CompetitionExportService(CsvSourceReader()), results, TEAM, _Immediate()
+    )
+    controller._follow_run()  # the surface follows the results controller's signal
+    return controller
+
+
+def test_the_controller_proposes_familiar_columns(tmp_path: Path) -> None:
+    controller = controller_for(run_for(write_source(tmp_path)))
+
+    assert controller.identifierColumn == "Variant_ID"
+    assert controller.panelColumn == "_panel"
+    assert controller.canWrite is True
+
+
+def test_an_unfamiliar_identifier_column_is_not_guessed(tmp_path: Path) -> None:
+    """Identifiers are never invented, so the operator must name the column."""
+    text = SOURCE.replace("Variant_ID", "kayit_no")
+    controller = controller_for(run_for(write_source(tmp_path, text)))
+
+    assert controller.identifierColumn == ""
+    assert controller.canWrite is False
+    assert controller.messageKind == "warning"
+
+    controller.selectIdentifierColumn("kayit_no")
+
+    assert controller.canWrite is True
+
+
+def test_the_controller_writes_and_reports_the_checks(tmp_path: Path) -> None:
+    controller = controller_for(run_for(write_source(tmp_path)))
+
+    controller.writeSubmission(str(tmp_path / "TEAM_763095_FINAL.json"))
+
+    assert controller.messageKind == "success"
+    assert "300" not in controller.message
+    assert Path(controller.writtenPath).is_file()
+    assert any("unique identifiers" in check for check in controller.checks)
+
+
+def test_a_refused_submission_reports_the_broken_rule(tmp_path: Path) -> None:
+    source = write_source(tmp_path, SOURCE.replace("Varyant_3", "Varyant_1"))
+    controller = controller_for(run_for(source))
+
+    controller.writeSubmission(str(tmp_path / "out.json"))
+
+    assert controller.messageKind == "error"
+    assert "more than once" in controller.message
+    assert controller.writtenPath == ""
+    assert controller.checks == []
+    assert controller.busy is False
+
+
+def test_the_header_is_exposed_for_display(tmp_path: Path) -> None:
+    controller = controller_for(run_for(write_source(tmp_path)))
+
+    assert controller.teamName == "Computational-Health-Lab"
+    assert controller.teamId == "763095"
+    assert controller.applicationId == "4484264"
+    assert controller.competitionLevel == "UNIVERSITE_VE_UZERI"
+    assert controller.suggestedFileName == "TEAM_763095_FINAL.json"
+
+
+def test_without_a_run_nothing_can_be_written(tmp_path: Path) -> None:
+    controller = controller_for(None)
+
+    assert controller.hasRun is False
+    assert controller.canWrite is False
+
+    controller.writeSubmission(str(tmp_path / "out.json"))
+
+    assert not (tmp_path / "out.json").exists()

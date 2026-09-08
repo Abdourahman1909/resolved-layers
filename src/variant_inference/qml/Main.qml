@@ -237,6 +237,37 @@ ApplicationWindow {
             }
 
             Item {
+                width: 86
+                height: 46
+                enabled: sourceController.hasResults
+                opacity: enabled ? 1 : 0.45
+                activeFocusOnTab: enabled
+                Accessible.role: Accessible.Button
+                Accessible.name: "Submission"
+                Accessible.description: "Prepare a completed Verified Run for Organizer Scoring"
+                Accessible.selected: sourceController.activeSurface === "submission"
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "Submission"
+                    color: sourceController.activeSurface === "submission" ? root.ink : root.secondary
+                    font.family: "Arial"
+                    font.pixelSize: 13
+                    font.weight: sourceController.activeSurface === "submission" ? Font.DemiBold : Font.Normal
+                }
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: 2
+                    color: sourceController.activeSurface === "submission" ? root.blue : "transparent"
+                }
+                TapHandler { enabled: parent.enabled; onTapped: sourceController.setActiveSurface("submission") }
+                Keys.onReturnPressed: sourceController.setActiveSurface("submission")
+                Keys.onSpacePressed: sourceController.setActiveSurface("submission")
+            }
+
+            Item {
                 width: 66
                 height: 46
                 activeFocusOnTab: true
@@ -1659,6 +1690,12 @@ ApplicationWindow {
         EvaluationWorkspace {
             id: evaluationWorkspace
             visible: sourceController.activeSurface === "evaluation"
+            anchors.fill: parent
+        }
+
+        CompetitionSubmission {
+            id: competitionSubmission
+            visible: sourceController.activeSurface === "submission"
             anchors.fill: parent
         }
 

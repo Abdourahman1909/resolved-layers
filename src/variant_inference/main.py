@@ -13,6 +13,7 @@ from variant_inference import __version__, assets
 from variant_inference.application.model_package_settings import (
     ModelPackageInstallationService,
 )
+from variant_inference.application.competition_export import CompetitionExportService
 from variant_inference.application.research_export import ResearchExportService
 from variant_inference.application.verified_run import VerifiedRunService
 from variant_inference.application.variant_inspector import SourceRowEvidenceService
@@ -30,6 +31,7 @@ from variant_inference.infrastructure.run_archive import DirectoryRunArchive
 from variant_inference.qt.controller import SourceReviewController
 from variant_inference.qt.export_controller import ExportController
 from variant_inference.qt.model_package_controller import ModelPackageController
+from variant_inference.qt.submission_controller import SubmissionController
 from variant_inference.qt.profile_model import GroupBreakdownModel
 from variant_inference.qt.results_controller import ResultsController
 from variant_inference.qt.evaluation_controller import EvaluationController
@@ -104,7 +106,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--surface",
-        choices=("review", "profile", "results", "evaluation", "settings"),
+        choices=("review", "profile", "results", "evaluation", "submission", "settings"),
         default="review",
         help="Initial surface used by automated visual verification",
     )
@@ -124,6 +126,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--evaluation-benign-value",
         help="Exact raw value mapped to Benign for Evaluation verification",
+    )
+    parser.add_argument(
+        "--write-submission",
+        type=Path,
+        help="Write the competition submission to this path for verification",
     )
     parser.add_argument(
         "--evaluation-group-column",
@@ -295,6 +302,10 @@ def main(argv: list[str] | None = None) -> int:
         ResearchExportService(CsvSourceReader()), results_controller
     )
     application.aboutToQuit.connect(export_controller.shutdown)
+    submission_controller = SubmissionController(
+        CompetitionExportService(CsvSourceReader()), results_controller
+    )
+    application.aboutToQuit.connect(submission_controller.shutdown)
     controller = SourceReviewController(
         table_model,
         group_model,
@@ -310,6 +321,7 @@ def main(argv: list[str] | None = None) -> int:
     engine.rootContext().setContextProperty("sourceController", controller)
     engine.rootContext().setContextProperty("modelPackageController", model_package_controller)
     engine.rootContext().setContextProperty("exportController", export_controller)
+    engine.rootContext().setContextProperty("submissionController", submission_controller)
     engine.rootContext().setContextProperty("sourceTableModel", table_model)
     engine.rootContext().setContextProperty("groupBreakdownModel", group_model)
     engine.rootContext().setContextProperty("resultsController", results_controller)
@@ -344,6 +356,21 @@ def main(argv: list[str] | None = None) -> int:
             roots[0].deleteLater()
         QTimer.singleShot(50, application.quit)
 
+    if args.surface == "submission":
+        def open_submission() -> None:
+            if not controller.hasResults:
+                QTimer.singleShot(25, open_submission)
+                return
+            controller.setActiveSurface("submission")
+            if args.write_submission:
+                QTimer.singleShot(
+                    50,
+                    lambda: submission_controller.writeSubmission(
+                        str(args.write_submission.resolve())
+                    ),
+                )
+
+        QTimer.singleShot(0, open_submission)
     if args.surface == "settings":
         # Settings needs neither a source nor a completed run to be reachable.
         QTimer.singleShot(0, lambda: controller.setActiveSurface("settings"))
