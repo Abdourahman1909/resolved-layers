@@ -106,7 +106,7 @@ This hypothesis is not fully accepted until the remaining grilling questions are
 
 - Define and approve a cohort-first post-prediction workspace that helps operators narrow thousands of variants before opening the on-demand Records table and Variant Inspector.
 - Which visualizations materially aid verification and which should be omitted.
-- Run Archive retention, secure deletion, and Source Snapshot encryption requirements.
+- Run Archive retention policy and Source Snapshot encryption requirements. Operator-initiated deletion of a single run is now implemented; automatic retention, bulk removal, and secure erasure beyond an ordinary filesystem delete remain undecided.
 - Offline-only versus optional hosted deployment.
 - Production vector assets and usage rules for the approved Resolved Layers identity and product lockup.
 - Accessibility target and supported languages.
@@ -274,6 +274,14 @@ The `Submission` surface is separate from Evaluation and shows no metric, since 
 Verified end to end with the real Model Package: a 300-row final-shaped file produced a 40 KB submission with 300 unique identifiers, 228 Pathogenic and 72 Benign. Two archived runs were correctly refused in the interface, one for duplicate `Variant_ID` values in its source and one for having no identifier column at all. The suite passes 149 tests.
 
 Practical note for the final: the 736-row held-out file has no identifier column, so confirm on the day which column carries the organisers' record identifiers before running.
+
+Operator-initiated Run Archive deletion was added on September 9, 2026 on `codex/delete-archived-runs`, prompted by an archive holding six runs of which four were duplicates created by the interface-thread defect fixed the same day.
+
+Accepted position: immutability means an archived run cannot be **altered**, and nothing rewrites a run or its evidence. Removing one entirely is a separate, deliberate operator act and is not reversible. `DirectoryRunArchive.delete` validates the run identifier, refuses anything whose resolved directory is not a direct child of the archive root, refuses a symlinked entry, and never touches the referenced Source Dataset, which the archive does not own.
+
+The interface requires a second explicit action: `Remove` reveals `Delete permanently?` with `Delete` and `Keep`, so no single click destroys evidence. Deleting the run currently on screen clears the Results surface rather than leaving it displaying a run that no longer exists, and a failed deletion is reported without changing anything.
+
+The root QML palette was missing the design system's error red, so the destructive action had no colour; `#B52921` from `DESIGN.md` was added rather than a new literal invented.
 
 ## 7. Authoritative files
 

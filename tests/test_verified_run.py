@@ -198,3 +198,105 @@ def test_archive_rejects_unsafe_run_identifier(tmp_path, model_package):
             audit=TransformationAudit(),
             operator_confirmed=True,
         )
+
+
+# Removing an archived run ---------------------------------------------------
+#
+# Immutability means a run cannot be altered. Removing one entirely is a
+# separate, deliberate act, and is not reversible.
+
+
+def _archive_with_two_runs(tmp_path, model_package):
+    """Two archived runs from the same source, built through the real service."""
+    from conftest import MemorySource
+
+    source_path = tmp_path / "source.csv"
+    source_path.write_text(
+        "required_numeric,required_category\n0.2,A\n0.8,B\n", encoding="utf-8"
+    )
+    source = MemorySource(("required_numeric", "required_category"))
+    source.rows = [("0.2", "A"), ("0.8", "B")]
+    source.identity = SourceIdentity(
+        path=source_path,
+        file_name=source_path.name,
+        row_count=2,
+        column_count=2,
+        sha256=hashlib.sha256(source_path.read_bytes()).hexdigest(),
+        delimiter="Comma (,)",
+        encoding="UTF-8",
+        last_modified="2026-08-29T12:00:00+03:00",
+    )
+    archive = DirectoryRunArchive(tmp_path / "archive")
+    audit = TransformationAudit(
+        (AuditEntry("row_filtering", "None", "Every Source Row is preserved."),)
+    )
+
+    archived = []
+    for index, run_id in enumerate(
+        ("run-20260101T000000.000000Z-aaaaaaaaaaaa", "run-20260101T000001.000000Z-bbbbbbbbbbbb")
+    ):
+        times = iter(
+            (
+                datetime(2026, 8, 29, 12, index, tzinfo=timezone.utc),
+                datetime(2026, 8, 29, 12, index, 1, tzinfo=timezone.utc),
+            )
+        )
+        timer = iter((10.0, 10.125))
+        service = VerifiedRunService(
+            FixedInference(), archive,
+            clock=lambda t=times: next(t), timer=lambda t=timer: next(t),
+            run_id_factory=lambda _, rid=run_id: rid,
+        )
+        archived.append(
+            service.execute(
+                source=source, package=model_package,
+                fit=compatible_fit(), audit=audit, operator_confirmed=True,
+            )
+        )
+    return archive, archived[0], archived[1], source_path
+
+
+def test_deleting_one_run_leaves_the_others(tmp_path, model_package):
+    archive, first, second, _ = _archive_with_two_runs(tmp_path, model_package)
+
+    archive.delete(first.run_id)
+
+    remaining = [entry.run_id for entry in archive.list_entries()]
+    assert first.run_id not in remaining
+    assert second.run_id in remaining
+    assert not first.directory.exists()
+    assert second.directory.exists()
+
+
+def test_deleting_a_run_never_touches_its_source(tmp_path, model_package):
+    """The archive references a Source Dataset; it does not own it."""
+    archive, first, _, source_path = _archive_with_two_runs(tmp_path, model_package)
+
+    archive.delete(first.run_id)
+
+    assert source_path.is_file()
+
+
+def test_deleting_an_absent_run_is_refused(tmp_path, model_package):
+    archive, first, _, _ = _archive_with_two_runs(tmp_path, model_package)
+    archive.delete(first.run_id)
+
+    with pytest.raises(RunArchiveError, match="not in this archive"):
+        archive.delete(first.run_id)
+
+
+@pytest.mark.parametrize(
+    "identifier", ["../escape", "run-../../etc", "", "not-a-run-id", "/absolute/path"]
+)
+def test_a_crafted_identifier_cannot_direct_a_delete_elsewhere(
+    tmp_path, model_package, identifier
+):
+    archive, _, _, _ = _archive_with_two_runs(tmp_path, model_package)
+    outside = tmp_path / "not-the-archive"
+    outside.mkdir()
+    (outside / "keep.txt").write_text("keep", encoding="utf-8")
+
+    with pytest.raises(RunArchiveError):
+        archive.delete(identifier)
+
+    assert (outside / "keep.txt").is_file()

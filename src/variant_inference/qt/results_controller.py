@@ -249,6 +249,35 @@ class ResultsController(QObject):
         self._archive_entries.set_entries(self._archive.list_entries())
         self.stateChanged.emit()
 
+    @Slot(str, result=bool)
+    def deleteArchivedRun(self, run_id: str) -> bool:  # noqa: N802
+        """Remove one archived run permanently.
+
+        Not reversible, so the interface asks for a second, explicit action
+        before calling this. If the removed run is the one on screen, the
+        Results surface is cleared rather than left showing a run that no
+        longer exists.
+        """
+        try:
+            self._archive.delete(run_id)
+        except Exception as error:  # surfaced, never swallowed
+            self._error_message = str(error)
+            self.stateChanged.emit()
+            return False
+
+        if self._session.run is not None and self._session.run.run_id == run_id:
+            self._close_inspector()
+            self._session.clear()
+            self._source_state = "unknown"
+            self._selected_record = None
+            self._selected_visible_row = -1
+            self._predictions.set_records(())
+            self._histogram.set_bins(())
+            self._investigation_sets.set_items(())
+        self._error_message = ""
+        self.refreshArchive()
+        return True
+
     def open_run(self, run_id: str) -> bool:
         try:
             self._source_request_id += 1

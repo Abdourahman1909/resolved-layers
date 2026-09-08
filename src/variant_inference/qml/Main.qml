@@ -20,6 +20,7 @@ ApplicationWindow {
     readonly property color pathogenic: "#263B72"
     readonly property color benign: "#6D9B91"
     readonly property color amber: "#8A590E"
+    readonly property color error: "#B52921"
     readonly property color rule: "#D8DEE8"
     readonly property color softRule: "#E8ECF2"
     readonly property int evidenceWidth: Math.max(398, Math.min(468, width * 0.305))
@@ -364,14 +365,71 @@ ApplicationWindow {
                     Accessible.role: Accessible.Button
                     Accessible.name: "Open Verified Run " + runId
 
+                    // Removing a run is not reversible, so it takes a second,
+                    // explicit action rather than one click beside "open".
+                    property bool confirmingDelete: false
+
                     Rectangle { anchors.fill: parent; color: hover.hovered ? "#F5F7FB" : "transparent" }
-                    Text { x: 20; y: 14; width: parent.width - 40; text: sourceName; elide: Text.ElideMiddle; color: root.ink; font.family: "Arial"; font.pixelSize: 13; font.weight: Font.DemiBold }
-                    Text { x: 20; y: 37; width: parent.width - 40; text: recordCount.toLocaleString() + " records  ·  " + pathogenicCount.toLocaleString() + " Pathogenic  ·  " + warningCount + " warnings"; color: root.secondary; font.family: "Arial"; font.pixelSize: 11 }
-                    Text { x: 20; y: 59; width: parent.width - 40; text: packageName + " " + packageVersion + "  ·  " + completedAt; elide: Text.ElideRight; color: root.secondary; font.family: "Arial"; font.pixelSize: 10 }
+                    Text { x: 20; y: 14; width: parent.width - 108; text: sourceName; elide: Text.ElideMiddle; color: root.ink; font.family: "Arial"; font.pixelSize: 13; font.weight: Font.DemiBold }
+                    Text { x: 20; y: 37; width: parent.width - 108; text: recordCount.toLocaleString() + " records  ·  " + pathogenicCount.toLocaleString() + " Pathogenic  ·  " + warningCount + " warnings"; color: root.secondary; font.family: "Arial"; font.pixelSize: 11 }
+                    Text { x: 20; y: 59; width: parent.width - 108; text: packageName + " " + packageVersion + "  ·  " + completedAt; elide: Text.ElideRight; color: root.secondary; font.family: "Arial"; font.pixelSize: 10 }
                     Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; height: 1; color: root.softRule }
                     HoverHandler { id: hover }
                     TapHandler { onTapped: { if (sourceController.openArchivedRun(runId)) archivePopup.close() } }
                     Keys.onReturnPressed: { if (sourceController.openArchivedRun(runId)) archivePopup.close() }
+
+                    Text {
+                        id: removeAction
+                        anchors.right: parent.right
+                        anchors.rightMargin: 20
+                        y: 14
+                        visible: !parent.confirmingDelete && (hover.hovered || removeHover.hovered)
+                        text: "Remove"
+                        color: removeHover.hovered ? root.error : root.secondary
+                        font.family: "Arial"
+                        font.pixelSize: 11
+                        Accessible.role: Accessible.Button
+                        Accessible.name: "Remove Verified Run " + runId
+                        HoverHandler { id: removeHover }
+                        TapHandler { onTapped: parent.parent.confirmingDelete = true }
+                    }
+
+                    Row {
+                        anchors.right: parent.right
+                        anchors.rightMargin: 20
+                        y: 12
+                        spacing: 12
+                        visible: parent.confirmingDelete
+
+                        Text {
+                            text: "Delete permanently?"
+                            color: root.secondary
+                            font.family: "Arial"
+                            font.pixelSize: 11
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Text {
+                            text: "Delete"
+                            color: root.error
+                            font.family: "Arial"
+                            font.pixelSize: 11
+                            font.weight: Font.DemiBold
+                            anchors.verticalCenter: parent.verticalCenter
+                            Accessible.role: Accessible.Button
+                            Accessible.name: "Confirm deleting Verified Run " + runId
+                            TapHandler { onTapped: resultsController.deleteArchivedRun(runId) }
+                        }
+                        Text {
+                            text: "Keep"
+                            color: root.secondary
+                            font.family: "Arial"
+                            font.pixelSize: 11
+                            anchors.verticalCenter: parent.verticalCenter
+                            Accessible.role: Accessible.Button
+                            Accessible.name: "Keep Verified Run " + runId
+                            TapHandler { onTapped: parent.parent.parent.confirmingDelete = false }
+                        }
+                    }
                 }
                 ScrollBar.vertical: AppScrollBar { }
             }
