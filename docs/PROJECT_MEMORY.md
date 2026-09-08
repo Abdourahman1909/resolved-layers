@@ -283,6 +283,28 @@ The interface requires a second explicit action: `Remove` reveals `Delete perman
 
 The root QML palette was missing the design system's error red, so the destructive action had no colour; `#B52921` from `DESIGN.md` was added rather than a new literal invented.
 
+Release 0.2.0 was published on September 8, 2026, adding the per-panel Evaluation breakdown, the submission writer, and the Competition Submission surface. The built AppImage was verified to report its version, reproduce the reference run exactly, and write a valid 300-record submission from inside the bundle.
+
+Four interface defects were then found by using the application rather than by testing it, all fixed on September 8 and 9, 2026. They are recorded together because they share a cause: the suite verifies controllers and renders, and none of these was visible to either.
+
+**Prediction blocked the interface thread.** Creating a Verified Run showed no progress and could not repaint, so every click made while it appeared frozen queued as an event and produced a further archived run; one intent had produced four runs. Prediction now runs on its own executor behind a busy guard, with an indeterminate progress bar. Moving it off-thread exposed two more faults: the source store's SQLite connection was bound to its creating thread, and the worker caught only three exception types, so that failure was swallowed and the interface stayed busy forever. The connection now permits cross-thread use under a lock, and the worker catches anything. An early version of the cross-thread test passed incorrectly because the main thread had already cached the page the worker read; the committed test reads an uncached page.
+
+**Nothing could be grabbed to scroll.** Qt's default for a ComboBox popup is a ScrollIndicator, which reports position but cannot be dragged, and other surfaces either had no scrollbar or revealed the handle only once hovered. One shared `AppScrollBar` now serves all nineteen scrollable surfaces, visible whenever there is anything to scroll.
+
+**The submission surface contradicted itself.** Its message was set once when a run opened, so choosing a column left a stale warning beside an enabled button. The message now follows the choice, and the chosen identifier column is inspected on selection: a column whose values repeat reports how many distinct values it has and disables writing. This catches selecting the label column, which has two distinct values across every record.
+
+**Archive rows could not be deleted.** The row carried a TapHandler covering its whole area, and pointer handlers do not take an exclusive grab, so a click on Delete also opened the run. The row now opens with a MouseArea and each action is its own MouseArea raised above it. Fixing that broke closing the popup, because a delegate cannot resolve the popup's id from inside a MouseArea; the view now hands its popup to delegates through `ListView.view`. That second fault could not appear in the smoke check, which starts with an empty archive so the delegate is never created.
+
+Recorded limitation: driving real clicks in a test was attempted and abandoned, because an offscreen Popup does not instantiate its delegates in this environment. `tests/test_archive_delete_ui.py` asserts the structural properties that decide event routing instead, verified by reintroducing the original TapHandler, and states that limit in its module docstring. Interface faults of this kind currently need a person to find them.
+
+## 6a. Immediate next step
+
+Two Model Packages were agreed on September 9, 2026 and are **not yet built**: keep `teknofest-2026-pdr-v1` at threshold 0.61 untouched, and add a sibling package at **0.75** so either can be installed from Settings on the day. Changing the threshold changes the manifest SHA-256, so the new package needs its own pinned checksum in `OFFICIAL_MANIFEST_CHECKSUMS`, and both should be verified to produce identical scores with only the classification boundary differing.
+
+The evidence for 0.75 is in the parent repository at `results/rebalance_experiment_2026-09-04/`, including `Final_Metric_Readiness_2026-09-04.pdf`. The decision between the two rests on one unanswered question: whether the final test set is class-balanced as the specification states.
+
+Also outstanding: release 0.2.1 with the four interface fixes above, since the installed AppImage at `~/Applications/` is 0.2.0 and lacks all of them. Previous versions are archived in `~/Applications/previous-versions/`.
+
 ## 7. Authoritative files
 
 1. `docs/adr/` for accepted architectural decisions.
