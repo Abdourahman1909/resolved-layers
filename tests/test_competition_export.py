@@ -377,3 +377,52 @@ def test_without_a_run_nothing_can_be_written(tmp_path: Path) -> None:
     controller.writeSubmission(str(tmp_path / "out.json"))
 
     assert not (tmp_path / "out.json").exists()
+
+
+def test_choosing_a_label_column_as_identifier_is_reported_immediately(tmp_path: Path) -> None:
+    """A label column has few distinct values, so it cannot identify records.
+
+    Reported on selection rather than at write time: during a timed final,
+    finding out after clicking wastes a cycle.
+    """
+    text = "Variant_ID,_panel,label\nA,CFTR,1\nB,PAH,0\nC,KANSER,1\nD,MASTER,0\n"
+    controller = controller_for(run_for(write_source(tmp_path, text)))
+
+    controller.selectIdentifierColumn("label")
+
+    assert controller.messageKind == "error"
+    assert "cannot be the record identifier" in controller.message
+
+
+def test_a_valid_identifier_column_reports_readiness(tmp_path: Path) -> None:
+    controller = controller_for(run_for(write_source(tmp_path)))
+
+    controller.selectIdentifierColumn("Variant_ID")
+
+    assert controller.messageKind == "neutral"
+    assert "Variant_ID" in controller.message
+    assert controller.canWrite is True
+
+
+def test_the_message_follows_the_current_choice(tmp_path: Path) -> None:
+    """Regression: the message was set once on load and left stale afterwards."""
+    text = SOURCE.replace("Variant_ID", "kayit_no")
+    controller = controller_for(run_for(write_source(tmp_path, text)))
+    assert controller.messageKind == "warning"
+
+    controller.selectIdentifierColumn("kayit_no")
+
+    assert controller.messageKind != "warning"
+    assert "No familiar identifier column" not in controller.message
+
+
+def test_a_rejected_identifier_column_disables_writing(tmp_path: Path) -> None:
+    """An enabled button beside a red refusal message is a contradiction."""
+    text = "Variant_ID,_panel,label\nA,CFTR,1\nB,PAH,0\nC,KANSER,1\nD,MASTER,0\n"
+    controller = controller_for(run_for(write_source(tmp_path, text)))
+
+    controller.selectIdentifierColumn("label")
+    assert controller.canWrite is False
+
+    controller.selectIdentifierColumn("Variant_ID")
+    assert controller.canWrite is True
