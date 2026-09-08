@@ -23,7 +23,12 @@ class ModelPackageController(QObject):
     stateChanged = Signal()
     installedChanged = Signal()
 
-    def __init__(self, service: ModelPackageInstallationService) -> None:
+    def __init__(
+        self,
+        service: ModelPackageInstallationService,
+        active_override: str = "",
+        active_manifest_path: Path | None = None,
+    ) -> None:
         super().__init__()
         self._service = service
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="model-package")
@@ -33,6 +38,12 @@ class ModelPackageController(QObject):
         self._message = "No Model Package installed."
         self._message_kind = "neutral"
         self._pending: Future | None = None
+        # What the application actually loaded at startup, which is not always
+        # what Settings installed: a command-line argument and an environment
+        # variable both take priority. Saying so is the difference between this
+        # surface describing the machine and merely describing its own file.
+        self._active_override = active_override
+        self._active_manifest_path = active_manifest_path
 
     # Startup --------------------------------------------------------------
 
@@ -45,7 +56,14 @@ class ModelPackageController(QObject):
 
     def _describe_installed(self) -> None:
         installed = self._installed
-        if installed is None:
+        if self._active_override:
+            # Reporting the installed package as ready would be false here: it
+            # is not the one predicting. Two packages may differ only in their
+            # Release Threshold, so nothing else on screen would reveal this.
+            # The status line stays short; the band below carries the detail.
+            self._message = self.overrideSummary
+            self._message_kind = "warning"
+        elif installed is None:
             self._message = "No Model Package installed."
             self._message_kind = "neutral"
         elif installed.is_usable:
@@ -121,8 +139,14 @@ class ModelPackageController(QObject):
         if candidate is None or not candidate.is_usable:
             return
         self._installed = self._service.install(candidate)
-        self._message = "Model Package installed. Restart to use it for prediction."
-        self._message_kind = "success"
+        if self._active_override:
+            # Promising it will be used after a restart would be a lie while an
+            # override stands, and the operator would not discover it.
+            self._message = self.overrideSummary
+            self._message_kind = "warning"
+        else:
+            self._message = "Model Package installed. Restart to use it for prediction."
+            self._message_kind = "success"
         self.installedChanged.emit()
         self.stateChanged.emit()
 
@@ -130,8 +154,12 @@ class ModelPackageController(QObject):
     def removeInstalled(self) -> None:  # noqa: N802
         self._service.remove()
         self._installed = None
-        self._message = "Model Package removed. Restart to apply."
-        self._message_kind = "neutral"
+        if self._active_override:
+            self._message = self.overrideSummary
+            self._message_kind = "warning"
+        else:
+            self._message = "Model Package removed. Restart to apply."
+            self._message_kind = "neutral"
         self.installedChanged.emit()
         self.stateChanged.emit()
 
@@ -218,6 +246,60 @@ class ModelPackageController(QObject):
     def installedPath(self) -> str:  # noqa: N802
         installed = self._installed
         return str(installed.manifest_path.parent) if installed else "—"
+
+    @Property(str, notify=installedChanged)
+    def installedThreshold(self) -> str:  # noqa: N802
+        """The boundary the installed package classifies at.
+
+        Two packages may hold the same weights and differ only here, so without
+        this the installed summary cannot tell them apart.
+        """
+        installed = self._installed
+        if installed is None or installed.identity is None:
+            return "—"
+        return f"{installed.identity.contract.release_threshold:.3f}"
+
+    @Property(str, notify=installedChanged)
+    def installedChecksum(self) -> str:  # noqa: N802
+        installed = self._installed
+        if installed is None or installed.identity is None:
+            return "—"
+        return installed.identity.manifest_checksum
+
+    @Property(bool, notify=installedChanged)
+    def overrideActive(self) -> bool:  # noqa: N802
+        """True when the package in use did not come from this surface."""
+        return bool(self._active_override)
+
+    def _override_origin(self) -> str:
+        if self._active_override == "argument":
+            return "the --model-package argument"
+        if self._active_override == "environment":
+            return "the CHL_MODEL_PACKAGE_MANIFEST environment variable"
+        return self._active_override
+
+    @Property(str, notify=installedChanged)
+    def overrideSummary(self) -> str:  # noqa: N802
+        """One line for the status band, where the full sentence would crowd."""
+        if not self._active_override:
+            return ""
+        return f"A different Model Package is in use, set by {self._override_origin()}."
+
+    @Property(str, notify=installedChanged)
+    def overrideMessage(self) -> str:  # noqa: N802
+        if not self._active_override:
+            return ""
+        return (
+            f"Prediction is using the Model Package from {self._override_origin()}, "
+            "not the one installed here. Installing a package will not change that "
+            "until the override is removed."
+        )
+
+    @Property(str, notify=installedChanged)
+    def overridePath(self) -> str:  # noqa: N802
+        if not self._active_override or self._active_manifest_path is None:
+            return "—"
+        return str(Path(self._active_manifest_path).parent)
 
     @Property(str, constant=True)
     def applicationVersion(self) -> str:  # noqa: N802

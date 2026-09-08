@@ -139,6 +139,28 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _same_package(left: Path | None, right: Path | None) -> bool:
+    """Whether two routes name the same manifest, allowing for a package folder.
+
+    An argument or environment variable may name the folder while Settings
+    stored the manifest inside it, and either may be relative or unresolved.
+    Comparing the strings would report a contradiction that does not exist.
+    """
+    if left is None or right is None:
+        return False
+
+    def normalise(path: Path) -> Path:
+        candidate = Path(path).expanduser()
+        if candidate.is_dir():
+            candidate = candidate / "manifest.json"
+        try:
+            return candidate.resolve()
+        except OSError:
+            return candidate
+
+    return normalise(left) == normalise(right)
+
+
 def verify_inference(args: argparse.Namespace) -> int:
     """Prove a build can load and execute its models, without the interface.
 
@@ -213,13 +235,22 @@ def main(argv: list[str] | None = None) -> int:
     # Resolution order: an explicit argument wins, then the environment, then
     # the package the operator installed through Settings. The last of those is
     # the only route that does not require a terminal.
+    #
+    # Which branch won is carried to Settings. Two packages can hold the same
+    # weights and differ only in their Release Threshold, so an operator who
+    # installs one here and is silently served the other has no way to notice.
+    installed_path = model_packages.settings().manifest_path
     package_path = args.model_package
+    package_override = "argument" if package_path is not None else ""
     if package_path is None and os.environ.get("CHL_MODEL_PACKAGE_MANIFEST"):
         package_path = Path(os.environ["CHL_MODEL_PACKAGE_MANIFEST"])
+        package_override = "environment"
     if package_path is None:
-        configured = model_packages.settings().manifest_path
-        if configured is not None:
-            package_path = configured
+        package_path = installed_path
+        package_override = ""
+    elif installed_path is None or _same_package(package_path, installed_path):
+        # Nothing installed to contradict, or both routes name the same package.
+        package_override = ""
 
     package = None
     package_error = ""
@@ -269,7 +300,11 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     identity_symbol = assets.SYMBOL_BAR if assets.SYMBOL_BAR.is_file() else None
-    model_package_controller = ModelPackageController(model_packages)
+    model_package_controller = ModelPackageController(
+        model_packages,
+        active_override=package_override,
+        active_manifest_path=package_path,
+    )
     model_package_controller.refresh_installed()
     application.aboutToQuit.connect(model_package_controller.shutdown)
 

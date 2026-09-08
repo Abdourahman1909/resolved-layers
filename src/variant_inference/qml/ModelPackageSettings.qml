@@ -90,6 +90,50 @@ Item {
 
             Item { width: 1; height: 12 }
 
+            // An argument or environment variable takes priority over whatever
+            // is installed here. Without this the panel below would describe a
+            // package that is not the one predicting.
+            Rectangle {
+                width: body.width
+                visible: modelPackageController.overrideActive
+                height: visible ? implicitHeight : 0
+                implicitHeight: overrideColumn.implicitHeight + 30
+                radius: 6
+                color: "#FDF7EC"
+                border.width: 1
+                border.color: "#E4CFA6"
+
+                Column {
+                    id: overrideColumn
+                    x: 20
+                    y: 15
+                    width: parent.width - 40
+                    spacing: 8
+
+                    Text {
+                        width: parent.width
+                        text: modelPackageController.overrideMessage
+                        color: settings.amber
+                        wrapMode: Text.WordWrap
+                        font.family: "Arial"
+                        font.pixelSize: 13
+                        lineHeight: 1.25
+                    }
+                    EvidenceRow {
+                        width: parent.width
+                        label: "In use instead"
+                        value: modelPackageController.overridePath
+                        valueColor: settings.amber
+                        wrapValue: true
+                    }
+                }
+            }
+
+            Item {
+                width: 1
+                height: modelPackageController.overrideActive ? 12 : 0
+            }
+
             Rectangle {
                 width: body.width
                 implicitHeight: installedColumn.implicitHeight + 34
@@ -109,6 +153,20 @@ Item {
                         width: parent.width
                         label: "Model Package"
                         value: modelPackageController.installedName
+                        wrapValue: true
+                    }
+                    // Two packages can hold the same weights and differ only in
+                    // their Release Threshold, so the name alone cannot identify
+                    // which one is installed.
+                    EvidenceRow {
+                        width: parent.width
+                        label: "Release Threshold"
+                        value: modelPackageController.installedThreshold
+                    }
+                    EvidenceRow {
+                        width: parent.width
+                        label: "Manifest SHA-256"
+                        value: modelPackageController.installedChecksum
                         wrapValue: true
                     }
                     EvidenceRow {
