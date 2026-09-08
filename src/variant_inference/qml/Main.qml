@@ -317,6 +317,7 @@ ApplicationWindow {
 
     Popup {
         id: archivePopup
+        objectName: "archivePopup"
         x: root.width - width - 28
         y: appBar.height - 5
         width: Math.min(470, root.width - 56)
@@ -351,6 +352,7 @@ ApplicationWindow {
                 model: runArchiveModel
                 boundsBehavior: Flickable.StopAtBounds
                 delegate: Item {
+                    id: archiveRow
                     required property string runId
                     required property string completedAt
                     required property string sourceName
@@ -369,65 +371,136 @@ ApplicationWindow {
                     // explicit action rather than one click beside "open".
                     property bool confirmingDelete: false
 
-                    Rectangle { anchors.fill: parent; color: hover.hovered ? "#F5F7FB" : "transparent" }
-                    Text { x: 20; y: 14; width: parent.width - 108; text: sourceName; elide: Text.ElideMiddle; color: root.ink; font.family: "Arial"; font.pixelSize: 13; font.weight: Font.DemiBold }
-                    Text { x: 20; y: 37; width: parent.width - 108; text: recordCount.toLocaleString() + " records  ·  " + pathogenicCount.toLocaleString() + " Pathogenic  ·  " + warningCount + " warnings"; color: root.secondary; font.family: "Arial"; font.pixelSize: 11 }
-                    Text { x: 20; y: 59; width: parent.width - 108; text: packageName + " " + packageVersion + "  ·  " + completedAt; elide: Text.ElideRight; color: root.secondary; font.family: "Arial"; font.pixelSize: 10 }
-                    Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; height: 1; color: root.softRule }
-                    HoverHandler { id: hover }
-                    TapHandler { onTapped: { if (sourceController.openArchivedRun(runId)) archivePopup.close() } }
-                    Keys.onReturnPressed: { if (sourceController.openArchivedRun(runId)) archivePopup.close() }
+                    Rectangle { anchors.fill: parent; color: openArea.containsMouse ? "#F5F7FB" : "transparent" }
 
-                    Text {
-                        id: removeAction
-                        anchors.right: parent.right
-                        anchors.rightMargin: 20
-                        y: 14
-                        visible: !parent.confirmingDelete && (hover.hovered || removeHover.hovered)
-                        text: "Remove"
-                        color: removeHover.hovered ? root.error : root.secondary
-                        font.family: "Arial"
-                        font.pixelSize: 11
-                        Accessible.role: Accessible.Button
-                        Accessible.name: "Remove Verified Run " + runId
-                        HoverHandler { id: removeHover }
-                        TapHandler { onTapped: parent.parent.confirmingDelete = true }
+                    // Opening the run. A MouseArea rather than a TapHandler so
+                    // the action controls above it can consume their own clicks;
+                    // with handlers alone both fired and the row opened instead
+                    // of deleting.
+                    MouseArea {
+                        id: openArea
+                        objectName: "archiveOpen"
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked: { if (sourceController.openArchivedRun(archiveRow.runId)) archivePopup.close() }
                     }
+                    Keys.onReturnPressed: { if (sourceController.openArchivedRun(archiveRow.runId)) archivePopup.close() }
 
-                    Row {
+                    Text { x: 20; y: 14; width: parent.width - 132; text: archiveRow.sourceName; elide: Text.ElideMiddle; color: root.ink; font.family: "Arial"; font.pixelSize: 13; font.weight: Font.DemiBold }
+                    Text { x: 20; y: 37; width: parent.width - 132; text: archiveRow.recordCount.toLocaleString() + " records  ·  " + archiveRow.pathogenicCount.toLocaleString() + " Pathogenic  ·  " + archiveRow.warningCount + " warnings"; color: root.secondary; font.family: "Arial"; font.pixelSize: 11 }
+                    Text { x: 20; y: 59; width: parent.width - 132; text: archiveRow.packageName + " " + archiveRow.packageVersion + "  ·  " + archiveRow.completedAt; elide: Text.ElideRight; color: root.secondary; font.family: "Arial"; font.pixelSize: 10 }
+                    Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; height: 1; color: root.softRule }
+
+                    // Action controls sit above the open area and consume their
+                    // own clicks, so a delete never also opens the run. Both
+                    // states are always present and cross-fade, so the control
+                    // is findable without hovering to discover it.
+                    Item {
+                        z: 2
                         anchors.right: parent.right
-                        anchors.rightMargin: 20
-                        y: 12
-                        spacing: 12
-                        visible: parent.confirmingDelete
+                        anchors.rightMargin: 14
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.max(removeButton.width, confirmRow.width)
+                        height: 30
 
-                        Text {
-                            text: "Delete permanently?"
-                            color: root.secondary
-                            font.family: "Arial"
-                            font.pixelSize: 11
+                        Rectangle {
+                            id: removeButton
+                            anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
+                            width: removeLabel.implicitWidth + 22
+                            height: 26
+                            radius: 4
+                            opacity: archiveRow.confirmingDelete ? 0 : 1
+                            visible: opacity > 0
+                            color: removeArea.containsMouse ? "#FBEDEC" : "transparent"
+                            border.width: 1
+                            border.color: removeArea.containsMouse ? "#E7BDB9" : root.rule
+
+                            Behavior on opacity { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                            Behavior on color { ColorAnimation { duration: 130 } }
+                            Behavior on border.color { ColorAnimation { duration: 130 } }
+
+                            Text {
+                                id: removeLabel
+                                anchors.centerIn: parent
+                                text: "Remove"
+                                color: removeArea.containsMouse ? root.error : root.secondary
+                                font.family: "Arial"
+                                font.pixelSize: 11
+                                Behavior on color { ColorAnimation { duration: 130 } }
+                            }
+                            MouseArea {
+                                id: removeArea
+                                objectName: "archiveRemove"
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                Accessible.role: Accessible.Button
+                                Accessible.name: "Remove Verified Run " + archiveRow.runId
+                                onClicked: archiveRow.confirmingDelete = true
+                            }
                         }
-                        Text {
-                            text: "Delete"
-                            color: root.error
-                            font.family: "Arial"
-                            font.pixelSize: 11
-                            font.weight: Font.DemiBold
+
+                        Row {
+                            id: confirmRow
+                            anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
-                            Accessible.role: Accessible.Button
-                            Accessible.name: "Confirm deleting Verified Run " + runId
-                            TapHandler { onTapped: resultsController.deleteArchivedRun(runId) }
-                        }
-                        Text {
-                            text: "Keep"
-                            color: root.secondary
-                            font.family: "Arial"
-                            font.pixelSize: 11
-                            anchors.verticalCenter: parent.verticalCenter
-                            Accessible.role: Accessible.Button
-                            Accessible.name: "Keep Verified Run " + runId
-                            TapHandler { onTapped: parent.parent.parent.confirmingDelete = false }
+                            spacing: 8
+                            opacity: archiveRow.confirmingDelete ? 1 : 0
+                            visible: opacity > 0
+
+                            Behavior on opacity { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "Delete permanently?"
+                                color: root.secondary
+                                font.family: "Arial"
+                                font.pixelSize: 11
+                            }
+                            Rectangle {
+                                width: deleteLabel.implicitWidth + 20
+                                height: 26
+                                radius: 4
+                                color: deleteArea.containsMouse ? "#98180F" : root.error
+                                anchors.verticalCenter: parent.verticalCenter
+                                Behavior on color { ColorAnimation { duration: 120 } }
+                                Text { id: deleteLabel; anchors.centerIn: parent; text: "Delete"; color: "#FFFFFF"; font.family: "Arial"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                MouseArea {
+                                    id: deleteArea
+                                    objectName: "archiveDeleteConfirm"
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    Accessible.role: Accessible.Button
+                                    Accessible.name: "Confirm deleting Verified Run " + archiveRow.runId
+                                    onClicked: {
+                                        archiveRow.confirmingDelete = false
+                                        resultsController.deleteArchivedRun(archiveRow.runId)
+                                    }
+                                }
+                            }
+                            Rectangle {
+                                width: keepLabel.implicitWidth + 18
+                                height: 26
+                                radius: 4
+                                color: keepArea.containsMouse ? "#F1F4F8" : "transparent"
+                                border.width: 1
+                                border.color: root.rule
+                                anchors.verticalCenter: parent.verticalCenter
+                                Behavior on color { ColorAnimation { duration: 120 } }
+                                Text { id: keepLabel; anchors.centerIn: parent; text: "Keep"; color: root.ink; font.family: "Arial"; font.pixelSize: 11 }
+                                MouseArea {
+                                    id: keepArea
+                                    objectName: "archiveKeep"
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    Accessible.role: Accessible.Button
+                                    Accessible.name: "Keep Verified Run " + archiveRow.runId
+                                    onClicked: archiveRow.confirmingDelete = false
+                                }
+                            }
                         }
                     }
                 }
