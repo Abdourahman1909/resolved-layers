@@ -112,6 +112,32 @@ class DirectoryRunArchive:
                 continue
         return tuple(sorted(entries, key=lambda item: item.completed_at, reverse=True))
 
+    def delete(self, run_id: str) -> None:
+        """Remove one archived run from this machine, permanently.
+
+        Immutability means an archived run cannot be *altered*: nothing here
+        rewrites a run or its evidence. Removing one entirely is a separate,
+        deliberate act by the operator, and is not reversible.
+
+        Only the archive's own run directory is touched. The Source Dataset it
+        referenced is never deleted, because the archive does not own it.
+        """
+        self._validate_run_id(run_id)
+        directory = self.root / run_id
+        if not directory.is_dir():
+            raise RunArchiveError(f"Verified Run {run_id} is not in this archive.")
+
+        resolved_root = self.root.resolve()
+        resolved = directory.resolve()
+        # Refuse anything that is not genuinely inside the archive, so a crafted
+        # identifier or a symlink cannot direct a delete elsewhere.
+        if resolved.parent != resolved_root:
+            raise RunArchiveError("Refusing to delete outside the Run Archive.")
+        if directory.is_symlink():
+            raise RunArchiveError("Refusing to delete a linked Run Archive entry.")
+
+        shutil.rmtree(resolved)
+
     def load(self, run_id: str) -> LoadedVerifiedRun:
         self._validate_run_id(run_id)
         run_directory = (self.root / run_id).resolve()

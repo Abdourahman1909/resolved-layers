@@ -22,6 +22,15 @@ class ResultSetSession:
     BIN_COUNT = 32
     NEAR_THRESHOLD_RADIUS = 0.06
 
+    def clear(self) -> None:
+        """Forget the loaded run, for when it is removed from the archive."""
+        self.run = None
+        self.selection_key = "all"
+        self.selection_title = "All predictions"
+        self.selected_lower = 0.0
+        self.selected_upper = 1.0
+        self.selected_source_rows = ()
+
     def load(self, run: LoadedVerifiedRun) -> None:
         self.run = run
         self.selected_source_rows = ()

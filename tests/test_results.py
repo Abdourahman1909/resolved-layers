@@ -232,3 +232,73 @@ def test_results_controller_reopens_run_and_exposes_exact_selected_records():
     controller.showRecords()
     assert controller.selectionKey == "all"
     assert predictions.rowCount() == 4
+
+
+# Removing an archived run through the controller ----------------------------
+
+
+def _controller_with_archive(tmp_path):
+    from variant_inference.application.variant_inspector import SourceRowEvidenceService
+    from variant_inference.infrastructure.csv_source import CsvSourceReader
+    from variant_inference.infrastructure.run_archive import DirectoryRunArchive
+
+    archive = DirectoryRunArchive(tmp_path / "runs")
+    controller = ResultsController(
+        archive,
+        PredictionTableModel(),
+        ScoreHistogramModel(),
+        InvestigationSetModel(),
+        RunArchiveListModel(),
+        SourceRowEvidenceService(archive, CsvSourceReader()),
+        SourceFieldListModel(),
+    )
+    return controller, archive
+
+
+def test_deleting_the_open_run_clears_the_results_surface(tmp_path, monkeypatch):
+    """A surface showing a run that no longer exists would be a lie."""
+    controller, archive = _controller_with_archive(tmp_path)
+    run = loaded_run()
+    deleted = []
+
+    monkeypatch.setattr(archive, "load", lambda run_id: run)
+    monkeypatch.setattr(archive, "source_status", lambda run_id: SourceReferenceStatus(
+        SourceReferenceState.AVAILABLE, run.source_sha256, run.source_sha256))
+    monkeypatch.setattr(archive, "delete", lambda run_id: deleted.append(run_id))
+    monkeypatch.setattr(archive, "list_entries", lambda: ())
+
+    try:
+        controller.open_run(run.run_id)
+        assert controller.hasRun is True
+
+        assert controller.deleteArchivedRun(run.run_id) is True
+
+        assert deleted == [run.run_id]
+        assert controller.hasRun is False
+    finally:
+        controller.close()
+
+
+def test_a_failed_deletion_is_reported_and_changes_nothing(tmp_path, monkeypatch):
+    from variant_inference.infrastructure.run_archive import RunArchiveError
+
+    controller, archive = _controller_with_archive(tmp_path)
+    run = loaded_run()
+
+    monkeypatch.setattr(archive, "load", lambda run_id: run)
+    monkeypatch.setattr(archive, "source_status", lambda run_id: SourceReferenceStatus(
+        SourceReferenceState.AVAILABLE, run.source_sha256, run.source_sha256))
+
+    def refuse(run_id):
+        raise RunArchiveError("Verified Run is not in this archive.")
+
+    monkeypatch.setattr(archive, "delete", refuse)
+
+    try:
+        controller.open_run(run.run_id)
+
+        assert controller.deleteArchivedRun("run-absent") is False
+        assert "not in this archive" in controller.errorMessage
+        assert controller.hasRun is True, "the open run must survive a failed delete"
+    finally:
+        controller.close()
