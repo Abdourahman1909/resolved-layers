@@ -27,10 +27,21 @@ from variant_inference.domain.models import (
 # Manifest SHA-256 of packages this release recognises without asking. A
 # checksum identifies a package; it discloses nothing about the weights,
 # features, or organizer data inside it.
+#
+# The two entries below hold the same weights and differ only in their Release
+# Threshold, which is a classification boundary rather than a model parameter.
+# Both are pinned so either can be installed on the day without a prompt; which
+# one is correct depends on the final test set's class balance, which the
+# organisers have not confirmed. They are separate packages because changing the
+# threshold changes the Inference Contract, and so the manifest checksum.
 OFFICIAL_MANIFEST_CHECKSUMS: frozenset[str] = frozenset(
     {
         # TEKNOFEST 2026 Missense CatBoost-LightGBM PDR Release 1.0.0-pdr
+        # Release Threshold 0.61, as reported in the PDR.
         "fc20e611197bbe65f9d5cda058c7367bf32d54df95dd77f5af3d3c59fb8d923d",
+        # The same release at Release Threshold 0.75, derived by
+        # scripts/derive_threshold_package.py. Version 1.0.0-pdr.t075.
+        "b5c8f2e72dfb0b56b73008ee0709cdc46e53fa7299c653ca9ada8a46b82e40f2",
     }
 )
 
