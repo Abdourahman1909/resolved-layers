@@ -346,6 +346,10 @@ ApplicationWindow {
             }
 
             ListView {
+                id: archiveList
+                // Delegates cannot resolve the popup's id from their own scope,
+                // so it is handed to them through the view they belong to.
+                property var owningPopup: archivePopup
                 width: parent.width
                 height: archivePopup.height - 68
                 clip: true
@@ -382,9 +386,9 @@ ApplicationWindow {
                         objectName: "archiveOpen"
                         anchors.fill: parent
                         hoverEnabled: true
-                        onClicked: { if (sourceController.openArchivedRun(archiveRow.runId)) archivePopup.close() }
+                        onClicked: { if (sourceController.openArchivedRun(archiveRow.runId)) archiveRow.ListView.view.owningPopup.close() }
                     }
-                    Keys.onReturnPressed: { if (sourceController.openArchivedRun(archiveRow.runId)) archivePopup.close() }
+                    Keys.onReturnPressed: { if (sourceController.openArchivedRun(archiveRow.runId)) archiveRow.ListView.view.owningPopup.close() }
 
                     Text { x: 20; y: 14; width: parent.width - 132; text: archiveRow.sourceName; elide: Text.ElideMiddle; color: root.ink; font.family: "Arial"; font.pixelSize: 13; font.weight: Font.DemiBold }
                     Text { x: 20; y: 37; width: parent.width - 132; text: archiveRow.recordCount.toLocaleString() + " records  ·  " + archiveRow.pathogenicCount.toLocaleString() + " Pathogenic  ·  " + archiveRow.warningCount + " warnings"; color: root.secondary; font.family: "Arial"; font.pixelSize: 11 }
