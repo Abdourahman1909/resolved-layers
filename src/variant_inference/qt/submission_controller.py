@@ -68,6 +68,9 @@ class SubmissionController(QObject):
         self._message_kind = "neutral"
         self._written_path = ""
         self._request_id = 0
+        self._inspection_id = 0
+        # Set when the chosen identifier column is known to repeat values.
+        self._identifier_rejected = False
         self._run_id = ""
 
         self.exportFinished.connect(self._emit)
@@ -91,6 +94,7 @@ class SubmissionController(QObject):
         self._written_path = ""
         self._identifier_column = ""
         self._panel_column = ""
+        self._identifier_rejected = False
         self._columns = ()
 
         if run is None:
@@ -137,9 +141,13 @@ class SubmissionController(QObject):
         if self._busy or (column_name and column_name not in self._columns):
             return
         self._identifier_column = column_name
+        self._identifier_rejected = False
         self._checks = []
         self._written_path = ""
+        self._describe_selection()
         self._emit()
+        if column_name:
+            self._inspect_identifiers(column_name)
 
     @Slot(str)
     def selectPanelColumn(self, column_name: str) -> None:  # noqa: N802
@@ -148,7 +156,78 @@ class SubmissionController(QObject):
         self._panel_column = column_name
         self._checks = []
         self._written_path = ""
+        self._describe_selection()
         self._emit()
+
+    def _inspect_identifiers(self, column_name: str) -> None:
+        """Report a column that cannot be an identifier before anything is written.
+
+        Choosing a label or category column is an easy mistake, and finding out
+        only at write time wastes a cycle during a timed final.
+        """
+        run = self._results.current_run
+        if run is None:
+            return
+        self._inspection_id += 1
+        inspection_id = self._inspection_id
+        future = self._executor.submit(self._count_distinct, run, column_name)
+        future.add_done_callback(
+            lambda done: self._apply_inspection(done, inspection_id, column_name)
+        )
+
+    def _count_distinct(self, run, column_name: str) -> tuple[int, int]:
+        source = self._service._reader.open(run.source_path)  # noqa: SLF001
+        try:
+            index = source.columns.index(column_name)
+            seen = set()
+            total = 0
+            for record in run.predictions:
+                seen.add(source.row_at(record.source_row - 1)[index].strip())
+                total += 1
+            return len(seen), total
+        finally:
+            source.close()
+
+    def _apply_inspection(self, done, inspection_id: int, column_name: str) -> None:
+        if inspection_id != self._inspection_id:
+            return
+        if self._identifier_column != column_name:
+            return
+        try:
+            distinct, total = done.result()
+        except Exception:
+            return  # the write path reports source problems in full
+        if distinct < total:
+            self._identifier_rejected = True
+            self._message = (
+                f"{column_name!r} has only {distinct:,} distinct values across "
+                f"{total:,} records, so it cannot be the record identifier. "
+                "The organisers reject duplicate ids."
+            )
+            self._message_kind = "error"
+            self.exportFinished.emit()
+
+    def _describe_selection(self) -> None:
+        """Keep the message describing the current choice, not an earlier one.
+
+        The message was previously set only when a run opened, so choosing a
+        column left a stale warning beside an enabled button.
+        """
+        if not self._identifier_column:
+            self._message = (
+                "Choose the column holding the organisers' record identifiers."
+            )
+            self._message_kind = "warning"
+            return
+        if not self._panel_column:
+            self._message = "Choose the column holding the panel for each record."
+            self._message_kind = "warning"
+            return
+        self._message = (
+            f"Ready: identifiers from {self._identifier_column!r}, "
+            f"panels from {self._panel_column!r}."
+        )
+        self._message_kind = "neutral"
 
     @Slot(str)
     def writeSubmission(self, value: str) -> None:  # noqa: N802
@@ -225,6 +304,7 @@ class SubmissionController(QObject):
             self._results.current_run is not None
             and self._identifier_column
             and self._panel_column
+            and not self._identifier_rejected
             and not self._busy
         )
 
