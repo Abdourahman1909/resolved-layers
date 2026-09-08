@@ -1,6 +1,6 @@
 # Next session
 
-> Written 2026-09-09. Kept in the repository deliberately: the previous handoff
+> Written 2026-09-09. Kept in the repository deliberately: an earlier handoff
 > was written to `/tmp` and was lost when the machine cleared it.
 
 Read `AGENTS.md`, then `docs/PROJECT_MEMORY.md` in full — especially **6a.
@@ -8,13 +8,16 @@ Immediate next step**. This file only orients you; the memory is authoritative.
 
 ## Where things stand
 
-`main` is clean, all work merged, no open pull requests, **172 tests passing**.
-Two releases are published: **v0.1.0** and **v0.2.0**.
+`main` is clean, all work merged, **185 tests passing**. Three releases are
+published: **v0.1.0**, **v0.2.0** and **v0.2.1**.
 
 The application does the whole competition workflow offline from a single
 AppImage: install a Model Package from Settings, open a CSV, review it, run
 deterministic inference, investigate per panel, evaluate against authorized
 labels, and write the official submission JSON.
+
+Both agreed items from the previous handoff are done. The two Model Packages
+exist and are pinned, and 0.2.1 is released and installed.
 
 ## The one deadline
 
@@ -25,45 +28,74 @@ AppImage matters. The submission format is fixed and implemented; see
 `TEKNOFEST_2026_Saglikta_Yapay_Zeka_Final_Uygulama_ve_Sonuc_Teslim_Kilavuzu.pdf`
 in this repository.
 
-## What to do first
-
-1. **Build the second Model Package at threshold 0.75**, beside the untouched
-   0.61 one. This was agreed and not started. Memory section 6a has the detail,
-   including that the manifest checksum changes and must be pinned.
-2. **Release 0.2.1.** The AppImage installed at `~/Applications/` is 0.2.0 and
-   lacks four interface fixes made after it was built.
-
-Both are bounded. Neither is blocked.
-
-## The open question that decides the threshold
+## The one question that still decides something
 
 **Is the final test set class-balanced, as the specification describes?**
 
 The specification states balanced test sets (1000/1000, 100/100, 100/100,
 30/30), but the delivered training data is 74% Pathogenic. They disagree.
 
-- Balanced → adopt **0.75**, worth roughly +0.022 on the final metric
-- Skewed like the delivered data → **0.61** is already right
+- Balanced → install the **0.75** package, worth roughly +0.022 on the metric
+- Skewed like the delivered data → install the **0.61** package
 
-The user was going to ask the organisers. Ask whether they did before assuming
-either. The full analysis is in the parent repository at
+Both packages are built, verified, and pinned, so this is now a choice made on
+the day rather than work to do. The user had not heard back from the organisers
+as of 2026-09-09. The full analysis is in the parent repository at
 `results/rebalance_experiment_2026-09-04/`.
 
-## How this project is worked on
+Concrete numbers, measured in the application on the 736-row held-out file,
+which follows the **delivered** distribution rather than the specification:
 
-Focused `codex/...` branches, one bounded milestone at a time, a pull request
-per milestone, and `docs/PROJECT_MEMORY.md` updated when state or a durable
-decision changes. Explain a plan before substantial work. Do not commit
-organizer data, trained weights, derived mappings, or machine-specific paths;
-the Model Package lives outside this repository for that reason.
+| Threshold | Pathogenic | mean F1 | mean MCC |
+| --- | --- | --- | --- |
+| 0.61 | 600 | 0.9306 | 0.5552 |
+| 0.75 | 551 | 0.8916 | 0.4639 |
+
+So on delivery-shaped data 0.61 wins clearly. That is the predicted behaviour,
+not a refutation of 0.75 — the case for 0.75 is built on the specification's
+balanced composition. Do not quote the table above as evidence against 0.75
+without saying which distribution it came from.
+
+## The two Model Packages
+
+Both live outside this repository, in the ignored parent path
+`results/production_model_packages/`:
+
+- `teknofest-2026-pdr-v1` — threshold 0.61, untouched, manifest
+  `fc20e611…8d923d`
+- `teknofest-2026-pdr-v1-threshold-075` — threshold 0.75, manifest
+  `b5c8f2e7…82e40f2`
+
+Both checksums are pinned in `OFFICIAL_MANIFEST_CHECKSUMS`, so either installs
+from Settings with no trust prompt. They hold byte-identical artifacts and were
+verified to produce identical scores, differing only in classification and only
+for scores inside `[0.61, 0.75)`. Re-check that at any time with:
+
+```bash
+.venv/bin/python scripts/compare_threshold_packages.py --package A --package B --source CSV
+```
+
+## Before the day: one machine configuration change
+
+`~/.config/environment.d/resolved-layers.conf` pins
+`CHL_MODEL_PACKAGE_MANIFEST` to the 0.61 package, and that variable takes
+priority over whatever Settings installs. The application now says so plainly
+rather than silently disagreeing with itself, but the cleanest setup is to
+delete that file, since both checksums are pinned and its
+`CHL_TRUSTED_MODEL_PACKAGE_SHA256` is no longer needed either. It takes effect
+at the next login.
 
 ## Something worth knowing before you trust the test suite
 
 Four real defects were found in one evening by the user simply using the
-application, and **none was visible to the 172 tests**: prediction froze the
-interface and produced duplicate runs from repeated clicks, nothing could be
+application, and none was visible to the 172 tests at the time: prediction froze
+the interface and produced duplicate runs from repeated clicks, nothing could be
 grabbed to scroll, the submission surface showed a stale warning beside an
 enabled button, and the archive delete control never received its clicks.
+
+Two more were found the same way on 2026-09-09, in the Settings surface: it
+reported the installed Model Package as ready while a different one was actually
+predicting, and the first fix for that printed the same sentence twice.
 
 The suite verifies controllers and that surfaces render. It does not verify that
 a control receives the click aimed at it. Driving real clicks was attempted and
@@ -81,15 +113,16 @@ in the archive row because it starts with an empty archive.
 
 ## Practical notes
 
+- Driving the interface by hand works: X11 with `xdotool`, `wmctrl` and
+  `import`. The GTK portal file dialog ignores synthetic typing; put the path on
+  the clipboard with `xclip` and paste it into the Ctrl+L location bar instead.
 - The project path contains spaces, so PyInstaller cannot build in place;
   `packaging/build-standalone.sh` stages a space-free copy.
 - `appimagetool` is at `~/.local/share/resolved-layers-build/appimagetool.AppImage`.
   Pass it as `APPIMAGE_TOOL=...`; it was previously kept in `/tmp` and lost.
 - Tests: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -m pytest`
-- The user's Model Package is configured through
-  `~/.config/environment.d/resolved-layers.conf`, so a menu launch finds it.
 - Restricted artifacts live in the parent repository at
-  `results/production_model_packages/teknofest-2026-pdr-v1/`.
+  `results/production_model_packages/`.
 
 ## Model questions
 
