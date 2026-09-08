@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import sqlite3
+import threading
 import tempfile
 from collections import OrderedDict
 from datetime import datetime
@@ -40,6 +41,7 @@ class CsvSource:
         self.column_types = column_types
         self._database_path = database_path
         self._connection = connection
+        self._lock = threading.Lock()
         self.missing_cell_count = missing_cell_count
         self.rows_with_missing = rows_with_missing
         self._pages: OrderedDict[int, tuple[tuple[str, ...], ...]] = OrderedDict()
@@ -68,12 +70,12 @@ class CsvSource:
             "CASE WHEN TRIM(COALESCE(CAST(json_extract(payload, ?) AS TEXT), '')) = '' "
             "THEN '' ELSE CAST(json_extract(payload, ?) AS TEXT) END"
         )
-        records = self._connection.execute(
+        records = self._execute(
             f"SELECT {expression} AS source_value, COUNT(*) "
             "FROM source_rows GROUP BY source_value "
             "ORDER BY COUNT(*) DESC, source_value COLLATE NOCASE",
             (path, path),
-        ).fetchall()
+        )
         return tuple((str(value or ""), int(count)) for value, count in records)
 
     def paired_value_counts(
@@ -87,12 +89,12 @@ class CsvSource:
             "CASE WHEN TRIM(COALESCE(CAST(json_extract(payload, ?) AS TEXT), '')) = '' "
             "THEN '' ELSE CAST(json_extract(payload, ?) AS TEXT) END"
         )
-        records = self._connection.execute(
+        records = self._execute(
             f"SELECT {expression} AS first_value, {expression} AS second_value, COUNT(*) "
             "FROM source_rows GROUP BY first_value, second_value "
             "ORDER BY first_value COLLATE NOCASE, second_value COLLATE NOCASE",
             (first_path, first_path, second_path, second_path),
-        ).fetchall()
+        )
         return tuple(
             (str(first or ""), str(second or ""), int(count))
             for first, second, count in records
@@ -130,15 +132,15 @@ class CsvSource:
         if clauses:
             query += " WHERE " + " AND ".join(f"({clause})" for clause in clauses)
         query += " ORDER BY source_row"
-        return tuple(int(row[0]) for row in self._connection.execute(query, parameters))
+        return tuple(int(row[0]) for row in self._execute(query, parameters))
 
     def _load_page(self, page_number: int) -> None:
         first_row = page_number * self.PAGE_SIZE + 1
         last_row = first_row + self.PAGE_SIZE
-        records = self._connection.execute(
+        records = self._execute(
             "SELECT source_row, payload FROM source_rows WHERE source_row >= ? AND source_row < ? ORDER BY source_row",
             (first_row, last_row),
-        ).fetchall()
+        )
         page = tuple(tuple(str(value) for value in json.loads(payload)) for _, payload in records)
         self._pages[page_number] = page
         while len(self._pages) > self.MAX_CACHED_PAGES:
@@ -150,12 +152,22 @@ class CsvSource:
         if not 0 <= column_index < len(self.columns):
             raise IndexError(column_index)
 
+    def _execute(self, statement: str, parameters=()):
+        """Run one statement under the lock and return its rows.
+
+        Rows are materialised inside the lock so a cursor is never read after
+        it is released.
+        """
+        with self._lock:
+            return list(self._connection.execute(statement, parameters))
+
     def close(self) -> None:
         if self._closed:
             return
         self._closed = True
         self._pages.clear()
-        self._connection.close()
+        with self._lock:
+            self._connection.close()
         try:
             self._database_path.unlink(missing_ok=True)
         except OSError:
@@ -184,7 +196,10 @@ class CsvSourceReader:
         database_file = tempfile.NamedTemporaryFile(prefix="chl-source-review-", suffix=".sqlite3", delete=False)
         database_path = Path(database_file.name)
         database_file.close()
-        connection = sqlite3.connect(database_path)
+        # Prediction runs off the interface thread, so the store must be
+        # reachable from more than the thread that created it. Access is
+        # serialised by a lock, since sqlite3 connections are not reentrant.
+        connection = sqlite3.connect(database_path, check_same_thread=False)
 
         try:
             connection.execute(

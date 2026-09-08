@@ -56,6 +56,20 @@ def test_profile_controller_filters_shared_table_without_rewriting_source_row(fi
         controller.close()
 
 
+class ImmediateExecutor:
+    """Runs submitted work inline, so a test sees the finished state."""
+
+    def submit(self, function, *arguments):
+        from concurrent.futures import Future
+
+        future: Future = Future()
+        try:
+            future.set_result(function(*arguments))
+        except BaseException as error:  # noqa: BLE001
+            future.set_exception(error)
+        return future
+
+
 def test_controller_creates_verified_run_only_after_confirmation(fixture_dir, tmp_path):
     package = JsonModelPackageRepository().load(
         fixture_dir / "development-package" / "manifest.json"
@@ -66,6 +80,9 @@ def test_controller_creates_verified_run_only_after_confirmation(fixture_dir, tm
         GroupBreakdownModel(),
         package,
         verified_runs=verified_runs,
+        # Prediction runs off the interface thread; run it inline so the
+        # assertions below observe a settled state.
+        run_executor=ImmediateExecutor(),
     )
     try:
         controller.openSource(str(fixture_dir / "dataset_profile.csv"))
@@ -81,5 +98,88 @@ def test_controller_creates_verified_run_only_after_confirmation(fixture_dir, tm
         assert controller.lastRunId == "run-controller-test"
         assert controller.lastRunPath.endswith("run-controller-test")
         assert controller.statusKind == "success"
+    finally:
+        controller.close()
+
+
+def test_repeated_clicks_cannot_create_more_than_one_run(fixture_dir, tmp_path):
+    """Reported in use: prediction blocked the interface, so every click made
+    while it appeared frozen produced another archived run."""
+    from variant_inference.infrastructure.model_package import JsonModelPackageRepository
+
+    package = JsonModelPackageRepository().load(
+        fixture_dir / "development-package" / "manifest.json"
+    )
+    verified_runs = StubVerifiedRuns(tmp_path)
+
+    class Blocking:
+        """Holds the work, as a real run in flight would."""
+
+        def __init__(self) -> None:
+            self.pending = []
+
+        def submit(self, function, *arguments):
+            self.pending.append((function, arguments))
+            return None
+
+        def drain(self) -> None:
+            for function, arguments in self.pending:
+                function(*arguments)
+            self.pending = []
+
+    executor = Blocking()
+    controller = SourceReviewController(
+        CsvTableModel(),
+        GroupBreakdownModel(),
+        package,
+        verified_runs=verified_runs,
+        run_executor=executor,
+    )
+    try:
+        controller.openSource(str(fixture_dir / "dataset_profile.csv"))
+        controller.setConfirmed(True)
+
+        controller.requestRun()
+        assert controller.runBusy is True
+        assert controller.runEnabled is False, "the action must be disabled while running"
+
+        # Every further click while it looks frozen.
+        for _ in range(5):
+            controller.requestRun()
+
+        assert len(executor.pending) == 1, "only one run may be submitted"
+
+        executor.drain()
+        assert controller.runBusy is False
+        assert controller.statusKind == "success"
+    finally:
+        controller.close()
+
+
+def test_the_action_reports_that_a_run_is_in_progress(fixture_dir, tmp_path):
+    from variant_inference.infrastructure.model_package import JsonModelPackageRepository
+
+    package = JsonModelPackageRepository().load(
+        fixture_dir / "development-package" / "manifest.json"
+    )
+
+    class Holding:
+        def submit(self, function, *arguments):
+            return None
+
+    controller = SourceReviewController(
+        CsvTableModel(),
+        GroupBreakdownModel(),
+        package,
+        verified_runs=StubVerifiedRuns(tmp_path),
+        run_executor=Holding(),
+    )
+    try:
+        controller.openSource(str(fixture_dir / "dataset_profile.csv"))
+        controller.setConfirmed(True)
+        controller.requestRun()
+
+        assert controller.runBusy is True
+        assert controller.runButtonText == "Creating Verified Run…"
     finally:
         controller.close()

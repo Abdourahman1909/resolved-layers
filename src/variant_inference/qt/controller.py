@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import Executor, Future, ThreadPoolExecutor
 from pathlib import Path
 
 from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
@@ -17,6 +18,8 @@ from variant_inference.qt.evaluation_controller import EvaluationController
 
 class SourceReviewController(QObject):
     stateChanged = Signal()
+    # Carries the archived run, or None with a message, back to this thread.
+    runFinished = Signal(object, str)
 
     def __init__(
         self,
@@ -29,6 +32,7 @@ class SourceReviewController(QObject):
         run_unavailable_reason: str = "",
         results_controller: ResultsController | None = None,
         evaluation_controller: EvaluationController | None = None,
+        run_executor: Executor | None = None,
     ) -> None:
         super().__init__()
         self._table_model = table_model
@@ -49,6 +53,15 @@ class SourceReviewController(QObject):
         self._identity_symbol = identity_symbol
         self._active_surface = "review"
         self._profile_message = "Select a label column and map both classes explicitly."
+        # Prediction runs off this thread: it can take minutes on competition
+        # data, and blocking here froze the interface and queued every click
+        # into a duplicate run.
+        self._owns_run_executor = run_executor is None
+        self._run_executor = run_executor or ThreadPoolExecutor(
+            max_workers=1, thread_name_prefix="resolved-layers-run"
+        )
+        self._run_busy = False
+        self.runFinished.connect(self._apply_run)
 
     def _emit(self) -> None:
         self.stateChanged.emit()
@@ -320,10 +333,20 @@ class SourceReviewController(QObject):
 
     @Property(bool, notify=stateChanged)
     def runEnabled(self) -> bool:  # noqa: N802
-        return self._session.run_enabled and self._verified_runs is not None
+        return (
+            self._session.run_enabled
+            and self._verified_runs is not None
+            and not self._run_busy
+        )
+
+    @Property(bool, notify=stateChanged)
+    def runBusy(self) -> bool:  # noqa: N802
+        return self._run_busy
 
     @Property(str, notify=stateChanged)
     def runButtonText(self) -> str:  # noqa: N802
+        if self._run_busy:
+            return "Creating Verified Run…"
         if not self._session.source:
             return "Open a CSV to continue"
         if self._package is None:
@@ -490,35 +513,66 @@ class SourceReviewController(QObject):
 
     @Slot()
     def requestRun(self) -> None:  # noqa: N802
-        if not self._session.run_enabled or self._verified_runs is None:
+        # The busy guard is the point: while a run is in flight the action is
+        # disabled, so repeated clicks cannot each produce an archived run.
+        if self._run_busy or not self._session.run_enabled or self._verified_runs is None:
             return
         assert self._session.source is not None
         assert self._session.package is not None
         assert self._session.fit is not None
         assert self._session.audit is not None
-        try:
-            archived = self._verified_runs.execute(
-                source=self._session.source,
-                package=self._session.package,
-                fit=self._session.fit,
-                audit=self._session.audit,
-                operator_confirmed=self._session.operator_confirmed,
-            )
-            self._last_run_id = archived.run_id
-            self._last_run_path = str(archived.directory)
-            if self._results_controller is not None:
-                self._results_controller.open_run(archived.run_id)
-                if (
-                    self._evaluation_controller is not None
-                    and self._results_controller.current_run is not None
-                ):
-                    self._evaluation_controller.load_run(self._results_controller.current_run)
-                self._active_surface = "results"
-            self._status_message = f"Verified Run {archived.run_id} saved to the local Run Archive."
-            self._status_kind = "success"
-        except (OSError, RuntimeError, ValueError) as error:
-            self._status_message = str(error)
+
+        self._run_busy = True
+        self._status_message = "Running deterministic inference over every Source Row…"
+        self._status_kind = "neutral"
+        self._emit()
+
+        service = self._verified_runs
+        source = self._session.source
+        package = self._session.package
+        fit = self._session.fit
+        audit = self._session.audit
+        confirmed = self._session.operator_confirmed
+
+        def work() -> None:
+            try:
+                archived = service.execute(
+                    source=source,
+                    package=package,
+                    fit=fit,
+                    audit=audit,
+                    operator_confirmed=confirmed,
+                )
+            except BaseException as error:  # noqa: BLE001
+                # Anything narrower leaves the interface busy forever when an
+                # unanticipated failure occurs, with no way to retry.
+                self.runFinished.emit(None, f"{type(error).__name__}: {error}")
+                return
+            self.runFinished.emit(archived, "")
+
+        self._run_executor.submit(work)
+
+    def _apply_run(self, archived, error_message: str) -> None:
+        """Apply the outcome on this thread; the worker touches no UI state."""
+        self._run_busy = False
+        if archived is None:
+            self._status_message = error_message
             self._status_kind = "error"
+            self._emit()
+            return
+
+        self._last_run_id = archived.run_id
+        self._last_run_path = str(archived.directory)
+        if self._results_controller is not None:
+            self._results_controller.open_run(archived.run_id)
+            if (
+                self._evaluation_controller is not None
+                and self._results_controller.current_run is not None
+            ):
+                self._evaluation_controller.load_run(self._results_controller.current_run)
+            self._active_surface = "results"
+        self._status_message = f"Verified Run {archived.run_id} saved to the local Run Archive."
+        self._status_kind = "success"
         self._emit()
 
     @Slot(str, result=bool)
@@ -555,6 +609,8 @@ class SourceReviewController(QObject):
 
     @Slot()
     def close(self) -> None:
+        if self._owns_run_executor:
+            self._run_executor.shutdown(wait=False, cancel_futures=True)
         self._session.close()
         if self._results_controller is not None:
             self._results_controller.close()
