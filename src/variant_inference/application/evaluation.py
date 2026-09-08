@@ -4,6 +4,8 @@ import math
 
 from variant_inference.application.ports import RunArchive, SourceDataset, SourceDatasetReader
 from variant_inference.domain.models import (
+    EvaluationGroup,
+    EvaluationGrouping,
     EvaluationCohort,
     EvaluationMetric,
     EvaluationReport,
@@ -65,6 +67,7 @@ class GroundTruthEvaluationService:
         self,
         run: LoadedVerifiedRun,
         authorization: GroundTruthAuthorization,
+        group_by: str | None = None,
     ) -> EvaluationReport:
         source = self._open_validated(run)
         try:
@@ -86,6 +89,11 @@ class GroundTruthEvaluationService:
             fn = len(fn_rows)
             tn = len(tn_rows)
             evaluated = tp + fp + fn + tn
+            grouping = (
+                self._grouping(source, group_by, tp_rows, fp_rows, fn_rows, tn_rows)
+                if group_by
+                else None
+            )
             return EvaluationReport(
                 run_id=run.run_id,
                 source_sha256=run.source_sha256,
@@ -127,6 +135,7 @@ class GroundTruthEvaluationService:
                 ),
                 missing_source_rows=tuple(missing_rows),
                 unrecognized_source_rows=tuple(unrecognized_rows),
+                grouping=grouping,
             )
         finally:
             source.close()
@@ -184,6 +193,57 @@ class GroundTruthEvaluationService:
             else:
                 unrecognized_rows.append(record.source_row)
         return tp_rows, fp_rows, fn_rows, tn_rows, missing_rows, unrecognized_rows
+
+    def _grouping(
+        self,
+        source: SourceDataset,
+        column_name: str,
+        tp_rows: list[int],
+        fp_rows: list[int],
+        fn_rows: list[int],
+        tn_rows: list[int],
+    ) -> EvaluationGrouping:
+        """Split the evaluated cohort by one Context Column and score each part.
+
+        Only evaluated rows appear here. Rows excluded from evaluation for a
+        missing or unrecognized label stay excluded, so a group's counts always
+        reconcile with the pooled confusion matrix.
+        """
+        if column_name not in source.columns:
+            raise ValueError(f"Grouping column {column_name!r} is absent from the source.")
+        index = source.columns.index(column_name)
+
+        cells: dict[str, dict[str, list[int]]] = {}
+        for key, rows in (
+            ("tp", tp_rows), ("fp", fp_rows), ("fn", fn_rows), ("tn", tn_rows)
+        ):
+            for source_row in rows:
+                raw = source.row_at(source_row - 1)[index].strip()
+                value = raw if raw else "(missing)"
+                cells.setdefault(value, {"tp": [], "fp": [], "fn": [], "tn": []})[key].append(
+                    source_row
+                )
+
+        groups = []
+        for value in sorted(cells):
+            cell = cells[value]
+            tp, fp = len(cell["tp"]), len(cell["fp"])
+            fn, tn = len(cell["fn"]), len(cell["tn"])
+            groups.append(
+                EvaluationGroup(
+                    value=value,
+                    evaluated_count=tp + fp + fn + tn,
+                    true_positive=tp,
+                    false_positive=fp,
+                    false_negative=fn,
+                    true_negative=tn,
+                    metrics=self._metrics(tp, fp, fn, tn),
+                    source_rows=tuple(
+                        sorted(cell["tp"] + cell["fp"] + cell["fn"] + cell["tn"])
+                    ),
+                )
+            )
+        return EvaluationGrouping(column_name=column_name, groups=tuple(groups))
 
     def _open_validated(self, run: LoadedVerifiedRun) -> SourceDataset:
         status = self._archive.source_status(run.run_id)

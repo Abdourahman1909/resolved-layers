@@ -33,7 +33,11 @@ from variant_inference.qt.model_package_controller import ModelPackageController
 from variant_inference.qt.profile_model import GroupBreakdownModel
 from variant_inference.qt.results_controller import ResultsController
 from variant_inference.qt.evaluation_controller import EvaluationController
-from variant_inference.qt.evaluation_models import EvaluationCohortModel, EvaluationMetricModel
+from variant_inference.qt.evaluation_models import (
+    EvaluationCohortModel,
+    EvaluationGroupModel,
+    EvaluationMetricModel,
+)
 from variant_inference.qt.results_models import (
     InvestigationSetModel,
     PredictionTableModel,
@@ -120,6 +124,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--evaluation-benign-value",
         help="Exact raw value mapped to Benign for Evaluation verification",
+    )
+    parser.add_argument(
+        "--evaluation-group-column",
+        help="Group observed metrics by this source column for verification",
     )
     return parser
 
@@ -267,10 +275,12 @@ def main(argv: list[str] | None = None) -> int:
     source_field_model = SourceFieldListModel()
     evaluation_metric_model = EvaluationMetricModel()
     evaluation_cohort_model = EvaluationCohortModel()
+    evaluation_group_model = EvaluationGroupModel()
     evaluation_controller = EvaluationController(
         GroundTruthEvaluationService(archive, CsvSourceReader()),
         evaluation_metric_model,
         evaluation_cohort_model,
+        groups=evaluation_group_model,
     )
     results_controller = ResultsController(
         archive,
@@ -311,6 +321,7 @@ def main(argv: list[str] | None = None) -> int:
     engine.rootContext().setContextProperty("evaluationController", evaluation_controller)
     engine.rootContext().setContextProperty("evaluationMetricModel", evaluation_metric_model)
     engine.rootContext().setContextProperty("evaluationCohortModel", evaluation_cohort_model)
+    engine.rootContext().setContextProperty("evaluationGroupModel", evaluation_group_model)
     qml_file = Path(__file__).with_name("qml") / "Main.qml"
     engine.load(QUrl.fromLocalFile(str(qml_file)))
     if not engine.rootObjects():
@@ -348,6 +359,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.surface == "profile":
             QTimer.singleShot(100, lambda: controller.setActiveSurface("profile"))
     if args.open_run:
+        def apply_visual_grouping() -> None:
+            if not args.evaluation_group_column:
+                return
+            if evaluation_controller.busy or not evaluation_controller.hasReport:
+                QTimer.singleShot(25, apply_visual_grouping)
+                return
+            evaluation_controller.selectGroupColumn(args.evaluation_group_column)
+
         def authorize_visual_evaluation() -> None:
             if not (
                 args.evaluation_label_column
@@ -379,6 +398,9 @@ def main(argv: list[str] | None = None) -> int:
                     args.evaluation_pathogenic_value,
                     args.evaluation_benign_value,
                 )
+                QTimer.singleShot(25, authorize_visual_evaluation)
+                return
+            apply_visual_grouping()
 
         def open_run() -> None:
             if controller.openArchivedRun(args.open_run) and args.surface == "evaluation":
@@ -406,7 +428,8 @@ def main(argv: list[str] | None = None) -> int:
             application.primaryScreen().grabWindow(window.winId()).save(str(destination))
             clean_quit()
 
-        QTimer.singleShot(1200, capture)
+        capture_delay = 4000 if args.evaluation_group_column else 1200
+        QTimer.singleShot(capture_delay, capture)
     elif args.smoke:
         QTimer.singleShot(750, clean_quit)
     return application.exec()

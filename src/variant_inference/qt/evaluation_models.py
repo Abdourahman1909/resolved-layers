@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from PySide6.QtCore import QAbstractListModel, QModelIndex, Qt
 
-from variant_inference.domain.models import EvaluationCohort, EvaluationMetric
+from variant_inference.domain.models import (
+    EvaluationCohort,
+    EvaluationGroup,
+    EvaluationMetric,
+)
 
 
 class EvaluationMetricModel(QAbstractListModel):
@@ -83,4 +87,67 @@ class EvaluationCohortModel(QAbstractListModel):
             self.TitleRole: b"title",
             self.DetailRole: b"detail",
             self.CountRole: b"count",
+        }
+
+
+class EvaluationGroupModel(QAbstractListModel):
+    """One row per group value, with its own confusion counts and metrics.
+
+    The competition combines panels by weighting each equally, so the per-group
+    figures matter independently of the pooled cohort.
+    """
+
+    ValueRole = Qt.UserRole + 1
+    EvaluatedRole = Qt.UserRole + 2
+    TruePositiveRole = Qt.UserRole + 3
+    FalsePositiveRole = Qt.UserRole + 4
+    FalseNegativeRole = Qt.UserRole + 5
+    TrueNegativeRole = Qt.UserRole + 6
+    F1Role = Qt.UserRole + 7
+    MccRole = Qt.UserRole + 8
+    PrecisionRole = Qt.UserRole + 9
+    RecallRole = Qt.UserRole + 10
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._items: tuple[EvaluationGroup, ...] = ()
+
+    def set_items(self, items: tuple[EvaluationGroup, ...]) -> None:
+        self.beginResetModel()
+        self._items = items
+        self.endResetModel()
+
+    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:  # noqa: N802
+        return 0 if parent.isValid() else len(self._items)
+
+    def data(self, index: QModelIndex, role: int = Qt.DisplayRole):
+        if not index.isValid():
+            return None
+        item = self._items[index.row()]
+        values = {
+            self.ValueRole: item.value,
+            self.EvaluatedRole: item.evaluated_count,
+            self.TruePositiveRole: item.true_positive,
+            self.FalsePositiveRole: item.false_positive,
+            self.FalseNegativeRole: item.false_negative,
+            self.TrueNegativeRole: item.true_negative,
+            self.F1Role: item.metric("f1").display,
+            self.MccRole: item.metric("mcc").display,
+            self.PrecisionRole: item.metric("precision").display,
+            self.RecallRole: item.metric("recall").display,
+        }
+        return values.get(role)
+
+    def roleNames(self):  # noqa: N802
+        return {
+            self.ValueRole: b"groupValue",
+            self.EvaluatedRole: b"evaluated",
+            self.TruePositiveRole: b"truePositive",
+            self.FalsePositiveRole: b"falsePositive",
+            self.FalseNegativeRole: b"falseNegative",
+            self.TrueNegativeRole: b"trueNegative",
+            self.F1Role: b"f1",
+            self.MccRole: b"mcc",
+            self.PrecisionRole: b"precision",
+            self.RecallRole: b"recall",
         }

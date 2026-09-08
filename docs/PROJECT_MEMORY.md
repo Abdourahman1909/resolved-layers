@@ -246,6 +246,18 @@ A product page was designed and published as a private Artifact at https://claud
 
 The repository remains private and is deliberately left so. Publishing it is now recorded as its own open decision, separate from the licence, because it would publish all source and history while artifact-publication permissions remain unresolved.
 
+The Evaluation group breakdown milestone completed on September 4, 2026 on `codex/evaluation-group-breakdown`, based on `main`.
+
+Motivation, recorded because it changes how this workspace should be read: the TEKNOFEST final scores the University and Above level as the **arithmetic mean of per-panel F1 and MCC, with every panel weighted equally**, published in the final application guide `TEKNOFEST_2026_Saglikta_Yapay_Zeka_Final_Uygulama_ve_Sonuc_Teslim_Kilavuzu.pdf`. A pooled figure can therefore look healthy while an individual panel is weak, and the pooled F1 of 0.9067 in the PDR does exactly that.
+
+Observed Evaluation can now group by any source column. `EvaluationGroup` and `EvaluationGrouping` carry per-group confusion counts and the full metric set, plus an unweighted mean that matches how the competition combines panels. Grouping is opt-in and no column is chosen automatically, matching the existing Ground-Truth Authorization stance. The authorized label column is excluded from the offered columns, since grouping by it would only restate the confusion matrix.
+
+Boundaries: only evaluated rows are grouped, so group counts always reconcile with the pooled confusion matrix and rows excluded for missing or unrecognized labels stay excluded. Blank group values are named `(missing)` rather than dropped. A metric that is undefined in any single group makes the mean `Undefined` rather than silently averaging the remaining groups. Grouping re-runs the evaluation off the QML thread, because it reads source values.
+
+Verified against the real 736-row PDR run: CFTR 0.9444 F1 and 0.6111 MCC, KANSER 0.9273 and 0.7962, MASTER 0.8948 and 0.5586, PAH 0.9559 and 0.2548, giving mean F1 0.9306 and mean MCC 0.5552 beside a pooled F1 of 0.9067. The suite passes 121 tests including group-to-pooled reconciliation, undefined-mean handling, exclusion of unevaluated rows, and an offscreen grouped QML path; checked at 1536x1050 and 1120x720.
+
+Related analysis, kept in the parent repository at `results/rebalance_experiment_2026-09-04/`: the released 0.61 threshold maximizes pooled F1 but the competition metric peaks on a plateau near 0.72 to 0.78, and a bootstrap over 400 resamples supports adopting **0.75**. Correcting the LightGBM `scale_pos_weight`, which ships at 2.146 and amplifies rather than compensates for the 74% pathogenic majority, was tested and does not help, because thresholding absorbs it. The app change here does not alter any Release Threshold; it only makes the per-panel behaviour visible.
+
 ## 7. Authoritative files
 
 1. `docs/adr/` for accepted architectural decisions.

@@ -217,6 +217,22 @@ def test_evaluation_qml_smoke_paths_cover_authorized_unlabeled_missing_and_modif
     _run_evaluation_smoke(archive, run)
 
 
+def test_evaluation_qml_renders_the_group_breakdown(tmp_path):
+    archive, run, _ = _evaluation_archive(tmp_path)
+    _run_evaluation_smoke(
+        archive,
+        run,
+        "--evaluation-label-column",
+        "GroundTruth",
+        "--evaluation-pathogenic-value",
+        "case",
+        "--evaluation-benign-value",
+        "control",
+        "--evaluation-group-column",
+        "_panel",
+    )
+
+
 def _run_settings_smoke(tmp_path, *arguments: str) -> None:
     environment = dict(os.environ)
     environment["QT_QPA_PLATFORM"] = "offscreen"
