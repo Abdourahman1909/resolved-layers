@@ -353,6 +353,57 @@ class EvaluationCohort:
 
 
 @dataclass(frozen=True)
+class EvaluationGroup:
+    """Observed metrics for one value of a chosen grouping Context Column.
+
+    The competition scores this workflow per panel rather than over the pooled
+    cohort, so a pooled figure can look healthy while an individual group is
+    weak. Groups are reported separately and never averaged into the pooled
+    numbers.
+    """
+
+    value: str
+    evaluated_count: int
+    true_positive: int
+    false_positive: int
+    false_negative: int
+    true_negative: int
+    metrics: tuple["EvaluationMetric", ...]
+    source_rows: tuple[int, ...] = ()
+
+    def metric(self, key: str) -> "EvaluationMetric":
+        match = next((item for item in self.metrics if item.key == key), None)
+        if match is None:
+            raise KeyError(f"Unknown metric {key!r}")
+        return match
+
+
+@dataclass(frozen=True)
+class EvaluationGrouping:
+    """Every group for one chosen column, plus the unweighted mean per metric.
+
+    The mean weights each group equally regardless of size, which is how the
+    competition combines panels. It is reported as `Undefined` when any group
+    leaves the underlying metric undefined, rather than silently dropping that
+    group from the average.
+    """
+
+    column_name: str
+    groups: tuple[EvaluationGroup, ...] = ()
+    excluded_count: int = 0
+
+    def mean(self, key: str) -> float | None:
+        values = [group.metric(key).value for group in self.groups]
+        if not values or any(value is None for value in values):
+            return None
+        return sum(values) / len(values)  # type: ignore[arg-type]
+
+    def mean_display(self, key: str) -> str:
+        value = self.mean(key)
+        return "Undefined" if value is None else f"{value:.4f}"
+
+
+@dataclass(frozen=True)
 class EvaluationReport:
     run_id: str
     source_sha256: str
@@ -369,6 +420,7 @@ class EvaluationReport:
     cohorts: tuple[EvaluationCohort, ...]
     missing_source_rows: tuple[int, ...] = ()
     unrecognized_source_rows: tuple[int, ...] = ()
+    grouping: EvaluationGrouping | None = None
 
     @property
     def excluded_count(self) -> int:

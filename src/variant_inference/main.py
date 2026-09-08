@@ -13,6 +13,7 @@ from variant_inference import __version__, assets
 from variant_inference.application.model_package_settings import (
     ModelPackageInstallationService,
 )
+from variant_inference.application.competition_export import CompetitionExportService
 from variant_inference.application.research_export import ResearchExportService
 from variant_inference.application.verified_run import VerifiedRunService
 from variant_inference.application.variant_inspector import SourceRowEvidenceService
@@ -30,10 +31,15 @@ from variant_inference.infrastructure.run_archive import DirectoryRunArchive
 from variant_inference.qt.controller import SourceReviewController
 from variant_inference.qt.export_controller import ExportController
 from variant_inference.qt.model_package_controller import ModelPackageController
+from variant_inference.qt.submission_controller import SubmissionController
 from variant_inference.qt.profile_model import GroupBreakdownModel
 from variant_inference.qt.results_controller import ResultsController
 from variant_inference.qt.evaluation_controller import EvaluationController
-from variant_inference.qt.evaluation_models import EvaluationCohortModel, EvaluationMetricModel
+from variant_inference.qt.evaluation_models import (
+    EvaluationCohortModel,
+    EvaluationGroupModel,
+    EvaluationMetricModel,
+)
 from variant_inference.qt.results_models import (
     InvestigationSetModel,
     PredictionTableModel,
@@ -100,7 +106,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--surface",
-        choices=("review", "profile", "results", "evaluation", "settings"),
+        choices=("review", "profile", "results", "evaluation", "submission", "settings"),
         default="review",
         help="Initial surface used by automated visual verification",
     )
@@ -120,6 +126,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--evaluation-benign-value",
         help="Exact raw value mapped to Benign for Evaluation verification",
+    )
+    parser.add_argument(
+        "--write-submission",
+        type=Path,
+        help="Write the competition submission to this path for verification",
+    )
+    parser.add_argument(
+        "--evaluation-group-column",
+        help="Group observed metrics by this source column for verification",
     )
     return parser
 
@@ -267,10 +282,12 @@ def main(argv: list[str] | None = None) -> int:
     source_field_model = SourceFieldListModel()
     evaluation_metric_model = EvaluationMetricModel()
     evaluation_cohort_model = EvaluationCohortModel()
+    evaluation_group_model = EvaluationGroupModel()
     evaluation_controller = EvaluationController(
         GroundTruthEvaluationService(archive, CsvSourceReader()),
         evaluation_metric_model,
         evaluation_cohort_model,
+        groups=evaluation_group_model,
     )
     results_controller = ResultsController(
         archive,
@@ -285,6 +302,10 @@ def main(argv: list[str] | None = None) -> int:
         ResearchExportService(CsvSourceReader()), results_controller
     )
     application.aboutToQuit.connect(export_controller.shutdown)
+    submission_controller = SubmissionController(
+        CompetitionExportService(CsvSourceReader()), results_controller
+    )
+    application.aboutToQuit.connect(submission_controller.shutdown)
     controller = SourceReviewController(
         table_model,
         group_model,
@@ -300,6 +321,7 @@ def main(argv: list[str] | None = None) -> int:
     engine.rootContext().setContextProperty("sourceController", controller)
     engine.rootContext().setContextProperty("modelPackageController", model_package_controller)
     engine.rootContext().setContextProperty("exportController", export_controller)
+    engine.rootContext().setContextProperty("submissionController", submission_controller)
     engine.rootContext().setContextProperty("sourceTableModel", table_model)
     engine.rootContext().setContextProperty("groupBreakdownModel", group_model)
     engine.rootContext().setContextProperty("resultsController", results_controller)
@@ -311,6 +333,7 @@ def main(argv: list[str] | None = None) -> int:
     engine.rootContext().setContextProperty("evaluationController", evaluation_controller)
     engine.rootContext().setContextProperty("evaluationMetricModel", evaluation_metric_model)
     engine.rootContext().setContextProperty("evaluationCohortModel", evaluation_cohort_model)
+    engine.rootContext().setContextProperty("evaluationGroupModel", evaluation_group_model)
     qml_file = Path(__file__).with_name("qml") / "Main.qml"
     engine.load(QUrl.fromLocalFile(str(qml_file)))
     if not engine.rootObjects():
@@ -333,6 +356,21 @@ def main(argv: list[str] | None = None) -> int:
             roots[0].deleteLater()
         QTimer.singleShot(50, application.quit)
 
+    if args.surface == "submission":
+        def open_submission() -> None:
+            if not controller.hasResults:
+                QTimer.singleShot(25, open_submission)
+                return
+            controller.setActiveSurface("submission")
+            if args.write_submission:
+                QTimer.singleShot(
+                    50,
+                    lambda: submission_controller.writeSubmission(
+                        str(args.write_submission.resolve())
+                    ),
+                )
+
+        QTimer.singleShot(0, open_submission)
     if args.surface == "settings":
         # Settings needs neither a source nor a completed run to be reachable.
         QTimer.singleShot(0, lambda: controller.setActiveSurface("settings"))
@@ -348,6 +386,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.surface == "profile":
             QTimer.singleShot(100, lambda: controller.setActiveSurface("profile"))
     if args.open_run:
+        def apply_visual_grouping() -> None:
+            if not args.evaluation_group_column:
+                return
+            if evaluation_controller.busy or not evaluation_controller.hasReport:
+                QTimer.singleShot(25, apply_visual_grouping)
+                return
+            evaluation_controller.selectGroupColumn(args.evaluation_group_column)
+
         def authorize_visual_evaluation() -> None:
             if not (
                 args.evaluation_label_column
@@ -379,6 +425,9 @@ def main(argv: list[str] | None = None) -> int:
                     args.evaluation_pathogenic_value,
                     args.evaluation_benign_value,
                 )
+                QTimer.singleShot(25, authorize_visual_evaluation)
+                return
+            apply_visual_grouping()
 
         def open_run() -> None:
             if controller.openArchivedRun(args.open_run) and args.surface == "evaluation":
@@ -406,7 +455,8 @@ def main(argv: list[str] | None = None) -> int:
             application.primaryScreen().grabWindow(window.winId()).save(str(destination))
             clean_quit()
 
-        QTimer.singleShot(1200, capture)
+        capture_delay = 4000 if args.evaluation_group_column else 1200
+        QTimer.singleShot(capture_delay, capture)
     elif args.smoke:
         QTimer.singleShot(750, clean_quit)
     return application.exec()

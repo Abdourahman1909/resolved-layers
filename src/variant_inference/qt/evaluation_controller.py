@@ -13,7 +13,11 @@ from variant_inference.domain.models import (
     LoadedVerifiedRun,
     SourceReferenceState,
 )
-from variant_inference.qt.evaluation_models import EvaluationCohortModel, EvaluationMetricModel
+from variant_inference.qt.evaluation_models import (
+    EvaluationCohortModel,
+    EvaluationGroupModel,
+    EvaluationMetricModel,
+)
 
 
 class EvaluationController(QObject):
@@ -26,11 +30,14 @@ class EvaluationController(QObject):
         metrics: EvaluationMetricModel,
         cohorts: EvaluationCohortModel,
         executor: Executor | None = None,
+        *,
+        groups: EvaluationGroupModel | None = None,
     ) -> None:
         super().__init__()
         self._service = service
         self._metrics = metrics
         self._cohorts = cohorts
+        self._groups = groups
         self._owns_executor = executor is None
         self._executor = executor or ThreadPoolExecutor(
             max_workers=1,
@@ -52,6 +59,9 @@ class EvaluationController(QObject):
         self._draft_benign = ""
         self._preview: LabelCoverage | None = None
         self._report: EvaluationReport | None = None
+        # Grouping is opt-in. Nothing is grouped until the operator asks,
+        # consistent with the workspace never choosing a column on its own.
+        self._group_column = ""
         self._message = "Open a Verified Run to prepare Evaluation."
         self._error_message = ""
         self.operationFinished.connect(self._apply_operation)
@@ -92,6 +102,76 @@ class EvaluationController(QObject):
     @Property(str, notify=stateChanged)
     def selectedLabelColumn(self) -> str:  # noqa: N802
         return self._selected_label_column
+
+    # Group breakdown --------------------------------------------------------
+
+    @Property("QStringList", notify=stateChanged)
+    def groupColumns(self) -> list[str]:  # noqa: N802
+        """Columns offered for grouping, excluding the authorized label column.
+
+        Grouping by the label column would only restate the confusion matrix.
+        """
+        return [
+            column
+            for column in self._source.label_columns
+            if column != self._selected_label_column
+        ]
+
+    @Property(str, notify=stateChanged)
+    def groupColumn(self) -> str:  # noqa: N802
+        return self._group_column
+
+    @Property(bool, notify=stateChanged)
+    def hasGrouping(self) -> bool:  # noqa: N802
+        report = self._report
+        return bool(report and report.grouping and report.grouping.groups)
+
+    @Property(int, notify=stateChanged)
+    def groupCount(self) -> int:  # noqa: N802
+        report = self._report
+        return len(report.grouping.groups) if report and report.grouping else 0
+
+    @Property(str, notify=stateChanged)
+    def meanGroupF1(self) -> str:  # noqa: N802
+        """Unweighted mean across groups — each group counted equally."""
+        report = self._report
+        return report.grouping.mean_display("f1") if report and report.grouping else "—"
+
+    @Property(str, notify=stateChanged)
+    def meanGroupMcc(self) -> str:  # noqa: N802
+        report = self._report
+        return report.grouping.mean_display("mcc") if report and report.grouping else "—"
+
+    @Slot(str)
+    def selectGroupColumn(self, column_name: str) -> None:  # noqa: N802
+        """Choose a grouping column, or pass an empty string to stop grouping.
+
+        Re-runs the evaluation, because grouping reads source values and that
+        work belongs off the QML thread like every other source read.
+        """
+        if self._busy:
+            return
+        if column_name and column_name not in self._source.label_columns:
+            self._error_message = f"{column_name!r} is not an available source column."
+            self.stateChanged.emit()
+            return
+        if column_name == self._group_column:
+            return
+        self._group_column = column_name
+        if self._authorization is None or self._run is None:
+            self.stateChanged.emit()
+            return
+        self._schedule(
+            "evaluate",
+            self._evaluate_mapping,
+            self._run,
+            self._authorization,
+            busy_message=(
+                f"Grouping observed metrics by {column_name}…"
+                if column_name
+                else "Removing the group breakdown…"
+            ),
+        )
 
     @Property("QStringList", notify=stateChanged)
     def labelValues(self) -> list[str]:  # noqa: N802
@@ -231,6 +311,8 @@ class EvaluationController(QObject):
         self._preview = None
         self._authorization = None
         self._report = None
+        if self._groups is not None:
+            self._groups.set_items(())
         self._metrics.set_items(())
         self._cohorts.set_items(())
         if self._run is None or not self._selected_label_column:
@@ -315,6 +397,8 @@ class EvaluationController(QObject):
         self._draft_benign = ""
         self._preview = None
         self._report = None
+        if self._groups is not None:
+            self._groups.set_items(())
         self._metrics.set_items(())
         self._cohorts.set_items(())
 
@@ -416,6 +500,10 @@ class EvaluationController(QObject):
             self._report = report
             self._metrics.set_items(report.metrics)
             self._cohorts.set_items(report.cohorts)
+            if self._groups is not None:
+                self._groups.set_items(
+                    report.grouping.groups if report.grouping else ()
+                )
             self._message = (
                 f"Observed Evaluation authorized for {report.evaluated_count:,} of "
                 f"{report.total_records:,} Source Rows."
@@ -436,4 +524,6 @@ class EvaluationController(QObject):
     def _evaluate_mapping(
         self, run: LoadedVerifiedRun, authorization: GroundTruthAuthorization
     ) -> tuple[GroundTruthAuthorization, EvaluationReport]:
-        return authorization, self._service.evaluate(run, authorization)
+        return authorization, self._service.evaluate(
+            run, authorization, group_by=self._group_column or None
+        )

@@ -217,6 +217,22 @@ def test_evaluation_qml_smoke_paths_cover_authorized_unlabeled_missing_and_modif
     _run_evaluation_smoke(archive, run)
 
 
+def test_evaluation_qml_renders_the_group_breakdown(tmp_path):
+    archive, run, _ = _evaluation_archive(tmp_path)
+    _run_evaluation_smoke(
+        archive,
+        run,
+        "--evaluation-label-column",
+        "GroundTruth",
+        "--evaluation-pathogenic-value",
+        "case",
+        "--evaluation-benign-value",
+        "control",
+        "--evaluation-group-column",
+        "_panel",
+    )
+
+
 def _run_settings_smoke(tmp_path, *arguments: str) -> None:
     environment = dict(os.environ)
     environment["QT_QPA_PLATFORM"] = "offscreen"
@@ -272,3 +288,23 @@ def test_settings_qml_starts_when_the_installed_package_has_vanished(tmp_path):
 
     # Fail closed and still render, rather than refusing to start.
     _run_settings_smoke(tmp_path)
+
+
+def test_submission_qml_starts_for_a_completed_run(tmp_path):
+    archive, run, _ = _evaluation_archive(tmp_path)
+    environment = dict(os.environ)
+    environment["QT_QPA_PLATFORM"] = "offscreen"
+    result = subprocess.run(
+        (
+            sys.executable, "-m", "variant_inference",
+            "--run-archive", str(archive),
+            "--open-run", run.run_id,
+            "--surface", "submission",
+            "--smoke",
+        ),
+        check=False, capture_output=True, env=environment, text=True, timeout=20,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "QQmlApplicationEngine failed" not in result.stderr
+    assert "ReferenceError" not in result.stderr
+    assert "Unable to assign" not in result.stderr

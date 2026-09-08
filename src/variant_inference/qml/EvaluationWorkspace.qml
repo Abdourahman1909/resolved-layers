@@ -351,6 +351,141 @@ Item {
                         }
                     }
 
+                    // Group breakdown. The competition combines panels by
+                    // weighting each equally, so a healthy pooled figure can
+                    // conceal a weak group. Grouping is opt-in; no column is
+                    // chosen automatically, exactly as with the label column.
+                    Rectangle {
+                        id: groupPanel
+                        width: parent.width
+                        implicitHeight: groupColumn.implicitHeight + 34
+                        color: "#FFFFFF"
+                        border.width: 1
+                        border.color: evaluationRoot.rule
+                        radius: 3
+
+                        Column {
+                            id: groupColumn
+                            x: 17
+                            y: 16
+                            width: parent.width - 34
+                            spacing: 0
+
+                            SectionTitle { text: "Group Breakdown" }
+
+                            Item { width: 1; height: 5 }
+
+                            Text {
+                                width: parent.width
+                                text: "Observed metrics computed inside each group separately. "
+                                    + "The mean weights every group equally regardless of size."
+                                color: evaluationRoot.secondary
+                                font.family: "Arial"
+                                font.pixelSize: 10
+                                wrapMode: Text.WordWrap
+                            }
+
+                            Item { width: 1; height: 12 }
+
+                            SelectField {
+                                id: groupColumnSelect
+                                width: Math.min(parent.width, 320)
+                                height: 34
+                                model: ["No grouping"].concat(evaluationController.groupColumns)
+                                currentIndex: Math.max(0, model.indexOf(evaluationController.groupColumn))
+                                enabled: evaluationController.hasReport && !evaluationController.busy
+                                Accessible.name: "Group observed metrics by a source column"
+                                onActivated: evaluationController.selectGroupColumn(currentIndex === 0 ? "" : currentText)
+                            }
+
+                            Item { width: 1; height: 14 }
+
+                            // Equal-weighted means, shown only once grouping exists.
+                            Row {
+                                visible: evaluationController.hasGrouping
+                                spacing: 26
+                                Repeater {
+                                    model: [
+                                        { label: "Mean F1", value: evaluationController.meanGroupF1 },
+                                        { label: "Mean MCC", value: evaluationController.meanGroupMcc },
+                                        { label: "Groups", value: evaluationController.groupCount.toString() }
+                                    ]
+                                    Column {
+                                        required property var modelData
+                                        spacing: 2
+                                        Text { text: modelData.label; color: evaluationRoot.secondary; font.family: "Arial"; font.pixelSize: 10; font.weight: Font.DemiBold }
+                                        Text { text: modelData.value; color: evaluationRoot.ink; font.family: "Arial"; font.pixelSize: 18; font.weight: Font.Medium }
+                                    }
+                                }
+                            }
+
+                            Item { width: 1; height: evaluationController.hasGrouping ? 14 : 0 }
+
+                            // Header row
+                            Row {
+                                visible: evaluationController.hasGrouping
+                                width: parent.width
+                                Repeater {
+                                    model: [
+                                        { text: "Group", share: 0.24, align: Text.AlignLeft },
+                                        { text: "Evaluated", share: 0.13, align: Text.AlignRight },
+                                        { text: "TP", share: 0.08, align: Text.AlignRight },
+                                        { text: "FP", share: 0.08, align: Text.AlignRight },
+                                        { text: "FN", share: 0.08, align: Text.AlignRight },
+                                        { text: "TN", share: 0.08, align: Text.AlignRight },
+                                        { text: "F1", share: 0.155, align: Text.AlignRight },
+                                        { text: "MCC", share: 0.155, align: Text.AlignRight }
+                                    ]
+                                    Text {
+                                        required property var modelData
+                                        width: groupColumn.width * modelData.share
+                                        text: modelData.text
+                                        horizontalAlignment: modelData.align
+                                        color: evaluationRoot.secondary
+                                        font.family: "Arial"
+                                        font.pixelSize: 10
+                                        font.weight: Font.DemiBold
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                visible: evaluationController.hasGrouping
+                                width: parent.width
+                                height: 1
+                                color: evaluationRoot.rule
+                            }
+
+                            Repeater {
+                                model: evaluationController.hasGrouping ? evaluationGroupModel : null
+                                delegate: Row {
+                                    required property string groupValue
+                                    required property int evaluated
+                                    required property int truePositive
+                                    required property int falsePositive
+                                    required property int falseNegative
+                                    required property int trueNegative
+                                    required property string f1
+                                    required property string mcc
+                                    width: groupColumn.width
+                                    height: 27
+                                    Accessible.role: Accessible.Row
+                                    Accessible.name: groupValue + ": F1 " + f1 + ", MCC " + mcc
+                                        + ", " + evaluated + " evaluated records"
+
+                                    Text { width: groupColumn.width * 0.24; anchors.verticalCenter: parent.verticalCenter; text: groupValue; elide: Text.ElideRight; color: evaluationRoot.ink; font.family: "Arial"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                    Text { width: groupColumn.width * 0.13; anchors.verticalCenter: parent.verticalCenter; horizontalAlignment: Text.AlignRight; text: evaluated.toLocaleString(); color: evaluationRoot.secondary; font.family: "Arial"; font.pixelSize: 11 }
+                                    Text { width: groupColumn.width * 0.08; anchors.verticalCenter: parent.verticalCenter; horizontalAlignment: Text.AlignRight; text: truePositive; color: evaluationRoot.pathogenic; font.family: "Arial"; font.pixelSize: 11 }
+                                    Text { width: groupColumn.width * 0.08; anchors.verticalCenter: parent.verticalCenter; horizontalAlignment: Text.AlignRight; text: falsePositive; color: evaluationRoot.error; font.family: "Arial"; font.pixelSize: 11 }
+                                    Text { width: groupColumn.width * 0.08; anchors.verticalCenter: parent.verticalCenter; horizontalAlignment: Text.AlignRight; text: falseNegative; color: evaluationRoot.error; font.family: "Arial"; font.pixelSize: 11 }
+                                    Text { width: groupColumn.width * 0.08; anchors.verticalCenter: parent.verticalCenter; horizontalAlignment: Text.AlignRight; text: trueNegative; color: evaluationRoot.benign; font.family: "Arial"; font.pixelSize: 11 }
+                                    Text { width: groupColumn.width * 0.155; anchors.verticalCenter: parent.verticalCenter; horizontalAlignment: Text.AlignRight; text: f1; color: evaluationRoot.ink; font.family: "Arial"; font.pixelSize: 11; font.weight: Font.Medium }
+                                    Text { width: groupColumn.width * 0.155; anchors.verticalCenter: parent.verticalCenter; horizontalAlignment: Text.AlignRight; text: mcc; color: evaluationRoot.ink; font.family: "Arial"; font.pixelSize: 11; font.weight: Font.Medium }
+                                }
+                            }
+                        }
+                    }
+
                     Rectangle {
                         width: parent.width
                         height: 238

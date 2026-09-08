@@ -420,3 +420,196 @@ def test_evaluation_controller_fails_closed_when_archive_source_status_errors(tm
     assert not controller.hasReport
     assert controller.sourceState == "missing"
     assert "manifest is unreadable" in controller.errorMessage
+
+
+# Group breakdown ----------------------------------------------------------
+#
+# The competition scores this workflow per panel, not over the pooled cohort,
+# so a healthy pooled figure can hide a weak individual group.
+
+
+def grouped_report(tmp_path, labels, group_by="_panel"):
+    source = tmp_path / "grouped.csv"
+    write_source(source, labels)
+    run = evaluation_run(source, labels)
+    authorization = GroundTruthAuthorization("GroundTruth", "case", "control")
+    return service_for(run).evaluate(run, authorization, group_by=group_by)
+
+
+# Predictions are Pathogenic on rows 1, 3, 5 and Benign on rows 2, 4, 6.
+# PANEL-1 holds rows 1-3, PANEL-2 holds rows 4-6.
+MIXED = ("case", "control", "control", "control", "case", "case")
+
+
+def test_grouping_is_opt_in(tmp_path) -> None:
+    assert grouped_report(tmp_path, MIXED, group_by=None).grouping is None
+
+
+def test_each_group_is_scored_separately(tmp_path) -> None:
+    grouping = grouped_report(tmp_path, MIXED).grouping
+
+    assert grouping is not None
+    assert [g.value for g in grouping.groups] == ["PANEL-1", "PANEL-2"]
+
+    first, second = grouping.groups
+    # PANEL-1: row1 TP, row2 TN, row3 FP
+    assert (first.true_positive, first.false_positive, first.false_negative, first.true_negative) == (1, 1, 0, 1)
+    # PANEL-2: row4 TN, row5 TP, row6 FN
+    assert (second.true_positive, second.false_positive, second.false_negative, second.true_negative) == (1, 0, 1, 1)
+
+
+def test_groups_reconcile_with_the_pooled_confusion_matrix(tmp_path) -> None:
+    report = grouped_report(tmp_path, MIXED)
+    groups = report.grouping.groups
+
+    for attribute in ("true_positive", "false_positive", "false_negative", "true_negative"):
+        assert sum(getattr(g, attribute) for g in groups) == getattr(report, attribute)
+    assert sum(g.evaluated_count for g in groups) == report.evaluated_count
+
+
+# PANEL-1 fully correct, PANEL-2 fully wrong. Pooled F1 sits between them.
+ASYMMETRIC = ("case", "control", "case", "case", "control", "case")
+
+
+def test_a_group_can_score_worse_than_the_pooled_cohort(tmp_path) -> None:
+    """The reason this feature exists: pooling hides a weak group."""
+    report = grouped_report(tmp_path, ASYMMETRIC)
+    pooled = report.metric("f1").value
+    per_group = [g.metric("f1").value for g in report.grouping.groups]
+
+    assert pooled == pytest.approx(4 / 7)
+    assert per_group == [pytest.approx(1.0), pytest.approx(0.0)]
+    assert min(per_group) < pooled
+
+
+def test_the_mean_weights_every_group_equally(tmp_path) -> None:
+    grouping = grouped_report(tmp_path, MIXED).grouping
+    values = [g.metric("f1").value for g in grouping.groups]
+
+    assert grouping.mean("f1") == pytest.approx(sum(values) / len(values))
+
+
+def test_an_undefined_group_metric_makes_the_mean_undefined(tmp_path) -> None:
+    """A group with no positive predictions and no positive labels leaves F1
+    undefined. Averaging the remaining groups would quietly overstate it."""
+    # Excluding row 5 leaves PANEL-2 with only Benign predictions on Benign
+    # labels, so it has no TP, FP or FN and F1 has no denominator.
+    labels = ("case", "control", "control", "control", "", "control")
+    grouping = grouped_report(tmp_path, labels).grouping
+
+    assert any(g.metric("f1").value is None for g in grouping.groups)
+    assert grouping.mean("f1") is None
+    assert grouping.mean_display("f1") == "Undefined"
+
+
+def test_rows_excluded_from_evaluation_stay_out_of_every_group(tmp_path) -> None:
+    labels = ("case", "", "unknown-value", "control", "case", "case")
+    report = grouped_report(tmp_path, labels)
+
+    assert report.missing_count == 1
+    assert report.unrecognized_count == 1
+    assert sum(g.evaluated_count for g in report.grouping.groups) == report.evaluated_count
+    every_row = {row for g in report.grouping.groups for row in g.source_rows}
+    assert 2 not in every_row and 3 not in every_row
+
+
+def test_grouping_reports_the_column_it_used(tmp_path) -> None:
+    assert grouped_report(tmp_path, MIXED).grouping.column_name == "_panel"
+
+
+def test_an_absent_grouping_column_is_refused(tmp_path) -> None:
+    with pytest.raises(ValueError, match="absent"):
+        grouped_report(tmp_path, MIXED, group_by="NoSuchColumn")
+
+
+def test_blank_group_values_are_named_rather_than_dropped(tmp_path) -> None:
+    source = tmp_path / "blank.csv"
+    source.write_text(
+        "Variant_ID,GroundTruth,_panel\n"
+        "VAR-001,case,\nVAR-002,control,\nVAR-003,control,P\n"
+        "VAR-004,control,P\nVAR-005,case,P\nVAR-006,case,P\n",
+        encoding="utf-8",
+    )
+    run = evaluation_run(source, MIXED)
+    report = service_for(run).evaluate(
+        run, GroundTruthAuthorization("GroundTruth", "case", "control"), group_by="_panel"
+    )
+
+    values = [g.value for g in report.grouping.groups]
+    assert "(missing)" in values
+    assert sum(g.evaluated_count for g in report.grouping.groups) == report.evaluated_count
+
+
+def grouping_controller(tmp_path):
+    from variant_inference.qt.evaluation_models import EvaluationGroupModel
+
+    source = tmp_path / "controller.csv"
+    write_source(source, ASYMMETRIC)
+    run = evaluation_run(source, ASYMMETRIC)
+    groups = EvaluationGroupModel()
+    controller = EvaluationController(
+        service_for(run),
+        EvaluationMetricModel(),
+        EvaluationCohortModel(),
+        ImmediateExecutor(),
+        groups=groups,
+    )
+    controller.load_run(run)
+    controller.selectLabelColumn("GroundTruth")
+    # Coverage must be reviewed before authorization; the controller refuses
+    # to authorize a mapping the operator has not seen the counts for.
+    controller.reviewCoverage("case", "control")
+    controller.authorizeEvaluation("case", "control")
+    return controller, groups
+
+
+def test_controller_does_not_group_until_asked(tmp_path) -> None:
+    controller, groups = grouping_controller(tmp_path)
+
+    assert controller.hasReport
+    assert controller.hasGrouping is False
+    assert groups.rowCount() == 0
+    assert controller.meanGroupF1 == "—"
+
+
+def test_controller_groups_on_request_and_reports_the_equal_weighted_mean(tmp_path) -> None:
+    controller, groups = grouping_controller(tmp_path)
+
+    controller.selectGroupColumn("_panel")
+
+    assert controller.hasGrouping is True
+    assert controller.groupCount == 2
+    assert groups.rowCount() == 2
+    # PANEL-1 scores 1.0 and PANEL-2 scores 0.0; the equal-weighted mean is 0.5,
+    # while the pooled F1 is 4/7. The mean is not the pooled figure.
+    assert controller.meanGroupF1 == "0.5000"
+    pooled = controller._report.metric("f1").value
+    assert pooled == pytest.approx(4 / 7)
+    assert controller.meanGroupF1 != f"{pooled:.4f}"
+
+
+def test_controller_can_stop_grouping(tmp_path) -> None:
+    controller, groups = grouping_controller(tmp_path)
+    controller.selectGroupColumn("_panel")
+
+    controller.selectGroupColumn("")
+
+    assert controller.hasGrouping is False
+    assert groups.rowCount() == 0
+
+
+def test_controller_refuses_a_column_the_source_does_not_have(tmp_path) -> None:
+    controller, _ = grouping_controller(tmp_path)
+
+    controller.selectGroupColumn("NoSuchColumn")
+
+    assert controller.groupColumn == ""
+    assert "not an available source column" in controller.errorMessage
+
+
+def test_the_authorized_label_column_is_not_offered_for_grouping(tmp_path) -> None:
+    """Grouping by the label column would only restate the confusion matrix."""
+    controller, _ = grouping_controller(tmp_path)
+
+    assert "GroundTruth" not in controller.groupColumns
+    assert "_panel" in controller.groupColumns
