@@ -1861,12 +1861,57 @@ ApplicationWindow {
                     }
 
                     ActionButton {
+                        id: runButton
                         width: parent.width
                         height: 44
                         primary: true
                         enabled: sourceController.runEnabled
                         text: sourceController.runButtonText
                         onClicked: sourceController.requestRun()
+
+                        // Prediction can take minutes on competition data. An
+                        // indeterminate bar shows the work is progressing, since
+                        // the number of rows completed is not observable.
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            anchors.margins: 1
+                            height: 3
+                            radius: 1.5
+                            visible: sourceController.runBusy
+                            color: "#8FB0FF"
+                            clip: true
+
+                            Rectangle {
+                                id: runPulse
+                                width: parent.width * 0.32
+                                height: parent.height
+                                radius: parent.radius
+                                color: "#FFFFFF"
+                                opacity: 0.85
+                                x: -width
+
+                                XAnimator on x {
+                                    running: sourceController.runBusy
+                                    loops: Animation.Infinite
+                                    from: -runPulse.width
+                                    to: runPulse.parent.width
+                                    duration: 1100
+                                }
+                            }
+                        }
+                    }
+
+                    Text {
+                        width: parent.width
+                        visible: sourceController.runBusy
+                        text: "Working. The interface stays responsive; this may take a few minutes."
+                        color: root.secondary
+                        font.family: "Arial"
+                        font.pixelSize: 11
+                        wrapMode: Text.WordWrap
+                        horizontalAlignment: Text.AlignHCenter
                     }
                 }
             }

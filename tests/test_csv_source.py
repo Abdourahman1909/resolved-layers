@@ -52,3 +52,38 @@ def test_empty_csv_is_rejected(tmp_path):
     with pytest.raises(CsvSourceError, match="empty"):
         CsvSourceReader().open(path)
 
+
+
+def test_the_store_is_readable_from_another_thread(tmp_path):
+    """Prediction runs off the interface thread and reads rows directly.
+
+    An already-cached page would hide a threading fault, so this reads an
+    uncached page and a column aggregate, both of which reach SQLite.
+    """
+    import threading
+
+    path = tmp_path / "threaded.csv"
+    rows = ["Variant_ID,_panel,value"]
+    rows += [f"VAR-{index:05d},PANEL-{index % 3},{index}" for index in range(1, 3001)]
+    path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+
+    source = CsvSourceReader().open(path)
+    outcome: dict[str, object] = {}
+
+    def worker() -> None:
+        try:
+            outcome["row"] = source.row_at(2500)[0]
+            outcome["groups"] = len(source.value_counts(1))
+        except BaseException as error:  # noqa: BLE001
+            outcome["error"] = f"{type(error).__name__}: {error}"
+
+    thread = threading.Thread(target=worker)
+    thread.start()
+    thread.join(30)
+
+    try:
+        assert "error" not in outcome, outcome.get("error")
+        assert outcome["row"] == "VAR-02501"
+        assert outcome["groups"] == 3
+    finally:
+        source.close()
