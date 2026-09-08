@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Dialogs
 
 // Competition Submission.
@@ -46,6 +47,7 @@ Item {
         contentHeight: body.implicitHeight + 44
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: AppScrollBar { }
 
         Column {
             id: body

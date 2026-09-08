@@ -56,11 +56,7 @@ Item {
             }
         }
 
-        ScrollBar.vertical: ScrollBar {
-            policy: ScrollBar.AsNeeded
-            contentItem: Rectangle { implicitWidth: 7; radius: 3; color: "#AEB8C8" }
-            background: Rectangle { color: "#F2F4F7" }
-        }
+        ScrollBar.vertical: AppScrollBar { }
 
         Column {
             id: contentColumn
@@ -562,6 +558,7 @@ Item {
                         ListView {
                             anchors.left: parent.left
                             anchors.leftMargin: 12
+                            ScrollBar.vertical: AppScrollBar { }
                             anchors.right: parent.right
                             anchors.rightMargin: 12
                             anchors.top: parent.top

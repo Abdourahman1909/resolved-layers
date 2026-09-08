@@ -85,7 +85,9 @@ ComboBox {
             implicitHeight: contentHeight
             model: control.popup.visible ? control.delegateModel : null
             currentIndex: control.highlightedIndex
-            ScrollIndicator.vertical: ScrollIndicator { }
+            // Interactive, so a long column list can be dragged rather than
+            // only wheeled through.
+            ScrollBar.vertical: AppScrollBar { policy: ScrollBar.AsNeeded }
         }
         background: Rectangle {
             color: "#FFFFFF"

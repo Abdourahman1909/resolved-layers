@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Dialogs
 
 // Install a Model Package without a terminal.
@@ -39,6 +40,7 @@ Item {
         contentHeight: body.implicitHeight + 48
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: AppScrollBar { }
 
         Column {
             id: body
