@@ -373,7 +373,7 @@ ApplicationWindow {
                     TapHandler { onTapped: { if (sourceController.openArchivedRun(runId)) archivePopup.close() } }
                     Keys.onReturnPressed: { if (sourceController.openArchivedRun(runId)) archivePopup.close() }
                 }
-                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+                ScrollBar.vertical: AppScrollBar { }
             }
         }
     }
@@ -647,16 +647,8 @@ ApplicationWindow {
                         }
                     }
 
-                    ScrollBar.vertical: ScrollBar {
-                        policy: ScrollBar.AsNeeded
-                        contentItem: Rectangle { implicitWidth: 7; radius: 3; color: "#AEB8C8" }
-                        background: Rectangle { color: "#F2F4F7" }
-                    }
-                    ScrollBar.horizontal: ScrollBar {
-                        policy: ScrollBar.AsNeeded
-                        contentItem: Rectangle { implicitHeight: 7; radius: 3; color: "#AEB8C8" }
-                        background: Rectangle { color: "#F2F4F7" }
-                    }
+                    ScrollBar.vertical: AppScrollBar { }
+                    ScrollBar.horizontal: AppScrollBar { }
                 }
             }
 
@@ -993,7 +985,7 @@ ApplicationWindow {
                             TapHandler { onTapped: sourceController.setGroupFilter(value) }
                             Keys.onReturnPressed: sourceController.setGroupFilter(value)
                         }
-                        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded; contentItem: Rectangle { implicitWidth: 6; radius: 3; color: "#AEB8C8" } }
+                        ScrollBar.vertical: AppScrollBar { }
                     }
                 }
 
@@ -1184,16 +1176,8 @@ ApplicationWindow {
                         border.color: root.softRule
                         Text { anchors.fill: parent; anchors.leftMargin: 9; anchors.rightMargin: 9; text: model.display; color: model.display === "—" ? "#8B94A3" : root.ink; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight; font.family: "Arial"; font.pixelSize: 11 }
                     }
-                    ScrollBar.vertical: ScrollBar {
-                        policy: ScrollBar.AsNeeded
-                        contentItem: Rectangle { implicitWidth: 7; radius: 3; color: "#AEB8C8" }
-                        background: Rectangle { color: "#F2F4F7" }
-                    }
-                    ScrollBar.horizontal: ScrollBar {
-                        policy: ScrollBar.AsNeeded
-                        contentItem: Rectangle { implicitHeight: 7; radius: 3; color: "#AEB8C8" }
-                        background: Rectangle { color: "#F2F4F7" }
-                    }
+                    ScrollBar.vertical: AppScrollBar { }
+                    ScrollBar.horizontal: AppScrollBar { }
                 }
             }
 
@@ -1442,6 +1426,7 @@ ApplicationWindow {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: investigationTitle.bottom
+                        ScrollBar.vertical: AppScrollBar { }
                         anchors.topMargin: 42
                         height: Math.min(contentHeight, 252)
                         model: investigationSetModel
@@ -1645,8 +1630,8 @@ ApplicationWindow {
                                     positionViewAtRow(next, TableView.Contain)
                                     event.accepted = true
                                 }
-                                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
-                                ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
+                                ScrollBar.vertical: AppScrollBar { }
+                                ScrollBar.horizontal: AppScrollBar { }
                             }
                         }
                     }
@@ -1724,11 +1709,7 @@ ApplicationWindow {
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
 
-                ScrollBar.vertical: ScrollBar {
-                    policy: ScrollBar.AsNeeded
-                    contentItem: Rectangle { implicitWidth: 6; radius: 3; color: "#AEB8C8" }
-                    background: Rectangle { color: "transparent" }
-                }
+                ScrollBar.vertical: AppScrollBar { }
 
                 Column {
                     id: evidenceColumn

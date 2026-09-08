@@ -99,11 +99,7 @@ Rectangle {
             event.accepted = true
         }
 
-        ScrollBar.vertical: ScrollBar {
-            policy: ScrollBar.AsNeeded
-            contentItem: Rectangle { implicitWidth: 6; radius: 3; color: "#AEB8C8" }
-            background: Rectangle { color: "transparent" }
-        }
+        ScrollBar.vertical: AppScrollBar { }
 
         Column {
             id: inspectorColumn
