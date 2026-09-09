@@ -139,14 +139,11 @@ class ModelPackageController(QObject):
         if candidate is None or not candidate.is_usable:
             return
         self._installed = self._service.install(candidate)
-        if self._active_override:
-            # Promising it will be used after a restart would be a lie while an
-            # override stands, and the operator would not discover it.
-            self._message = self.overrideSummary
-            self._message_kind = "warning"
-        else:
-            self._message = "Model Package installed. Restart to use it for prediction."
-            self._message_kind = "success"
+        # Settings now outranks the environment variable, so this is true even
+        # while one is set; only an explicit argument on the next launch would
+        # take precedence, and that is a deliberate per-launch instruction.
+        self._message = "Model Package installed. Restart to use it for prediction."
+        self._message_kind = "success"
         self.installedChanged.emit()
         self.stateChanged.emit()
 
@@ -154,12 +151,8 @@ class ModelPackageController(QObject):
     def removeInstalled(self) -> None:  # noqa: N802
         self._service.remove()
         self._installed = None
-        if self._active_override:
-            self._message = self.overrideSummary
-            self._message_kind = "warning"
-        else:
-            self._message = "Model Package removed. Restart to apply."
-            self._message_kind = "neutral"
+        self._message = "Model Package removed. Restart to apply."
+        self._message_kind = "neutral"
         self.installedChanged.emit()
         self.stateChanged.emit()
 
@@ -291,20 +284,24 @@ class ModelPackageController(QObject):
     def overrideMessage(self) -> str:  # noqa: N802
         if not self._active_override:
             return ""
+        origin = self._override_origin()
+        if self._active_override == "argument":
+            # An argument is a deliberate instruction for one launch, so it
+            # outranks Settings and says so without implying anything is stuck.
+            tail = "It applies to this launch only."
+        else:
+            tail = "Installing a Model Package here will replace it."
         if self._installed is None:
             # Nothing is installed here, but prediction still works. Saying only
             # "No Model Package installed" would describe this file rather than
             # the application, and an operator would not know where it came from.
             return (
-                f"Prediction is using a Model Package supplied by "
-                f"{self._override_origin()}. Nothing is installed here, and "
-                "installing something will not replace it until the override is "
-                "removed."
+                f"Prediction is using a Model Package supplied by {origin}. "
+                f"Nothing is installed here. {tail}"
             )
         return (
-            f"Prediction is using the Model Package from {self._override_origin()}, "
-            "not the one installed here. Installing a package will not change that "
-            "until the override is removed."
+            f"Prediction is using the Model Package from {origin}, not the one "
+            f"installed here. {tail}"
         )
 
     @Property(str, notify=installedChanged)

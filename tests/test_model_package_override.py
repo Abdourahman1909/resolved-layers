@@ -25,7 +25,7 @@ from variant_inference.infrastructure.model_package import JsonModelPackageRepos
 from variant_inference.infrastructure.model_package_store import (
     JsonModelPackageSettingsStore,
 )
-from variant_inference.main import _same_package
+from variant_inference.main import _same_package, resolve_model_package
 from variant_inference.qt.model_package_controller import ModelPackageController
 
 FIXTURE_PACKAGE = Path(__file__).parent / "fixtures" / "development-package"
@@ -63,9 +63,10 @@ def test_nothing_installed_is_never_reported_as_a_contradiction() -> None:
 def test_an_override_is_reported_instead_of_claiming_the_installed_one_is_ready(
     tmp_path: Path,
 ) -> None:
+    # Only an explicit argument can outrank an installed package now.
     controller = ModelPackageController(
         _installed_service(tmp_path),
-        active_override="environment",
+        active_override="argument",
         active_manifest_path=tmp_path / "other-package" / "manifest.json",
     )
     controller.refresh_installed()
@@ -74,10 +75,11 @@ def test_an_override_is_reported_instead_of_claiming_the_installed_one_is_ready(
     assert controller.messageKind == "warning"
     # The status line stays short; the band carries the full explanation, so the
     # operator does not read the same sentence twice.
-    assert "CHL_MODEL_PACKAGE_MANIFEST" in controller.overrideSummary
+    assert "--model-package" in controller.overrideSummary
     assert controller.message == controller.overrideSummary
     assert controller.message != controller.overrideMessage
     assert "not the one installed here" in controller.overrideMessage
+    assert "this launch only" in controller.overrideMessage
     assert controller.overridePath == str(tmp_path / "other-package")
     controller.shutdown()
 
@@ -105,9 +107,10 @@ def _await_inspection(controller: ModelPackageController) -> None:
     controller._executor.submit(lambda: None).result(timeout=15)
 
 
-def test_installing_under_an_override_does_not_promise_it_will_be_used(
+def test_installing_under_an_environment_override_now_does_take_effect(
     tmp_path: Path,
 ) -> None:
+    """Settings outranks the variable, so the restart promise is honest."""
     service = _installed_service(tmp_path)
     controller = ModelPackageController(
         service,
@@ -120,8 +123,8 @@ def test_installing_under_an_override_does_not_promise_it_will_be_used(
 
     controller.installSelected()
 
-    assert controller.messageKind == "warning"
-    assert "Restart" not in controller.message
+    assert controller.messageKind == "success"
+    assert "Restart to use it for prediction" in controller.message
     controller.shutdown()
 
 
@@ -150,6 +153,57 @@ def test_an_argument_override_names_the_argument(tmp_path: Path) -> None:
     assert "--model-package" in controller.overrideSummary
     assert "--model-package" in controller.overrideMessage
     controller.shutdown()
+
+
+# Which route wins ------------------------------------------------------------
+
+
+def test_settings_outranks_the_environment_variable(tmp_path: Path) -> None:
+    """The whole point of the flip: an installed package is actually used.
+
+    Before this, the variable won and an explicit install was stored and never
+    consulted, so an operator installed one package and predicted with another.
+    """
+    installed = tmp_path / "installed" / "manifest.json"
+
+    path, override = resolve_model_package(None, installed, str(tmp_path / "from-env"))
+
+    assert path == installed
+    assert override == ""
+
+
+def test_the_environment_is_a_fallback_when_nothing_is_installed(tmp_path: Path) -> None:
+    from_env = tmp_path / "from-env"
+
+    path, override = resolve_model_package(None, None, str(from_env))
+
+    assert path == from_env
+    assert override == "environment"
+
+
+def test_an_explicit_argument_still_wins(tmp_path: Path) -> None:
+    # A per-launch instruction, unlike ambient state left over from login.
+    argument = tmp_path / "argument" / "manifest.json"
+    installed = tmp_path / "installed" / "manifest.json"
+
+    path, override = resolve_model_package(argument, installed, str(tmp_path / "env"))
+
+    assert path == argument
+    assert override == "argument"
+
+
+def test_an_argument_naming_the_installed_package_is_not_an_override() -> None:
+    path, override = resolve_model_package(
+        FIXTURE_PACKAGE, FIXTURE_PACKAGE / "manifest.json", None
+    )
+
+    assert path == FIXTURE_PACKAGE
+    assert override == ""
+
+
+def test_nothing_anywhere_resolves_to_nothing() -> None:
+    assert resolve_model_package(None, None, None) == (None, "")
+    assert resolve_model_package(None, None, "") == (None, "")
 
 
 # Telling two packages apart -------------------------------------------------
@@ -211,7 +265,7 @@ def test_the_same_package_by_two_routes_is_not_called_an_override(
 ) -> None:
     # main() clears the override when both routes resolve to one manifest, so
     # pointing the variable at the installed package raises no warning.
-    from variant_inference.main import _same_package
+    from variant_inference.main import _same_package, resolve_model_package
 
     assert _same_package(FIXTURE_PACKAGE, FIXTURE_PACKAGE / "manifest.json")
 

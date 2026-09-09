@@ -10,7 +10,7 @@ Immediate next step**. This file only orients you; the memory is authoritative.
 
 **Nothing is pushed.** All of this session's work sits on the local branch
 `codex/threshold-075-package`, six commits ahead of `main`, with a clean tree and
-**191 tests passing**. The user chose on 2026-09-09 to leave it local for now, so
+**196 tests passing**. The user chose on 2026-09-09 to leave it local for now, so
 there is no pull request, no `v0.2.1` tag, and no GitHub release. Two releases are
 published on GitHub: **v0.1.0** and **v0.2.0**.
 
@@ -90,18 +90,27 @@ for scores inside `[0.61, 0.75)`. Re-check that at any time with:
 .venv/bin/python scripts/compare_threshold_packages.py --package A --package B --source CSV
 ```
 
-## The machine is already set up
+## Which Model Package a launch uses
 
-`~/.config/environment.d/resolved-layers.conf` was **deleted** on 2026-09-09 and
-the variables cleared from the running session. Settings is now the only place
-the Model Package is chosen, and it holds the **0.75** package. Nothing further
-is needed before the day.
+Order, decided by `resolve_model_package` in `main.py` and pinned by tests:
 
-If a `CHL_MODEL_PACKAGE_MANIFEST` ever comes back, deleting the file is not
-enough on its own: systemd reads `environment.d` once at login, so the running
-session keeps the variables. `systemctl --user unset-environment` alone did not
-clear them; it took a following `systemctl --user daemon-reload`. A logout and
-login is the guaranteed route.
+1. `--model-package` — a deliberate instruction for one launch
+2. **the package installed through Settings**
+3. `CHL_MODEL_PACKAGE_MANIFEST` — a fallback only when nothing is installed
+
+The variable used to sit at position 2 and beat Settings. It predates in-app
+installation, when it was the only way a menu launch could find a package at
+all, and it kept its priority after Settings was built. That is how an operator
+installed the 0.75 package, pressed Install, ran a prediction, and got 0.61: the
+choice was stored correctly and never consulted. Flipped on 2026-09-09 at the
+user's instruction.
+
+`~/.config/environment.d/resolved-layers.conf` was also deleted that day. Note
+that deleting it does not clear a running session: systemd reads `environment.d`
+once at login, and `gnome-shell` keeps its own copy for the life of the session,
+so every menu launch inherits it until the next login. That no longer matters
+for correctness — Settings wins either way — but it is why the variable can
+still appear to be set long after the file is gone.
 
 ## Something worth knowing before you trust the test suite
 
