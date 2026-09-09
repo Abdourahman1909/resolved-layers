@@ -319,6 +319,14 @@ Result of the first run: the Windows executable reported 0.2.1, started with no 
 
 Two decisions worth not relitigating. The spec picks its icon by platform, because Windows rejects a PNG there and wants the `.ico` that already ships from the same locked reference. Identity assets are deliberately **not** regenerated on the runner: the locked reference is the authority, and a rendering difference on a runner must not decide what the application looks like.
 
+A Windows installer followed the same day, on `codex/windows-installer`. The build had shipped as a folder to unpack, which is not how anyone installs an application on Windows: no Start menu entry, no Add or remove programs entry, no uninstaller. The reasoning for doing it before anything else is worth keeping, because it inverted the obvious order: the thing this build most needs is for a person to open it, and nobody unpacks four thousand files as a favour, so the installer is what makes that test happen rather than polish applied after it.
+
+`packaging/windows-installer.iss` produces one Setup.exe beside the zip. It installs per-user under `%LOCALAPPDATA%\Programs` and raises no administrator prompt, matching the Linux installer's deliberate no-root policy, since an operator should be able to install this on a machine they do not administer. A fixed `AppId` means a newer version replaces the previous one rather than accumulating entries. The uninstaller removes only what it installed: settings and the Run Archive live under the user's own AppData and are left alone, exactly as `uninstall-appimage.sh` preserves the Linux archive.
+
+Built on the runner at 187,069,435 bytes, smaller than the 333 MB zip because of lzma2, identifying as an Inno Setup installer with Product Name `Resolved Layers`, version `0.2.1` and company `Computational Health Lab`. The v0.2.1 release now carries three artifacts: the Linux AppImage, the Windows zip, and the Windows installer.
+
+Not addressed deliberately: SmartScreen still warns for either Windows download, because clearing it needs a purchased certificate and accumulated reputation. Both READMEs say so plainly rather than leaving a downloader to wonder.
+
 Recorded limit, stated in the workflow and the shipped README: a green run proves the build is sound, not that the interface is. Every interface defect in this project was found by a person using the application, and **no one has yet opened the Windows build and used it**. That remains outstanding before a Windows release is trusted for anything that matters.
 
 ## 6a. Immediate next step
