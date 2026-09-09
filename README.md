@@ -72,14 +72,18 @@ application completely.
 
 ### Windows
 
-Download **`Resolved_Layers-<version>-windows-x86_64.zip`** from the same
-release, unpack it somewhere you will keep it, and run `resolved-layers.exe`
-from the unpacked folder. Keep the folder together: the executable loads Qt and
-the model libraries from the files beside it.
+Download **`Resolved_Layers-<version>-windows-x86_64-Setup.exe`** from the same
+release and run it. It installs for your user only, so it never asks for an
+administrator, and adds a Start menu shortcut and an uninstaller. Uninstalling
+leaves your settings and Run Archive alone.
+
+A plain **`...windows-x86_64.zip`** of the same build is published beside it for
+a machine where you would rather install nothing: unpack it and run
+`resolved-layers.exe`, keeping the folder together.
 
 SmartScreen will warn that the publisher is unrecognised, because the build is
-not code-signed. The archive carries its own `README.txt` covering that and
-where settings and the Run Archive are kept.
+not code-signed. Both downloads carry a `README.txt` covering that, and where
+settings and the Run Archive are kept.
 
 **Requires** 64-bit Windows 10 or later.
 

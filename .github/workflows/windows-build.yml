@@ -14,8 +14,10 @@ name: Windows build
 # sound, not that the interface is. A Windows release still needs someone to
 # open it and use it before it is trusted.
 #
-# It runs when a release is published, so the archive attaches to a release that
-# already exists, and on demand for testing a build without publishing one.
+# It produces two things: a portable zip, and a per-user installer that needs no
+# administrator and registers the application the way Windows expects. It runs
+# when a release is published, so both attach to a release that already exists,
+# and on demand for testing a build without publishing one.
 
 on:
   release:
@@ -87,14 +89,41 @@ jobs:
           Compress-Archive -Path "staging/$name" -DestinationPath "$name.zip"
           "archive=$name.zip" >> $env:GITHUB_OUTPUT
 
+      - name: Build the installer
+        id: installer
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup -y --no-progress
+            $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          }
+          $version = python -c "import variant_inference; print(variant_inference.__version__)"
+          & $iscc /Qp `
+            "/DAppVersion=$version" `
+            "/DSourceDir=$PWD\dist\resolved-layers" `
+            "/O$PWD" `
+            packaging\windows-installer.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with $LASTEXITCODE" }
+          $setup = "Resolved_Layers-$version-windows-x86_64-Setup.exe"
+          if (-not (Test-Path $setup)) { throw "installer was not produced" }
+          "{0:N0} bytes" -f (Get-Item $setup).Length
+          "setup=$setup" >> $env:GITHUB_OUTPUT
+
       - uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: ${{ steps.package.outputs.archive }}
+          path: |
+            ${{ steps.package.outputs.archive }}
+            ${{ steps.installer.outputs.setup }}
           retention-days: 30
 
-      - name: Attach it to the release
+      - name: Attach both to the release
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload ${{ github.event.release.tag_name }} ${{ steps.package.outputs.archive }} --clobber
+        run: >
+          gh release upload ${{ github.event.release.tag_name }}
+          ${{ steps.package.outputs.archive }}
+          ${{ steps.installer.outputs.setup }}
+          --clobber
