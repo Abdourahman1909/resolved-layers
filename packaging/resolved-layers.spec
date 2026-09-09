@@ -80,6 +80,12 @@ analysis = Analysis(
 
 pyz = PYZ(analysis.pure)
 
+# Windows wants an .ico and rejects a PNG here; every other target takes the
+# PNG. Both ship, produced from the same locked identity reference.
+ICON = PACKAGE_ROOT / "assets" / "icons" / (
+    "resolved-layers.ico" if sys.platform == "win32" else "resolved-layers-256.png"
+)
+
 executable = EXE(
     pyz,
     analysis.scripts,
@@ -87,7 +93,7 @@ executable = EXE(
     exclude_binaries=True,
     name="resolved-layers",
     console=False,
-    icon=str(PACKAGE_ROOT / "assets" / "icons" / "resolved-layers-256.png"),
+    icon=str(ICON),
 )
 
 collection = COLLECT(
