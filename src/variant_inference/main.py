@@ -351,6 +351,7 @@ def main(argv: list[str] | None = None) -> int:
         run_unavailable_reason=run_unavailable_reason,
         results_controller=results_controller,
         evaluation_controller=evaluation_controller,
+        package_override=package_override,
     )
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("sourceController", controller)

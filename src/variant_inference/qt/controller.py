@@ -33,8 +33,12 @@ class SourceReviewController(QObject):
         results_controller: ResultsController | None = None,
         evaluation_controller: EvaluationController | None = None,
         run_executor: Executor | None = None,
+        package_override: str = "",
     ) -> None:
         super().__init__()
+        # Which route supplied the package, when it was not Settings. Disclosed
+        # here because this is the surface where a run is confirmed.
+        self._package_override = package_override
         self._table_model = table_model
         self._group_model = group_model
         self._reader = CsvSourceReader()
@@ -241,6 +245,42 @@ class SourceReviewController(QObject):
     @Property(str, notify=stateChanged)
     def packageVersion(self) -> str:  # noqa: N802
         return self._package.version if self._package else "—"
+
+    @Property(str, notify=stateChanged)
+    def packageThreshold(self) -> str:  # noqa: N802
+        """The boundary this run will classify at, before it is run.
+
+        Two packages can hold the same weights and differ only here, so the name
+        alone does not tell the operator which run they are about to create.
+        """
+        if self._package is None:
+            return "—"
+        return f"{self._package.contract.release_threshold:.3f}"
+
+    @Property(bool, notify=stateChanged)
+    def packageOverridden(self) -> bool:  # noqa: N802
+        return bool(self._package_override)
+
+    @Property(str, notify=stateChanged)
+    def packageOverrideNotice(self) -> str:  # noqa: N802
+        """Say so here, not only in Settings.
+
+        The operator confirms a run on this surface and has no reason to revisit
+        Settings afterwards, so a disclosure that lives only there arrives after
+        the run it should have preceded.
+        """
+        if not self._package_override:
+            return ""
+        if self._package_override == "argument":
+            origin = "the --model-package argument"
+        elif self._package_override == "environment":
+            origin = "the CHL_MODEL_PACKAGE_MANIFEST environment variable"
+        else:
+            origin = self._package_override
+        return (
+            f"This Model Package comes from {origin}, not from Settings. "
+            "It is the one this run will use."
+        )
 
     @Property(int, notify=stateChanged)
     def requiredCount(self) -> int:  # noqa: N802

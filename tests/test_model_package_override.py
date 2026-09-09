@@ -221,3 +221,55 @@ def test_the_same_package_by_two_routes_is_not_called_an_override(
     assert not controller.overrideActive
     assert controller.messageKind == "success"
     controller.shutdown()
+
+
+# Disclosed where the run is confirmed -----------------------------------------
+
+
+def _review_controller(override: str = ""):
+    """A Source Review controller holding the fixture package."""
+    from variant_inference.qt.controller import SourceReviewController
+    from variant_inference.qt.profile_model import GroupBreakdownModel
+    from variant_inference.qt.table_model import CsvTableModel
+
+    package = JsonModelPackageRepository().load(FIXTURE_PACKAGE / "manifest.json")
+    return SourceReviewController(
+        CsvTableModel(),
+        GroupBreakdownModel(),
+        package,
+        package_override=override,
+    )
+
+
+def test_source_review_shows_the_threshold_the_run_will_use() -> None:
+    # The operator confirms a run here. Two packages can differ only in this
+    # number, so the package name alone does not identify the run being created.
+    controller = _review_controller()
+
+    assert controller.packageThreshold == "0.610"
+
+
+def test_source_review_discloses_an_override_before_the_run() -> None:
+    """The Settings band arrives after the run it should have preceded."""
+    controller = _review_controller("environment")
+
+    assert controller.packageOverridden
+    assert "CHL_MODEL_PACKAGE_MANIFEST" in controller.packageOverrideNotice
+    assert "not from Settings" in controller.packageOverrideNotice
+
+
+def test_source_review_says_nothing_when_settings_supplied_the_package() -> None:
+    controller = _review_controller()
+
+    assert not controller.packageOverridden
+    assert controller.packageOverrideNotice == ""
+
+
+def test_source_review_reports_no_threshold_without_a_package() -> None:
+    from variant_inference.qt.controller import SourceReviewController
+    from variant_inference.qt.profile_model import GroupBreakdownModel
+    from variant_inference.qt.table_model import CsvTableModel
+
+    controller = SourceReviewController(CsvTableModel(), GroupBreakdownModel(), None)
+
+    assert controller.packageThreshold == "—"
