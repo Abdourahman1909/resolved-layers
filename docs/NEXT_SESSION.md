@@ -8,7 +8,7 @@ Immediate next step**. This file only orients you; the memory is authoritative.
 
 ## Where things stand
 
-`main` is clean, all work merged, **185 tests passing**. Three releases are
+`main` is clean, all work merged, **187 tests passing**. Three releases are
 published: **v0.1.0**, **v0.2.0** and **v0.2.1**.
 
 The application does the whole competition workflow offline from a single
@@ -79,11 +79,13 @@ for scores inside `[0.61, 0.75)`. Re-check that at any time with:
 
 `~/.config/environment.d/resolved-layers.conf` pins
 `CHL_MODEL_PACKAGE_MANIFEST` to the 0.61 package, and that variable takes
-priority over whatever Settings installs. The application now says so plainly
-rather than silently disagreeing with itself, but the cleanest setup is to
-delete that file, since both checksums are pinned and its
-`CHL_TRUSTED_MODEL_PACKAGE_SHA256` is no longer needed either. It takes effect
-at the next login.
+priority over whatever Settings installs. The application now says so plainly —
+Settings names the variable and the package it supplied — rather than silently
+disagreeing with itself. But the cleanest setup is to **delete that file**,
+since both checksums are pinned and its `CHL_TRUSTED_MODEL_PACKAGE_SHA256` is no
+longer needed either. Settings then becomes the single place the package is
+chosen, which is what you want when the choice is made under time pressure. It
+takes effect at the next login.
 
 ## Something worth knowing before you trust the test suite
 
@@ -93,9 +95,11 @@ the interface and produced duplicate runs from repeated clicks, nothing could be
 grabbed to scroll, the submission surface showed a stale warning beside an
 enabled button, and the archive delete control never received its clicks.
 
-Two more were found the same way on 2026-09-09, in the Settings surface: it
-reported the installed Model Package as ready while a different one was actually
-predicting, and the first fix for that printed the same sentence twice.
+Three more were found the same way on 2026-09-09, all in the Settings surface:
+it reported the installed Model Package as ready while a different one was
+actually predicting; the first fix for that printed the same sentence twice; and
+it still said "No Model Package installed" on a machine where the environment
+variable was the only route a package arrived by, while prediction worked.
 
 The suite verifies controllers and that surfaces render. It does not verify that
 a control receives the click aimed at it. Driving real clicks was attempted and
