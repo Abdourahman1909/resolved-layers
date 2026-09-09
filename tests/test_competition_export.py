@@ -174,11 +174,40 @@ def test_the_class_reflects_our_own_threshold_not_a_fixed_half(tmp_path: Path) -
 # Rules the organisers reject on -------------------------------------------
 
 
-def test_a_duplicate_identifier_is_refused(tmp_path: Path) -> None:
+def test_the_same_identifier_twice_in_one_panel_is_refused(tmp_path: Path) -> None:
+    """That is the same record submitted twice, whatever the organisers match on."""
+    source = write_source(
+        tmp_path, SOURCE.replace("Varyant_3,KANSER", "Varyant_1,CFTR")
+    )
+
+    with pytest.raises(CompetitionExportError, match="more than once in panel"):
+        export(tmp_path, run_for(source))
+
+
+def test_an_identifier_reused_across_panels_is_written_and_disclosed(
+    tmp_path: Path,
+) -> None:
+    """The organisers' own data does this, so refusing it would block a valid run.
+
+    Their merged file repeats an identifier across panels 574 times and never
+    inside one panel, and every submitted record carries both fields. Writing the
+    identifier exactly as given matters more than uniqueness: a modified one
+    would not match their ground truth at all.
+    """
     source = write_source(tmp_path, SOURCE.replace("Varyant_3", "Varyant_1"))
 
-    with pytest.raises(CompetitionExportError, match="more than once"):
-        export(tmp_path, run_for(source))
+    report = export(tmp_path, run_for(source))
+
+    payload = json.loads((tmp_path / "out" / "submission.json").read_text("utf-8"))
+    identifiers = [item["id"] for item in payload["predictions"]]
+    assert identifiers.count("Varyant_1") == 2
+    assert [item["panel"] for item in payload["predictions"]] == [
+        "CFTR",
+        "PAH",
+        "KANSER",
+        "MASTER",
+    ]
+    assert any("more than one panel" in check for check in report.checks)
 
 
 def test_an_empty_identifier_is_refused_rather_than_invented(tmp_path: Path) -> None:
@@ -206,7 +235,9 @@ def test_the_written_file_is_parseable_utf8_json(tmp_path: Path) -> None:
 
 
 def test_a_refused_export_leaves_no_partial_file(tmp_path: Path) -> None:
-    source = write_source(tmp_path, SOURCE.replace("Varyant_3", "Varyant_1"))
+    source = write_source(
+        tmp_path, SOURCE.replace("Varyant_3,KANSER", "Varyant_1,CFTR")
+    )
 
     with pytest.raises(CompetitionExportError):
         export(tmp_path, run_for(source))
@@ -268,7 +299,7 @@ def test_the_report_summarises_what_was_written(tmp_path: Path) -> None:
     assert report.benign_count == 2
     assert report.identifier_column == "Variant_ID"
     assert report.profile_id == "teknofest-2026-final-v1"
-    assert any("unique identifiers" in check for check in report.checks)
+    assert any("unique identifier and panel pairs" in check for check in report.checks)
 
 
 def test_a_blank_panel_is_reported_but_not_fatal(tmp_path: Path) -> None:
@@ -342,17 +373,19 @@ def test_the_controller_writes_and_reports_the_checks(tmp_path: Path) -> None:
     assert controller.messageKind == "success"
     assert "300" not in controller.message
     assert Path(controller.writtenPath).is_file()
-    assert any("unique identifiers" in check for check in controller.checks)
+    assert any("unique identifier and panel pairs" in check for check in controller.checks)
 
 
 def test_a_refused_submission_reports_the_broken_rule(tmp_path: Path) -> None:
-    source = write_source(tmp_path, SOURCE.replace("Varyant_3", "Varyant_1"))
+    source = write_source(
+        tmp_path, SOURCE.replace("Varyant_3,KANSER", "Varyant_1,CFTR")
+    )
     controller = controller_for(run_for(source))
 
     controller.writeSubmission(str(tmp_path / "out.json"))
 
     assert controller.messageKind == "error"
-    assert "more than once" in controller.message
+    assert "more than once in panel" in controller.message
     assert controller.writtenPath == ""
     assert controller.checks == []
     assert controller.busy is False

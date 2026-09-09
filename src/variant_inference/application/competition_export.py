@@ -219,6 +219,14 @@ class CompetitionExportService:
 
         predictions: list[dict] = []
         seen: set[str] = set()
+        # Uniqueness is checked on the identifier together with its panel, not
+        # on the identifier alone. The organisers' own data repeats an
+        # identifier across panels while never repeating it inside one, and
+        # every submitted record carries both fields, so the pair is what
+        # identifies a record. Refusing on the identifier alone would have
+        # blocked a legitimate submission on a file shaped like theirs.
+        seen_pairs: set[tuple[str, str]] = set()
+        repeated_across_panels: set[str] = set()
         blank_panels = 0
         for record in run.predictions:
             row = source.row_at(record.source_row - 1)
@@ -230,11 +238,18 @@ class CompetitionExportService:
                     f"{identifier_column!r}. Every test record needs an identifier, "
                     "and identifiers must not be invented."
                 )
-            if identifier in seen:
+            panel_value = row[panel_index].strip()
+            if (identifier, panel_value) in seen_pairs:
                 raise CompetitionExportError(
-                    f"Identifier {identifier!r} appears more than once. The "
-                    "organisers reject duplicate ids."
+                    f"Identifier {identifier!r} appears more than once in panel "
+                    f"{panel_value!r}. That is the same record twice, which the "
+                    "organisers reject."
                 )
+            if identifier in seen:
+                # Legitimate in their data. Disclosed, never silently altered:
+                # a modified identifier would not match their ground truth.
+                repeated_across_panels.add(identifier)
+            seen_pairs.add((identifier, panel_value))
             seen.add(identifier)
 
             probability = float(record.ensemble_score)
@@ -244,14 +259,13 @@ class CompetitionExportService:
                     "not a finite value between 0 and 1."
                 )
 
-            panel = row[panel_index].strip()
-            if not panel:
+            if not panel_value:
                 blank_panels += 1
 
             predictions.append(
                 {
                     "id": identifier,
-                    "panel": panel,
+                    "panel": panel_value,
                     "predicted_class": (
                         self._profile.pathogenic_class
                         if record.prediction == "Pathogenic"
@@ -268,10 +282,19 @@ class CompetitionExportService:
 
         checks = [
             f"{len(predictions)} records, one per Source Row",
-            f"{len(seen)} unique identifiers from {identifier_column!r}",
+            f"{len(seen_pairs)} unique identifier and panel pairs from "
+            f"{identifier_column!r} and {panel_column!r}",
             "every probability finite and within 0 to 1",
             f"classes limited to {self._profile.valid_classes}",
         ]
+        if repeated_across_panels:
+            # Worth reading before uploading: it is what their data does, but it
+            # is also what a wrong identifier column would look like.
+            checks.append(
+                f"{len(repeated_across_panels)} identifiers appear in more than "
+                "one panel, as the organisers' own data does; each is unique "
+                "within its panel and is written exactly as given"
+            )
         if blank_panels:
             # Not fatal: the guide fixes the class names but not the panel values.
             checks.append(f"{blank_panels} records have an empty panel value")
