@@ -48,21 +48,28 @@ The specification states balanced test sets (1000/1000, 100/100, 100/100,
 
 Both packages are built, verified, and pinned, so this is now a choice made on
 the day rather than work to do. The user had not heard back from the organisers
-as of 2026-09-09. The full analysis is in the parent repository at
-`results/rebalance_experiment_2026-09-04/`.
+as of 2026-09-09.
 
-Concrete numbers, measured in the application on the 736-row held-out file,
-which follows the **delivered** distribution rather than the specification:
+**The loss is asymmetric, and it favours 0.75.** `threshold_regret.py` in the
+parent repository at `results/rebalance_experiment_2026-09-04/` reuses that
+experiment's out-of-fold scores and varies only the assumed class composition:
 
-| Threshold | Pathogenic | mean F1 | mean MCC |
-| --- | --- | --- | --- |
-| 0.61 | 600 | 0.9306 | 0.5552 |
-| 0.75 | 551 | 0.8916 | 0.4639 |
+| Hypothesis | 0.61 | 0.75 |
+| --- | --- | --- |
+| Balanced 50/50, as specified | 0.7407 | **0.7615** |
+| Delivered, one 74% share | **0.7980** | 0.7915 |
+| Delivered, each panel's own share | **0.7986** | 0.7873 |
 
-So on delivery-shaped data 0.61 wins clearly. That is the predicted behaviour,
-not a refutation of 0.75 — the case for 0.75 is built on the specification's
-balanced composition. Do not quote the table above as evidence against 0.75
-without saying which distribution it came from.
+Picking 0.61 and being wrong costs 0.0207. Picking 0.75 and being wrong costs
+0.0065 to 0.0113. **0.75 has the smaller worst case under both readings**, so it
+is the better default even without an answer from the organisers.
+
+Do **not** judge this from the 736-row held-out file. Measured there, 0.61 looks
+better by about 0.065 (mean F1 0.9306 / MCC 0.5552 against 0.8916 / 0.4639) — but
+that split leaves PAH and CFTR with two observed negatives each, and per-panel
+MCC on two negatives is noise. The out-of-fold design exists precisely because
+the single split cannot support per-panel estimates. That trap was walked into
+once on 2026-09-09 and corrected.
 
 ## The two Model Packages
 
