@@ -9,8 +9,8 @@ Immediate next step**. This file only orients you; the memory is authoritative.
 ## Where things stand
 
 `main` is clean, **197 tests passing**, everything merged and published. Three
-releases: **v0.1.0**, **v0.2.0** and **v0.2.1**. The v0.2.1 release carries both
-a Linux AppImage and a Windows zip.
+releases: **v0.1.0**, **v0.2.0** and **v0.2.1**. The v0.2.1 release carries three
+artifacts: a Linux AppImage, a Windows installer, and a Windows zip.
 
 The 0.2.1 AppImage is installed at `~/Applications/` and registered in the
 applications menu; 0.2.0 and 0.1.0 are archived in `previous-versions/`.
@@ -172,9 +172,15 @@ proves it can predict, by running real inference against a synthetic package
 `scripts/make_smoke_package.py` assembles from two tiny boosters. The first run
 produced predictions bit-identical to Linux, to twelve decimals.
 
+A per-user installer is published beside the zip, needing no administrator and
+adding a Start menu entry, precisely so that asking someone to try it is a
+double-click rather than a chore.
+
 What no runner can do is click. **Nobody has opened the Windows build and used
 it**, and every interface defect in this project was found exactly that way. Do
-not trust it for anything that matters until someone has.
+not trust it for anything that matters until someone has. This is the single
+highest-value outstanding task: one person, on Windows, for twenty minutes —
+install, open a CSV, run a prediction, click through Results and Evaluation.
 
 Run it without publishing a release:
 
