@@ -45,6 +45,12 @@ record-level trail from any prediction back to the original row.
 
 ## Install
 
+Both builds carry their own Python runtime, Qt, CatBoost and LightGBM, so
+nothing else is needed. Neither contains a Model Package; install one from
+Settings inside the application.
+
+### Linux
+
 Download the latest **`Resolved_Layers-<version>-x86_64.AppImage`** from
 [Releases](https://github.com/Abdourahman1909/resolved-layers/releases/latest),
 then:
@@ -63,6 +69,19 @@ application completely.
 > application.
 
 **Requires** Linux x86-64 with glibc 2.35 or newer (Ubuntu 22.04+, Fedora 36+).
+
+### Windows
+
+Download **`Resolved_Layers-<version>-windows-x86_64.zip`** from the same
+release, unpack it somewhere you will keep it, and run `resolved-layers.exe`
+from the unpacked folder. Keep the folder together: the executable loads Qt and
+the model libraries from the files beside it.
+
+SmartScreen will warn that the publisher is unrecognised, because the build is
+not code-signed. The archive carries its own `README.txt` covering that and
+where settings and the Run Archive are kept.
+
+**Requires** 64-bit Windows 10 or later.
 
 ### Add it to the applications menu
 
