@@ -248,8 +248,8 @@ def main(argv: list[str] | None = None) -> int:
     if package_path is None:
         package_path = installed_path
         package_override = ""
-    elif installed_path is None or _same_package(package_path, installed_path):
-        # Nothing installed to contradict, or both routes name the same package.
+    elif _same_package(package_path, installed_path):
+        # Both routes name the same package, so there is nothing to disclose.
         package_override = ""
 
     package = None

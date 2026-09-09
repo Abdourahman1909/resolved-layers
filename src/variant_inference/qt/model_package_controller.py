@@ -283,12 +283,24 @@ class ModelPackageController(QObject):
         """One line for the status band, where the full sentence would crowd."""
         if not self._active_override:
             return ""
+        if self._installed is None:
+            return f"A Model Package supplied by {self._override_origin()} is in use."
         return f"A different Model Package is in use, set by {self._override_origin()}."
 
     @Property(str, notify=installedChanged)
     def overrideMessage(self) -> str:  # noqa: N802
         if not self._active_override:
             return ""
+        if self._installed is None:
+            # Nothing is installed here, but prediction still works. Saying only
+            # "No Model Package installed" would describe this file rather than
+            # the application, and an operator would not know where it came from.
+            return (
+                f"Prediction is using a Model Package supplied by "
+                f"{self._override_origin()}. Nothing is installed here, and "
+                "installing something will not replace it until the override is "
+                "removed."
+            )
         return (
             f"Prediction is using the Model Package from {self._override_origin()}, "
             "not the one installed here. Installing a package will not change that "

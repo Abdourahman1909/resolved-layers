@@ -177,3 +177,47 @@ def test_nothing_installed_reports_no_threshold_or_checksum(tmp_path: Path) -> N
     assert controller.installedThreshold == "—"
     assert controller.installedChecksum == "—"
     controller.shutdown()
+
+
+def test_an_environment_package_is_disclosed_even_with_nothing_installed(
+    tmp_path: Path,
+) -> None:
+    """Prediction works while Settings has nothing; say where the package came from.
+
+    Reporting only "No Model Package installed" would describe the settings file
+    rather than the application, on the machine where the environment variable is
+    the only route a package arrives by.
+    """
+    store = JsonModelPackageSettingsStore(tmp_path / "config" / "model-package.json")
+    controller = ModelPackageController(
+        ModelPackageInstallationService(JsonModelPackageRepository(), store),
+        active_override="environment",
+        active_manifest_path=FIXTURE_PACKAGE / "manifest.json",
+    )
+    controller.refresh_installed()
+
+    assert not controller.hasInstalled
+    assert controller.overrideActive
+    assert controller.messageKind == "warning"
+    assert controller.message != "No Model Package installed."
+    assert "CHL_MODEL_PACKAGE_MANIFEST" in controller.overrideMessage
+    assert "Nothing is installed here" in controller.overrideMessage
+    assert controller.overridePath == str(FIXTURE_PACKAGE)
+    controller.shutdown()
+
+
+def test_the_same_package_by_two_routes_is_not_called_an_override(
+    tmp_path: Path,
+) -> None:
+    # main() clears the override when both routes resolve to one manifest, so
+    # pointing the variable at the installed package raises no warning.
+    from variant_inference.main import _same_package
+
+    assert _same_package(FIXTURE_PACKAGE, FIXTURE_PACKAGE / "manifest.json")
+
+    controller = ModelPackageController(_installed_service(tmp_path))
+    controller.refresh_installed()
+
+    assert not controller.overrideActive
+    assert controller.messageKind == "success"
+    controller.shutdown()

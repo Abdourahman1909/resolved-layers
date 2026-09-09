@@ -121,7 +121,9 @@ Item {
                     }
                     EvidenceRow {
                         width: parent.width
-                        label: "In use instead"
+                        // "instead" only makes sense when something is installed
+                        // for it to be used in place of.
+                        label: modelPackageController.hasInstalled ? "In use instead" : "In use"
                         value: modelPackageController.overridePath
                         valueColor: settings.amber
                         wrapValue: true
