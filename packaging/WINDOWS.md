@@ -4,20 +4,26 @@ This archive contains the application and everything it needs to run. There is
 no installer and nothing is written outside the folder you unpack it into,
 except the settings and Run Archive described below.
 
-## Run it
+## Install it
 
-1. Unpack the archive somewhere you will keep it, such as your user folder.
-2. Open the unpacked folder and run **`resolved-layers.exe`**.
+Two downloads are published for Windows. Prefer the installer.
 
-Windows SmartScreen may warn that the publisher is unrecognised, because the
-executable is not code-signed. Choose **More info**, then **Run anyway**. If you
-would rather not, the Linux AppImage is signed by nothing either, and both are
-built from the source in this repository.
+**`Resolved_Layers-<version>-windows-x86_64-Setup.exe`** installs the
+application for your user only, so it never asks for an administrator. It adds a
+Start menu shortcut with the application icon, an entry in Add or remove
+programs, and an uninstaller. Installing a newer version replaces the previous
+one rather than leaving two entries.
 
-Keep the folder together. The executable loads Qt, CatBoost and LightGBM from
-the files beside it, so moving `resolved-layers.exe` on its own will not work.
-To put it in the Start menu, right-click the executable and choose **Pin to
-Start**.
+**`Resolved_Layers-<version>-windows-x86_64.zip`** is the same build as a plain
+folder, for a machine where you would rather install nothing. Unpack it and run
+`resolved-layers.exe` from the unpacked folder. Keep the folder together: the
+executable loads Qt, CatBoost and LightGBM from the files beside it, so moving
+`resolved-layers.exe` on its own will not work.
+
+Windows SmartScreen will warn that the publisher is unrecognised, for either
+download, because the build is not code-signed. Choose **More info**, then **Run
+anyway**. Signing needs a purchased certificate, and this build is distributed
+from the repository it is built from instead.
 
 ## It ships without a Model Package
 
@@ -44,8 +50,11 @@ confirm which package is active before predicting.
 - Settings: `%APPDATA%\Computational Health Lab\Resolved Layers\model-package.json`
   — a path and confirmed checksums only, never a model artifact.
 - Run Archive: `%LOCALAPPDATA%\Computational Health Lab\Resolved Layers\runs`
-  — completed Verified Runs. Deleting the application folder leaves these; remove
-  them yourself if you want them gone.
+  — completed Verified Runs.
+
+**Uninstalling removes neither.** A completed Verified Run is evidence, and
+removing the application is not a decision to destroy it. Delete those folders
+yourself if you want them gone.
 
 Neither contains organizer data. A Verified Run records the path and checksum of
 the source dataset it read, not a copy of it, unless you opt into a snapshot.
