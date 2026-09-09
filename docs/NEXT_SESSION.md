@@ -8,8 +8,16 @@ Immediate next step**. This file only orients you; the memory is authoritative.
 
 ## Where things stand
 
-`main` is clean, all work merged, **187 tests passing**. Three releases are
-published: **v0.1.0**, **v0.2.0** and **v0.2.1**.
+**Nothing is pushed.** All of this session's work sits on the local branch
+`codex/threshold-075-package`, six commits ahead of `main`, with a clean tree and
+**187 tests passing**. The user chose on 2026-09-09 to leave it local for now, so
+there is no pull request, no `v0.2.1` tag, and no GitHub release. Two releases are
+published on GitHub: **v0.1.0** and **v0.2.0**.
+
+The 0.2.1 AppImage *is* built and installed at `~/Applications/`, so the machine
+runs the new build even though it was never published. Publishing it later means
+pushing the branch, merging, tagging `v0.2.1`, and attaching
+`dist/Resolved_Layers-0.2.1-x86_64.AppImage` — the build already verified below.
 
 The application does the whole competition workflow offline from a single
 AppImage: install a Model Package from Settings, open a CSV, review it, run
@@ -17,7 +25,7 @@ deterministic inference, investigate per panel, evaluate against authorized
 labels, and write the official submission JSON.
 
 Both agreed items from the previous handoff are done. The two Model Packages
-exist and are pinned, and 0.2.1 is released and installed.
+exist and are pinned, and 0.2.1 is built, verified, and installed locally.
 
 ## The one deadline
 
@@ -127,6 +135,15 @@ in the archive row because it starts with an empty archive.
 - Tests: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -m pytest`
 - Restricted artifacts live in the parent repository at
   `results/production_model_packages/`.
+
+## Deferred on purpose
+
+A Turkish/English interface switch was raised on 2026-09-09 and deliberately put
+off until after the final: about 350 unmarked strings across every surface, and
+the hard part is authoring a locked Turkish counterpart to the `CONTEXT.md`
+glossary rather than the mechanics. Section 5 of the memory records the full
+assessment so it does not have to be worked out again. Nothing in the competition
+guide requires a Turkish interface.
 
 ## Model questions
 
