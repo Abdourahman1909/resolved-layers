@@ -10,7 +10,7 @@ Immediate next step**. This file only orients you; the memory is authoritative.
 
 **Nothing is pushed.** All of this session's work sits on the local branch
 `codex/threshold-075-package`, six commits ahead of `main`, with a clean tree and
-**187 tests passing**. The user chose on 2026-09-09 to leave it local for now, so
+**191 tests passing**. The user chose on 2026-09-09 to leave it local for now, so
 there is no pull request, no `v0.2.1` tag, and no GitHub release. Two releases are
 published on GitHub: **v0.1.0** and **v0.2.0**.
 
@@ -90,17 +90,18 @@ for scores inside `[0.61, 0.75)`. Re-check that at any time with:
 .venv/bin/python scripts/compare_threshold_packages.py --package A --package B --source CSV
 ```
 
-## Before the day: one machine configuration change
+## The machine is already set up
 
-`~/.config/environment.d/resolved-layers.conf` pins
-`CHL_MODEL_PACKAGE_MANIFEST` to the 0.61 package, and that variable takes
-priority over whatever Settings installs. The application now says so plainly —
-Settings names the variable and the package it supplied — rather than silently
-disagreeing with itself. But the cleanest setup is to **delete that file**,
-since both checksums are pinned and its `CHL_TRUSTED_MODEL_PACKAGE_SHA256` is no
-longer needed either. Settings then becomes the single place the package is
-chosen, which is what you want when the choice is made under time pressure. It
-takes effect at the next login.
+`~/.config/environment.d/resolved-layers.conf` was **deleted** on 2026-09-09 and
+the variables cleared from the running session. Settings is now the only place
+the Model Package is chosen, and it holds the **0.75** package. Nothing further
+is needed before the day.
+
+If a `CHL_MODEL_PACKAGE_MANIFEST` ever comes back, deleting the file is not
+enough on its own: systemd reads `environment.d` once at login, so the running
+session keeps the variables. `systemctl --user unset-environment` alone did not
+clear them; it took a following `systemctl --user daemon-reload`. A logout and
+login is the guaranteed route.
 
 ## Something worth knowing before you trust the test suite
 
@@ -110,11 +111,18 @@ the interface and produced duplicate runs from repeated clicks, nothing could be
 grabbed to scroll, the submission surface showed a stale warning beside an
 enabled button, and the archive delete control never received its clicks.
 
-Three more were found the same way on 2026-09-09, all in the Settings surface:
-it reported the installed Model Package as ready while a different one was
-actually predicting; the first fix for that printed the same sentence twice; and
-it still said "No Model Package installed" on a machine where the environment
-variable was the only route a package arrived by, while prediction worked.
+Four more were found the same way on 2026-09-09. Three were in Settings: it
+reported the installed Model Package as ready while a different one was actually
+predicting; the first fix for that printed the same sentence twice; and it still
+said "No Model Package installed" where the environment variable was the only
+route a package arrived by, while prediction worked.
+
+The fourth is the one to remember. The user installed the 0.75 package, ran a
+prediction, and got 0.61. The code was correct and Settings had said so — but the
+warning lived only in Settings, which nobody revisits after installing, so it
+arrived after the run instead of before it. Source Review now shows the Release
+Threshold and names the route the package came from. **A warning belongs where
+the decision is taken, not where the setting was made.**
 
 The suite verifies controllers and that surfaces render. It does not verify that
 a control receives the click aimed at it. Driving real clicks was attempted and
