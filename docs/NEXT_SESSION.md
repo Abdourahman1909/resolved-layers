@@ -8,24 +8,20 @@ Immediate next step**. This file only orients you; the memory is authoritative.
 
 ## Where things stand
 
-**Nothing is pushed.** All of this session's work sits on the local branch
-`codex/threshold-075-package`, six commits ahead of `main`, with a clean tree and
-**196 tests passing**. The user chose on 2026-09-09 to leave it local for now, so
-there is no pull request, no `v0.2.1` tag, and no GitHub release. Two releases are
-published on GitHub: **v0.1.0** and **v0.2.0**.
+`main` is clean, **197 tests passing**, everything merged and published. Three
+releases: **v0.1.0**, **v0.2.0** and **v0.2.1**. The v0.2.1 release carries both
+a Linux AppImage and a Windows zip.
 
-The 0.2.1 AppImage *is* built and installed at `~/Applications/`, so the machine
-runs the new build even though it was never published. Publishing it later means
-pushing the branch, merging, tagging `v0.2.1`, and attaching
-`dist/Resolved_Layers-0.2.1-x86_64.AppImage` — the build already verified below.
+The 0.2.1 AppImage is installed at `~/Applications/` and registered in the
+applications menu; 0.2.0 and 0.1.0 are archived in `previous-versions/`.
 
 The application does the whole competition workflow offline from a single
-AppImage: install a Model Package from Settings, open a CSV, review it, run
+build: install a Model Package from Settings, open a CSV, review it, run
 deterministic inference, investigate per panel, evaluate against authorized
 labels, and write the official submission JSON.
 
-Both agreed items from the previous handoff are done. The two Model Packages
-exist and are pinned, and 0.2.1 is built, verified, and installed locally.
+Both agreed items from the previous handoff are done, and a Windows build was
+added afterwards.
 
 ## The one deadline
 
@@ -168,6 +164,23 @@ the hard part is authoring a locked Turkish counterpart to the `CONTEXT.md`
 glossary rather than the mechanics. Section 5 of the memory records the full
 assessment so it does not have to be worked out again. Nothing in the competition
 guide requires a Turkish interface.
+
+## The Windows build has never been used by a person
+
+`.github/workflows/windows-build.yml` builds it on a `windows-latest` runner and
+proves it can predict, by running real inference against a synthetic package
+`scripts/make_smoke_package.py` assembles from two tiny boosters. The first run
+produced predictions bit-identical to Linux, to twelve decimals.
+
+What no runner can do is click. **Nobody has opened the Windows build and used
+it**, and every interface defect in this project was found exactly that way. Do
+not trust it for anything that matters until someone has.
+
+Run it without publishing a release:
+
+```bash
+gh workflow run "Windows build" --ref main
+```
 
 ## Model questions
 
