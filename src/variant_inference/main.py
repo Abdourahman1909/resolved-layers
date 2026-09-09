@@ -139,6 +139,62 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _same_package(left: Path | None, right: Path | None) -> bool:
+    """Whether two routes name the same manifest, allowing for a package folder.
+
+    An argument or environment variable may name the folder while Settings
+    stored the manifest inside it, and either may be relative or unresolved.
+    Comparing the strings would report a contradiction that does not exist.
+    """
+    if left is None or right is None:
+        return False
+
+    def normalise(path: Path) -> Path:
+        candidate = Path(path).expanduser()
+        if candidate.is_dir():
+            candidate = candidate / "manifest.json"
+        try:
+            return candidate.resolve()
+        except OSError:
+            return candidate
+
+    return normalise(left) == normalise(right)
+
+
+def resolve_model_package(
+    argument: Path | None,
+    installed: Path | None,
+    environment_value: str | None,
+) -> tuple[Path | None, str]:
+    """Decide which Model Package this launch uses, and say where it came from.
+
+    Order: an explicit per-launch argument, then the package the operator
+    installed through Settings, then the environment variable as a fallback for
+    a machine where nothing has been installed.
+
+    Settings deliberately outranks the environment variable. The variable
+    predates in-app installation, when it was the only way a menu launch could
+    find a package at all, and it kept its priority after Settings was built.
+    That left an explicit click in the interface losing to ambient state fixed
+    at login, which is how an operator installed one package and predicted with
+    another: the choice was stored correctly and never consulted. An explicit
+    argument still wins, because it is a deliberate instruction for one launch
+    rather than something left behind.
+
+    Returns the resolved path and, when it did not come from Settings, the route
+    that supplied it, so the interface can disclose that where a run is
+    confirmed rather than leaving it to be discovered afterwards.
+    """
+    if argument is not None:
+        override = "" if _same_package(argument, installed) else "argument"
+        return argument, override
+    if installed is not None:
+        return installed, ""
+    if environment_value:
+        return Path(environment_value), "environment"
+    return None, ""
+
+
 def verify_inference(args: argparse.Namespace) -> int:
     """Prove a build can load and execute its models, without the interface.
 
@@ -210,16 +266,12 @@ def main(argv: list[str] | None = None) -> int:
         JsonModelPackageRepository(), settings_store
     )
 
-    # Resolution order: an explicit argument wins, then the environment, then
-    # the package the operator installed through Settings. The last of those is
-    # the only route that does not require a terminal.
-    package_path = args.model_package
-    if package_path is None and os.environ.get("CHL_MODEL_PACKAGE_MANIFEST"):
-        package_path = Path(os.environ["CHL_MODEL_PACKAGE_MANIFEST"])
-    if package_path is None:
-        configured = model_packages.settings().manifest_path
-        if configured is not None:
-            package_path = configured
+    installed_path = model_packages.settings().manifest_path
+    package_path, package_override = resolve_model_package(
+        args.model_package,
+        installed_path,
+        os.environ.get("CHL_MODEL_PACKAGE_MANIFEST"),
+    )
 
     package = None
     package_error = ""
@@ -269,7 +321,11 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     identity_symbol = assets.SYMBOL_BAR if assets.SYMBOL_BAR.is_file() else None
-    model_package_controller = ModelPackageController(model_packages)
+    model_package_controller = ModelPackageController(
+        model_packages,
+        active_override=package_override,
+        active_manifest_path=package_path,
+    )
     model_package_controller.refresh_installed()
     application.aboutToQuit.connect(model_package_controller.shutdown)
 
@@ -316,6 +372,7 @@ def main(argv: list[str] | None = None) -> int:
         run_unavailable_reason=run_unavailable_reason,
         results_controller=results_controller,
         evaluation_controller=evaluation_controller,
+        package_override=package_override,
     )
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("sourceController", controller)

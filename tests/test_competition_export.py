@@ -174,11 +174,37 @@ def test_the_class_reflects_our_own_threshold_not_a_fixed_half(tmp_path: Path) -
 # Rules the organisers reject on -------------------------------------------
 
 
-def test_a_duplicate_identifier_is_refused(tmp_path: Path) -> None:
+def test_the_same_identifier_twice_in_one_panel_is_refused(tmp_path: Path) -> None:
+    """The same record submitted twice, named as such."""
+    source = write_source(
+        tmp_path, SOURCE.replace("Varyant_3,KANSER", "Varyant_1,CFTR")
+    )
+
+    with pytest.raises(CompetitionExportError, match="in panel 'CFTR'"):
+        export(tmp_path, run_for(source))
+
+
+def test_an_identifier_reused_across_panels_is_refused_and_explained(
+    tmp_path: Path,
+) -> None:
+    """The published rules refuse a repeated id however its panels differ.
+
+    Section 3 lists "tekrar eden id" among the structures the upload system does
+    not accept, and separately forbids omitting, adding or altering an id, so
+    their test set cannot contain a repeat. Their merged training file does
+    repeat identifiers across panels, so a repeat here points at the wrong
+    identifier column, and the message says so rather than only refusing.
+    """
     source = write_source(tmp_path, SOURCE.replace("Varyant_3", "Varyant_1"))
 
-    with pytest.raises(CompetitionExportError, match="more than once"):
+    with pytest.raises(CompetitionExportError) as failure:
         export(tmp_path, run_for(source))
+
+    message = str(failure.value)
+    assert "more than once" in message
+    assert "'CFTR' and 'KANSER'" in message
+    assert "right identifier column" in message
+    assert "never be altered" in message
 
 
 def test_an_empty_identifier_is_refused_rather_than_invented(tmp_path: Path) -> None:
@@ -206,7 +232,9 @@ def test_the_written_file_is_parseable_utf8_json(tmp_path: Path) -> None:
 
 
 def test_a_refused_export_leaves_no_partial_file(tmp_path: Path) -> None:
-    source = write_source(tmp_path, SOURCE.replace("Varyant_3", "Varyant_1"))
+    source = write_source(
+        tmp_path, SOURCE.replace("Varyant_3,KANSER", "Varyant_1,CFTR")
+    )
 
     with pytest.raises(CompetitionExportError):
         export(tmp_path, run_for(source))
@@ -346,7 +374,9 @@ def test_the_controller_writes_and_reports_the_checks(tmp_path: Path) -> None:
 
 
 def test_a_refused_submission_reports_the_broken_rule(tmp_path: Path) -> None:
-    source = write_source(tmp_path, SOURCE.replace("Varyant_3", "Varyant_1"))
+    source = write_source(
+        tmp_path, SOURCE.replace("Varyant_3,KANSER", "Varyant_1,CFTR")
+    )
     controller = controller_for(run_for(source))
 
     controller.writeSubmission(str(tmp_path / "out.json"))

@@ -218,7 +218,15 @@ class CompetitionExportService:
         panel_index = source.columns.index(panel_column)
 
         predictions: list[dict] = []
-        seen: set[str] = set()
+        # The published rules refuse a repeated id outright: section 3 lists
+        # "tekrar eden id" among the structures the upload system does not
+        # accept. The same section forbids omitting an id, adding one, or
+        # altering a value, which together mean their test set cannot contain a
+        # repeat. Their merged training file does repeat identifiers across
+        # panels, so a repeat here almost always means the wrong identifier
+        # column was chosen, and saying so is more useful than writing a file
+        # the upload will reject.
+        seen: dict[str, str] = {}
         blank_panels = 0
         for record in run.predictions:
             row = source.row_at(record.source_row - 1)
@@ -230,12 +238,22 @@ class CompetitionExportService:
                     f"{identifier_column!r}. Every test record needs an identifier, "
                     "and identifiers must not be invented."
                 )
+            panel_value = row[panel_index].strip()
             if identifier in seen:
-                raise CompetitionExportError(
-                    f"Identifier {identifier!r} appears more than once. The "
-                    "organisers reject duplicate ids."
+                previous = seen[identifier]
+                where = (
+                    f"in panels {previous!r} and {panel_value!r}"
+                    if previous != panel_value
+                    else f"in panel {panel_value!r}"
                 )
-            seen.add(identifier)
+                raise CompetitionExportError(
+                    f"Identifier {identifier!r} appears more than once, {where}. "
+                    "The organisers reject repeated ids, and their test set should "
+                    f"not contain any, so check whether {identifier_column!r} is "
+                    "the right identifier column. Identifiers must never be "
+                    "altered to make them unique."
+                )
+            seen[identifier] = panel_value
 
             probability = float(record.ensemble_score)
             if not math.isfinite(probability) or not 0.0 <= probability <= 1.0:
@@ -244,14 +262,13 @@ class CompetitionExportService:
                     "not a finite value between 0 and 1."
                 )
 
-            panel = row[panel_index].strip()
-            if not panel:
+            if not panel_value:
                 blank_panels += 1
 
             predictions.append(
                 {
                     "id": identifier,
-                    "panel": panel,
+                    "panel": panel_value,
                     "predicted_class": (
                         self._profile.pathogenic_class
                         if record.prediction == "Pathogenic"
@@ -268,7 +285,8 @@ class CompetitionExportService:
 
         checks = [
             f"{len(predictions)} records, one per Source Row",
-            f"{len(seen)} unique identifiers from {identifier_column!r}",
+            f"{len(seen)} unique identifiers from {identifier_column!r}, "
+            "written exactly as given",
             "every probability finite and within 0 to 1",
             f"classes limited to {self._profile.valid_classes}",
         ]

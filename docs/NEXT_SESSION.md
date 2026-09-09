@@ -1,6 +1,6 @@
 # Next session
 
-> Written 2026-09-09. Kept in the repository deliberately: the previous handoff
+> Written 2026-09-09. Kept in the repository deliberately: an earlier handoff
 > was written to `/tmp` and was lost when the machine cleared it.
 
 Read `AGENTS.md`, then `docs/PROJECT_MEMORY.md` in full — especially **6a.
@@ -8,13 +8,24 @@ Immediate next step**. This file only orients you; the memory is authoritative.
 
 ## Where things stand
 
-`main` is clean, all work merged, no open pull requests, **172 tests passing**.
-Two releases are published: **v0.1.0** and **v0.2.0**.
+**Nothing is pushed.** All of this session's work sits on the local branch
+`codex/threshold-075-package`, six commits ahead of `main`, with a clean tree and
+**196 tests passing**. The user chose on 2026-09-09 to leave it local for now, so
+there is no pull request, no `v0.2.1` tag, and no GitHub release. Two releases are
+published on GitHub: **v0.1.0** and **v0.2.0**.
+
+The 0.2.1 AppImage *is* built and installed at `~/Applications/`, so the machine
+runs the new build even though it was never published. Publishing it later means
+pushing the branch, merging, tagging `v0.2.1`, and attaching
+`dist/Resolved_Layers-0.2.1-x86_64.AppImage` — the build already verified below.
 
 The application does the whole competition workflow offline from a single
 AppImage: install a Model Package from Settings, open a CSV, review it, run
 deterministic inference, investigate per panel, evaluate against authorized
 labels, and write the official submission JSON.
+
+Both agreed items from the previous handoff are done. The two Model Packages
+exist and are pinned, and 0.2.1 is built, verified, and installed locally.
 
 ## The one deadline
 
@@ -25,45 +36,102 @@ AppImage matters. The submission format is fixed and implemented; see
 `TEKNOFEST_2026_Saglikta_Yapay_Zeka_Final_Uygulama_ve_Sonuc_Teslim_Kilavuzu.pdf`
 in this repository.
 
-## What to do first
-
-1. **Build the second Model Package at threshold 0.75**, beside the untouched
-   0.61 one. This was agreed and not started. Memory section 6a has the detail,
-   including that the manifest checksum changes and must be pinned.
-2. **Release 0.2.1.** The AppImage installed at `~/Applications/` is 0.2.0 and
-   lacks four interface fixes made after it was built.
-
-Both are bounded. Neither is blocked.
-
-## The open question that decides the threshold
+## The one question that still decides something
 
 **Is the final test set class-balanced, as the specification describes?**
 
 The specification states balanced test sets (1000/1000, 100/100, 100/100,
 30/30), but the delivered training data is 74% Pathogenic. They disagree.
 
-- Balanced → adopt **0.75**, worth roughly +0.022 on the final metric
-- Skewed like the delivered data → **0.61** is already right
+- Balanced → install the **0.75** package, worth roughly +0.022 on the metric
+- Skewed like the delivered data → install the **0.61** package
 
-The user was going to ask the organisers. Ask whether they did before assuming
-either. The full analysis is in the parent repository at
-`results/rebalance_experiment_2026-09-04/`.
+Both packages are built, verified, and pinned, so this is now a choice made on
+the day rather than work to do. The user had not heard back from the organisers
+as of 2026-09-09.
 
-## How this project is worked on
+**The loss is asymmetric, and it favours 0.75.** `threshold_regret.py` in the
+parent repository at `results/rebalance_experiment_2026-09-04/` reuses that
+experiment's out-of-fold scores and varies only the assumed class composition:
 
-Focused `codex/...` branches, one bounded milestone at a time, a pull request
-per milestone, and `docs/PROJECT_MEMORY.md` updated when state or a durable
-decision changes. Explain a plan before substantial work. Do not commit
-organizer data, trained weights, derived mappings, or machine-specific paths;
-the Model Package lives outside this repository for that reason.
+| Hypothesis | 0.61 | 0.75 |
+| --- | --- | --- |
+| Balanced 50/50, as specified | 0.7407 | **0.7615** |
+| Delivered, one 74% share | **0.7980** | 0.7915 |
+| Delivered, each panel's own share | **0.7986** | 0.7873 |
+
+Picking 0.61 and being wrong costs 0.0207. Picking 0.75 and being wrong costs
+0.0065 to 0.0113. **0.75 has the smaller worst case under both readings**, so it
+is the better default even without an answer from the organisers.
+
+Do **not** judge this from the 736-row held-out file. Measured there, 0.61 looks
+better by about 0.065 (mean F1 0.9306 / MCC 0.5552 against 0.8916 / 0.4639) — but
+that split leaves PAH and CFTR with two observed negatives each, and per-panel
+MCC on two negatives is noise. The out-of-fold design exists precisely because
+the single split cannot support per-panel estimates. That trap was walked into
+once on 2026-09-09 and corrected.
+
+## The two Model Packages
+
+Both live outside this repository, in the ignored parent path
+`results/production_model_packages/`:
+
+- `teknofest-2026-pdr-v1` — threshold 0.61, untouched, manifest
+  `fc20e611…8d923d`
+- `teknofest-2026-pdr-v1-threshold-075` — threshold 0.75, manifest
+  `b5c8f2e7…82e40f2`
+
+Both checksums are pinned in `OFFICIAL_MANIFEST_CHECKSUMS`, so either installs
+from Settings with no trust prompt. They hold byte-identical artifacts and were
+verified to produce identical scores, differing only in classification and only
+for scores inside `[0.61, 0.75)`. Re-check that at any time with:
+
+```bash
+.venv/bin/python scripts/compare_threshold_packages.py --package A --package B --source CSV
+```
+
+## Which Model Package a launch uses
+
+Order, decided by `resolve_model_package` in `main.py` and pinned by tests:
+
+1. `--model-package` — a deliberate instruction for one launch
+2. **the package installed through Settings**
+3. `CHL_MODEL_PACKAGE_MANIFEST` — a fallback only when nothing is installed
+
+The variable used to sit at position 2 and beat Settings. It predates in-app
+installation, when it was the only way a menu launch could find a package at
+all, and it kept its priority after Settings was built. That is how an operator
+installed the 0.75 package, pressed Install, ran a prediction, and got 0.61: the
+choice was stored correctly and never consulted. Flipped on 2026-09-09 at the
+user's instruction.
+
+`~/.config/environment.d/resolved-layers.conf` was also deleted that day. Note
+that deleting it does not clear a running session: systemd reads `environment.d`
+once at login, and `gnome-shell` keeps its own copy for the life of the session,
+so every menu launch inherits it until the next login. That no longer matters
+for correctness — Settings wins either way — but it is why the variable can
+still appear to be set long after the file is gone.
 
 ## Something worth knowing before you trust the test suite
 
 Four real defects were found in one evening by the user simply using the
-application, and **none was visible to the 172 tests**: prediction froze the
-interface and produced duplicate runs from repeated clicks, nothing could be
+application, and none was visible to the 172 tests at the time: prediction froze
+the interface and produced duplicate runs from repeated clicks, nothing could be
 grabbed to scroll, the submission surface showed a stale warning beside an
 enabled button, and the archive delete control never received its clicks.
+
+Four more were found the same way on 2026-09-09. Three were in Settings: it
+reported the installed Model Package as ready while a different one was actually
+predicting; the first fix for that printed the same sentence twice; and it still
+said "No Model Package installed" where the environment variable was the only
+route a package arrived by, while prediction worked.
+
+The fourth is the one to remember. The user installed the 0.75 package, ran a
+prediction, and got 0.61. The code was correct and Settings had said so — but the
+warning lived only in Settings, which nobody revisits after installing, so it
+arrived after the run instead of before it. Source Review now shows the Release
+Threshold and names the route the package came from. **A warning belongs where
+the decision is taken, not where the setting was made.**
 
 The suite verifies controllers and that surfaces render. It does not verify that
 a control receives the click aimed at it. Driving real clicks was attempted and
@@ -81,15 +149,25 @@ in the archive row because it starts with an empty archive.
 
 ## Practical notes
 
+- Driving the interface by hand works: X11 with `xdotool`, `wmctrl` and
+  `import`. The GTK portal file dialog ignores synthetic typing; put the path on
+  the clipboard with `xclip` and paste it into the Ctrl+L location bar instead.
 - The project path contains spaces, so PyInstaller cannot build in place;
   `packaging/build-standalone.sh` stages a space-free copy.
 - `appimagetool` is at `~/.local/share/resolved-layers-build/appimagetool.AppImage`.
   Pass it as `APPIMAGE_TOOL=...`; it was previously kept in `/tmp` and lost.
 - Tests: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -m pytest`
-- The user's Model Package is configured through
-  `~/.config/environment.d/resolved-layers.conf`, so a menu launch finds it.
 - Restricted artifacts live in the parent repository at
-  `results/production_model_packages/teknofest-2026-pdr-v1/`.
+  `results/production_model_packages/`.
+
+## Deferred on purpose
+
+A Turkish/English interface switch was raised on 2026-09-09 and deliberately put
+off until after the final: about 350 unmarked strings across every surface, and
+the hard part is authoring a locked Turkish counterpart to the `CONTEXT.md`
+glossary rather than the mechanics. Section 5 of the memory records the full
+assessment so it does not have to be worked out again. Nothing in the competition
+guide requires a Turkish interface.
 
 ## Model questions
 

@@ -276,6 +276,31 @@ def test_settings_qml_starts_with_an_installed_model_package(tmp_path, fixture_d
     _run_settings_smoke(tmp_path)
 
 
+def test_settings_qml_renders_the_override_band(tmp_path, fixture_dir):
+    """An argument naming a different package must render the warning band.
+
+    The band is only created when an override is active, so the surface's other
+    smoke paths never instantiate it.
+    """
+    from variant_inference.application.model_package_settings import (
+        ModelPackageInstallationService,
+    )
+    from variant_inference.infrastructure.model_package import JsonModelPackageRepository
+    from variant_inference.infrastructure.model_package_store import (
+        JsonModelPackageSettingsStore,
+    )
+
+    config = tmp_path / "config" / "Computational Health Lab" / "Resolved Layers"
+    store = JsonModelPackageSettingsStore(config / "model-package.json")
+    service = ModelPackageInstallationService(JsonModelPackageRepository(), store)
+    service.install(service.confirm(service.inspect(fixture_dir / "development-package")))
+
+    # A path that is not the installed package, so the two genuinely disagree.
+    _run_settings_smoke(
+        tmp_path, "--model-package", str(tmp_path / "elsewhere" / "manifest.json")
+    )
+
+
 def test_settings_qml_starts_when_the_installed_package_has_vanished(tmp_path):
     from variant_inference.domain.models import ModelPackageSettings
     from variant_inference.infrastructure.model_package_store import (

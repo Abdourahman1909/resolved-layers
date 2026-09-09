@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 
 from variant_inference.application.model_package_settings import (
+    OFFICIAL_MANIFEST_CHECKSUMS,
     ModelPackageInstallationService,
 )
 from variant_inference.domain.models import ModelPackageSettings, ModelPackageTrust
@@ -259,3 +260,28 @@ def test_the_store_holds_no_model_artifacts(tmp_path: Path) -> None:
     assert "manifest_path" in written
     for artifact_suffix in (".pkl", ".cbm", ".joblib"):
         assert artifact_suffix not in written
+
+
+# Pinned official packages ---------------------------------------------------
+
+
+def test_both_release_thresholds_are_pinned_as_official() -> None:
+    """Either package must install on the day without a trust prompt."""
+    assert (
+        "fc20e611197bbe65f9d5cda058c7367bf32d54df95dd77f5af3d3c59fb8d923d"
+        in OFFICIAL_MANIFEST_CHECKSUMS
+    ), "the reported 0.61 PDR package"
+    assert (
+        "b5c8f2e72dfb0b56b73008ee0709cdc46e53fa7299c653ca9ada8a46b82e40f2"
+        in OFFICIAL_MANIFEST_CHECKSUMS
+    ), "the same release at threshold 0.75"
+
+
+def test_the_pinned_checksums_are_distinct_and_well_formed() -> None:
+    # Changing the threshold changes the Inference Contract and so the manifest
+    # checksum; a single shared entry would mean one of them was not pinned.
+    assert len(OFFICIAL_MANIFEST_CHECKSUMS) == 2
+    for checksum in OFFICIAL_MANIFEST_CHECKSUMS:
+        assert len(checksum) == 64
+        assert checksum == checksum.lower()
+        assert checksum.strip("0123456789abcdef") == ""

@@ -7,7 +7,7 @@
 **A desktop application for model inference you can actually verify.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-0B42E7.svg)](LICENSE)
-[![Release](https://img.shields.io/badge/release-v0.1.0-0B42E7.svg)](https://github.com/Abdourahman1909/resolved-layers/releases/latest)
+[![Release](https://img.shields.io/badge/release-v0.2.1-0B42E7.svg)](https://github.com/Abdourahman1909/resolved-layers/releases/latest)
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86--64-303847.svg)](#install)
 [![Built with](https://img.shields.io/badge/built%20with-PySide6%20%2B%20Qt%20Quick-303847.svg)](https://doc.qt.io/qtforpython/)
 
@@ -50,8 +50,8 @@ Download the latest **`Resolved_Layers-<version>-x86_64.AppImage`** from
 then:
 
 ```bash
-chmod +x Resolved_Layers-0.1.0-x86_64.AppImage
-./Resolved_Layers-0.1.0-x86_64.AppImage
+chmod +x Resolved_Layers-0.2.1-x86_64.AppImage
+./Resolved_Layers-0.2.1-x86_64.AppImage
 ```
 
 That is the whole installation. The file bundles its own Python runtime, Qt,
@@ -70,7 +70,7 @@ An AppImage runs on its own, but nothing registers it with the desktop, so
 searching for it finds nothing. To get a proper menu entry and icon:
 
 ```bash
-packaging/install-appimage.sh Resolved_Layers-0.1.0-x86_64.AppImage
+packaging/install-appimage.sh Resolved_Layers-0.2.1-x86_64.AppImage
 ```
 
 It reads the icons out of the AppImage itself, so it needs no repository

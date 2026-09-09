@@ -1867,6 +1867,25 @@ ApplicationWindow {
                     SectionTitle { text: "Inference Contract Fit" }
                     Item { width: 1; height: 14 }
                     EvidenceRow { width: parent.width; label: "Model Package"; value: sourceController.packageName; wrapValue: true }
+                    // The boundary this run will classify at. Two packages can
+                    // hold the same weights and differ only here.
+                    EvidenceRow { width: parent.width; label: "Release Threshold"; value: sourceController.packageThreshold }
+                    // Where the package came from, when it was not Settings. A
+                    // disclosure that lives only in Settings arrives after the
+                    // run it should have preceded.
+                    Text {
+                        width: parent.width
+                        visible: sourceController.packageOverridden
+                        height: visible ? implicitHeight : 0
+                        topPadding: visible ? 6 : 0
+                        bottomPadding: visible ? 4 : 0
+                        text: sourceController.packageOverrideNotice
+                        color: "#8A590E"
+                        wrapMode: Text.Wrap
+                        font.family: "Arial"
+                        font.pixelSize: 11
+                        lineHeight: 1.25
+                    }
                     EvidenceRow { width: parent.width; label: "Required features"; value: sourceController.hasSource && sourceController.packageVersion !== "—" ? sourceController.requiredCount.toString() : "—" }
                     EvidenceRow { width: parent.width; label: "Available in source"; value: sourceController.hasSource && sourceController.packageVersion !== "—" ? sourceController.availableRequiredCount.toString() : "—" }
                     EvidenceRow { width: parent.width; label: "Missing required"; value: sourceController.hasSource && sourceController.packageVersion !== "—" ? sourceController.missingRequiredCount.toString() : "—"; valueColor: sourceController.missingRequiredCount > 0 ? "#B52921" : root.ink }
