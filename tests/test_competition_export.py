@@ -180,31 +180,32 @@ def test_the_same_identifier_twice_in_one_panel_is_refused(tmp_path: Path) -> No
         tmp_path, SOURCE.replace("Varyant_3,KANSER", "Varyant_1,CFTR")
     )
 
-    with pytest.raises(CompetitionExportError, match="in panel 'CFTR'"):
+    with pytest.raises(CompetitionExportError, match=r"same panel \('CFTR'\)"):
         export(tmp_path, run_for(source))
 
 
-def test_an_identifier_reused_across_panels_is_refused_and_explained(
+def test_an_identifier_reused_across_panels_is_kept_and_reported(
     tmp_path: Path,
 ) -> None:
-    """The published rules refuse a repeated id however its panels differ.
+    """A record is the (id, panel) pair, so a cross-panel repeat is two records.
 
-    Section 3 lists "tekrar eden id" among the structures the upload system does
-    not accept, and separately forbids omitting, adding or altering an id, so
-    their test set cannot contain a repeat. Their merged training file does
-    repeat identifiers across panels, so a repeat here points at the wrong
-    identifier column, and the message says so rather than only refusing.
+    Section 3 refuses a "tekrar eden id", but 3.2 carries `panel` beside `id`
+    and section 4 scores panel by panel. The organisers' own merged data has the
+    same variant in two panels with different feature values, so dropping one
+    would omit a test example, which the same section forbids. Both are kept and
+    the operator is told, because a repeat can also mean the wrong identifier
+    column was chosen. This matches the standalone fallback exactly.
     """
     source = write_source(tmp_path, SOURCE.replace("Varyant_3", "Varyant_1"))
 
-    with pytest.raises(CompetitionExportError) as failure:
-        export(tmp_path, run_for(source))
+    report = export(tmp_path, run_for(source))
 
-    message = str(failure.value)
-    assert "more than once" in message
-    assert "'CFTR' and 'KANSER'" in message
-    assert "right identifier column" in message
-    assert "never be altered" in message
+    payload = json.loads(report.path.read_text(encoding="utf-8"))
+    assert report.record_count == 4, "no row may be dropped"
+    kept = [item for item in payload["predictions"] if item["id"] == "Varyant_1"]
+    assert [item["panel"] for item in kept] == ["CFTR", "KANSER"]
+    assert any("more than one panel" in check for check in report.checks)
+    assert any("omitting one is forbidden" in check for check in report.checks)
 
 
 def test_an_empty_identifier_is_refused_rather_than_invented(tmp_path: Path) -> None:
@@ -296,7 +297,7 @@ def test_the_report_summarises_what_was_written(tmp_path: Path) -> None:
     assert report.benign_count == 2
     assert report.identifier_column == "Variant_ID"
     assert report.profile_id == "teknofest-2026-final-v1"
-    assert any("unique identifiers" in check for check in report.checks)
+    assert any("unique (Variant_ID, _panel) records" in check for check in report.checks)
 
 
 def test_a_blank_panel_is_reported_but_not_fatal(tmp_path: Path) -> None:
@@ -370,7 +371,7 @@ def test_the_controller_writes_and_reports_the_checks(tmp_path: Path) -> None:
     assert controller.messageKind == "success"
     assert "300" not in controller.message
     assert Path(controller.writtenPath).is_file()
-    assert any("unique identifiers" in check for check in controller.checks)
+    assert any("unique (Variant_ID, _panel) records" in check for check in controller.checks)
 
 
 def test_a_refused_submission_reports_the_broken_rule(tmp_path: Path) -> None:
@@ -382,7 +383,7 @@ def test_a_refused_submission_reports_the_broken_rule(tmp_path: Path) -> None:
     controller.writeSubmission(str(tmp_path / "out.json"))
 
     assert controller.messageKind == "error"
-    assert "more than once" in controller.message
+    assert "twice in the same panel" in controller.message
     assert controller.writtenPath == ""
     assert controller.checks == []
     assert controller.busy is False
