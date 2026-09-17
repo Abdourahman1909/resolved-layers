@@ -218,15 +218,23 @@ class CompetitionExportService:
         panel_index = source.columns.index(panel_column)
 
         predictions: list[dict] = []
-        # The published rules refuse a repeated id outright: section 3 lists
-        # "tekrar eden id" among the structures the upload system does not
-        # accept. The same section forbids omitting an id, adding one, or
-        # altering a value, which together mean their test set cannot contain a
-        # repeat. Their merged training file does repeat identifiers across
-        # panels, so a repeat here almost always means the wrong identifier
-        # column was chosen, and saying so is more useful than writing a file
-        # the upload will reject.
-        seen: dict[str, str] = {}
+        # A record is identified by the pair, not by the id alone.
+        #
+        # The guide pulls both ways. Section 3 lists "tekrar eden id" among the
+        # structures the upload system does not accept. But the University
+        # format in 3.2 carries `panel` beside `id`, section 4 scores panel by
+        # panel with each panel weighted equally, and the organisers' own merged
+        # training data has the same variant appearing in two panels with
+        # different feature values and, in principle, different labels.
+        #
+        # So the same pair twice is one record submitted twice and is refused.
+        # The same id in two different panels is two different records: both are
+        # kept, with a warning, because dropping one would omit a test example,
+        # which section 3 forbids outright. Identifiers are never altered either
+        # way. This matches the standalone fallback, so the two tools cannot
+        # disagree about what a submission should contain.
+        seen: dict[tuple[str, str], int] = {}
+        panels_by_id: dict[str, list[str]] = {}
         blank_panels = 0
         for record in run.predictions:
             row = source.row_at(record.source_row - 1)
@@ -239,21 +247,18 @@ class CompetitionExportService:
                     "and identifiers must not be invented."
                 )
             panel_value = row[panel_index].strip()
-            if identifier in seen:
-                previous = seen[identifier]
-                where = (
-                    f"in panels {previous!r} and {panel_value!r}"
-                    if previous != panel_value
-                    else f"in panel {panel_value!r}"
-                )
+            key = (identifier, panel_value)
+            if key in seen:
                 raise CompetitionExportError(
-                    f"Identifier {identifier!r} appears more than once, {where}. "
-                    "The organisers reject repeated ids, and their test set should "
-                    f"not contain any, so check whether {identifier_column!r} is "
-                    "the right identifier column. Identifiers must never be "
-                    "altered to make them unique."
+                    f"Identifier {identifier!r} appears twice in the same panel "
+                    f"({panel_value!r}), at Source Rows {seen[key]} and "
+                    f"{record.source_row}. That is one record submitted twice, "
+                    "which the organisers reject. Check whether "
+                    f"{identifier_column!r} is the right identifier column; "
+                    "identifiers must never be altered to make them unique."
                 )
-            seen[identifier] = panel_value
+            seen[key] = record.source_row
+            panels_by_id.setdefault(identifier, []).append(panel_value)
 
             probability = float(record.ensemble_score)
             if not math.isfinite(probability) or not 0.0 <= probability <= 1.0:
@@ -285,11 +290,24 @@ class CompetitionExportService:
 
         checks = [
             f"{len(predictions)} records, one per Source Row",
-            f"{len(seen)} unique identifiers from {identifier_column!r}, "
+            f"{len(seen)} unique ({identifier_column}, {panel_column}) records, "
             "written exactly as given",
             "every probability finite and within 0 to 1",
             f"classes limited to {self._profile.valid_classes}",
         ]
+        repeated = {k: v for k, v in panels_by_id.items() if len(v) > 1}
+        if repeated:
+            # Not fatal, and deliberately so: these are separate test examples
+            # and omitting one is forbidden. Named loudly so the operator can
+            # tell a real cross-panel variant from the wrong identifier column.
+            example = next(iter(repeated))
+            extra = sum(len(v) - 1 for v in repeated.values())
+            checks.append(
+                f"{len(repeated)} identifiers appear in more than one panel, "
+                f"{extra} extra rows. Every row is kept: they are separate test "
+                f"examples and omitting one is forbidden. Example: {example} in "
+                + ", ".join(repeated[example])
+            )
         if blank_panels:
             # Not fatal: the guide fixes the class names but not the panel values.
             checks.append(f"{blank_panels} records have an empty panel value")
