@@ -137,6 +137,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Group observed metrics by this source column for verification",
     )
     parser.add_argument(
+        "--run",
+        action="store_true",
+        help=(
+            "Confirm the reviewed source and start the Verified Run as soon as "
+            "the source and package are ready. Without this a run only begins "
+            "when someone clicks Run, so no automated check can reach Results, "
+            "Evaluation or Submission. For verification, not for operators: it "
+            "confirms the source review on their behalf."
+        ),
+    )
+    parser.add_argument(
         "--render-backend",
         choices=("opengl", "d3d11", "d3d12", "vulkan", "metal", "software"),
         help=(
@@ -458,6 +469,32 @@ def main(argv: list[str] | None = None) -> int:
             roots[0].deleteLater()
         QTimer.singleShot(50, application.quit)
 
+    if args.run:
+        # The run action is otherwise reachable only from the interface, so
+        # every automated check stopped at the Source Review surface. Both the
+        # submission identifier rule and the Submission screen's own guard
+        # reached a user because nothing headless could get past that point.
+        def start_run() -> None:
+            if controller.hasResults or controller.runBusy:
+                return
+            if not controller.canConfirm:
+                # The source is still being read, or it does not fit the
+                # contract. Either way there is nothing to confirm yet.
+                QTimer.singleShot(25, start_run)
+                return
+            if not controller.confirmed:
+                # Source Review's confirmation gate is deliberate: a person
+                # states they have reviewed the source before it is predicted.
+                # An automated check has no person, so --run says plainly that
+                # it is standing in for one.
+                controller.setConfirmed(True)
+            if not controller.runEnabled:
+                QTimer.singleShot(25, start_run)
+                return
+            controller.requestRun()
+
+        QTimer.singleShot(0, start_run)
+
     if args.surface == "submission":
         def open_submission() -> None:
             if not controller.hasResults:
@@ -465,12 +502,38 @@ def main(argv: list[str] | None = None) -> int:
                 return
             controller.setActiveSurface("submission")
             if args.write_submission:
-                QTimer.singleShot(
-                    50,
-                    lambda: submission_controller.writeSubmission(
-                        str(args.write_submission.resolve())
-                    ),
-                )
+                destination = str(args.write_submission.resolve())
+
+                def write_then_report() -> None:
+                    if not submission_controller.canWrite:
+                        # Refused before anything is written: a rejected
+                        # identifier column, or a column not chosen. Say why and
+                        # stop, rather than leaving a check waiting for a file
+                        # that is never coming. Checked before the call, because
+                        # writing also clears canWrite while it is in flight.
+                        print(
+                            f"Submission refused: {submission_controller.message}",
+                            file=sys.stderr,
+                        )
+                        QTimer.singleShot(0, clean_quit)
+                        return
+                    submission_controller.writeSubmission(destination)
+
+                def report_then_quit() -> None:
+                    # A submission can be refused by the identifier guard before
+                    # writing, or by the export itself while writing. Both end
+                    # here with no file, so the reason is reported from one
+                    # place: a check that sees only a missing file learns
+                    # nothing.
+                    if not args.write_submission.exists():
+                        print(
+                            f"Submission refused: {submission_controller.message}",
+                            file=sys.stderr,
+                        )
+                    QTimer.singleShot(50, clean_quit)
+
+                QTimer.singleShot(50, write_then_report)
+                submission_controller.exportFinished.connect(report_then_quit)
 
         QTimer.singleShot(0, open_submission)
     if args.surface == "settings":
