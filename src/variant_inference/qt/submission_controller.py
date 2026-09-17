@@ -160,31 +160,49 @@ class SubmissionController(QObject):
         self._emit()
 
     def _inspect_identifiers(self, column_name: str) -> None:
-        """Report a column that cannot be an identifier before anything is written.
+        """Report a column that cannot identify a record, before anything is written.
 
         Choosing a label or category column is an easy mistake, and finding out
         only at write time wastes a cycle during a timed final.
+
+        A record is the (identifier, panel) pair, matching the export itself:
+        the same variant legitimately appears in two panels with different
+        feature values, and the organisers' final dataset does exactly that.
+        Only a repeated pair means the column cannot identify a record.
         """
         run = self._results.current_run
         if run is None:
             return
         self._inspection_id += 1
         inspection_id = self._inspection_id
-        future = self._executor.submit(self._count_distinct, run, column_name)
+        future = self._executor.submit(
+            self._count_distinct, run, column_name, self._panel_column
+        )
         future.add_done_callback(
             lambda done: self._apply_inspection(done, inspection_id, column_name)
         )
 
-    def _count_distinct(self, run, column_name: str) -> tuple[int, int]:
+    def _count_distinct(self, run, column_name: str, panel_column: str) -> tuple[int, int, int]:
+        """Return distinct pairs, distinct identifiers, and the record count."""
         source = self._service._reader.open(run.source_path)  # noqa: SLF001
         try:
             index = source.columns.index(column_name)
-            seen = set()
+            panel_index = (
+                source.columns.index(panel_column)
+                if panel_column in source.columns
+                else None
+            )
+            pairs = set()
+            identifiers = set()
             total = 0
             for record in run.predictions:
-                seen.add(source.row_at(record.source_row - 1)[index].strip())
+                row = source.row_at(record.source_row - 1)
+                identifier = row[index].strip()
+                panel = row[panel_index].strip() if panel_index is not None else ""
+                identifiers.add(identifier)
+                pairs.add((identifier, panel))
                 total += 1
-            return len(seen), total
+            return len(pairs), len(identifiers), total
         finally:
             source.close()
 
@@ -194,17 +212,31 @@ class SubmissionController(QObject):
         if self._identifier_column != column_name:
             return
         try:
-            distinct, total = done.result()
+            pairs, identifiers, total = done.result()
         except Exception:
             return  # the write path reports source problems in full
-        if distinct < total:
+        if pairs < total:
             self._identifier_rejected = True
             self._message = (
-                f"{column_name!r} has only {distinct:,} distinct values across "
-                f"{total:,} records, so it cannot be the record identifier. "
-                "The organisers reject duplicate ids."
+                f"{column_name!r} repeats within a panel: only {pairs:,} distinct "
+                f"records across {total:,} rows. That is the same record twice, "
+                "which the organisers reject, so this cannot be the identifier "
+                "column."
             )
             self._message_kind = "error"
+            self.exportFinished.emit()
+            return
+        if identifiers < total:
+            # Not a defect: the same variant in two panels is two test examples,
+            # and omitting either is forbidden. Said plainly so an operator who
+            # picked the wrong column still notices.
+            self._identifier_rejected = False
+            self._message = (
+                f"{total - identifiers:,} identifiers appear in more than one "
+                f"panel. Every row is kept: they are separate test examples. "
+                f"Check {column_name!r} is the intended identifier column."
+            )
+            self._message_kind = "warning"
             self.exportFinished.emit()
 
     def _describe_selection(self) -> None:
