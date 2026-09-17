@@ -136,6 +136,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--evaluation-group-column",
         help="Group observed metrics by this source column for verification",
     )
+    parser.add_argument(
+        "--render-backend",
+        choices=("opengl", "d3d11", "d3d12", "vulkan", "metal", "software"),
+        help=(
+            "Force the graphics backend. Use this if the window opens blank: "
+            "'software' always draws, at the cost of speed."
+        ),
+    )
     return parser
 
 
@@ -241,11 +249,48 @@ def verify_inference(args: argparse.Namespace) -> int:
     return 0
 
 
+def graphics_environment(
+    platform: str,
+    requested: str | None,
+    environment: dict[str, str],
+) -> dict[str, str]:
+    """Decide the Qt graphics variables to set before any Qt object exists.
+
+    Two separate problems, one place.
+
+    On Windows, Qt Quick defaults to Direct3D. On some NVIDIA laptop adapters
+    D3D11 and D3D12 report `Graphics device lost` in a loop and never draw, so
+    the window stays blank while the process runs normally (issue #32). OpenGL
+    renders correctly on the same machine, and the Windows bundle carries a
+    software OpenGL library for machines with no usable driver. So OpenGL
+    becomes the default there.
+
+    Anywhere else the platform default is left alone. Linux already uses OpenGL,
+    and a blank window has also been reported there, so forcing a backend would
+    be guessing at an undiagnosed cause.
+
+    An explicit choice always wins, and an operator who already set the Qt
+    variable by hand is never overridden.
+    """
+    chosen: dict[str, str] = {}
+    if requested == "software":
+        chosen["QT_QUICK_BACKEND"] = "software"
+    elif requested:
+        chosen["QSG_RHI_BACKEND"] = requested
+    elif platform == "win32":
+        if "QSG_RHI_BACKEND" not in environment and "QT_QUICK_BACKEND" not in environment:
+            chosen["QSG_RHI_BACKEND"] = "opengl"
+    return chosen
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.verify_inference:
         # Deliberately before any Qt object exists: this path needs no display.
         return verify_inference(args)
+    # Before any Qt object exists: Qt reads these when it builds the scene graph.
+    os.environ.update(graphics_environment(sys.platform, args.render_backend, dict(os.environ)))
+
     application = QGuiApplication(sys.argv[:1])
     application.setApplicationName("Resolved Layers")
     application.setApplicationVersion(__version__)

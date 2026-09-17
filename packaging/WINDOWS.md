@@ -45,6 +45,25 @@ confirmed first, because model artifacts are unpickled and unpickling runs code.
 startup. Source Review shows the Release Threshold the run will use, so you can
 confirm which package is active before predicting.
 
+## If the window opens blank
+
+On some laptops with an NVIDIA GPU the window frame appears but the content
+stays white, with no crash and no error. Qt Quick's Direct3D backend loses the
+graphics device on those adapters and never draws (issue #32).
+
+From version 0.2.2 this build already asks for OpenGL on Windows, which renders
+correctly on the affected hardware. If a window is still blank, force the
+software renderer, which always draws:
+
+```
+"%LOCALAPPDATA%\Programs\Resolved Layers\resolved-layers.exe" --render-backend software
+```
+
+It is slower, and every surface works. `--render-backend` also accepts
+`opengl`, `d3d11`, `d3d12` and `vulkan` if you are diagnosing a specific
+adapter. Setting `QSG_RHI_BACKEND` or `QT_QUICK_BACKEND` yourself overrides the
+default and is never overwritten.
+
 ## Where it keeps things
 
 - Settings: `%APPDATA%\Computational Health Lab\Resolved Layers\model-package.json`

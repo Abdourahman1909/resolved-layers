@@ -103,6 +103,27 @@ checkout and no administrator rights. Remove the entry again with
 A wheel-based installer is also available for a launcher on `PATH` — see
 [packaging/README.md](packaging/README.md).
 
+
+### If the window opens blank
+
+Reported on laptops with an NVIDIA GPU: the window appears but its content stays
+white, with no crash (issue #32). The cause on Linux is not yet diagnosed —
+OpenGL is already the default there — so if this happens, force the software
+renderer, which always draws:
+
+```bash
+./Resolved_Layers-0.2.2-x86_64.AppImage --render-backend software
+```
+
+If that renders, please add the following to issue #32, since it is what the
+diagnosis needs:
+
+```bash
+echo $XDG_SESSION_TYPE; nvidia-smi; prime-select query
+QSG_INFO=1 QT_LOGGING_RULES="qt.rhi.general=true;qt.scenegraph.general=true" \
+  ./Resolved_Layers-0.2.2-x86_64.AppImage 2>&1 | tee render.log
+```
+
 ## Model Packages
 
 **The application ships without a model.** A Model Package is supplied
